@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class PatientDevice extends Model
 {
@@ -51,20 +52,63 @@ class PatientDevice extends Model
     {
         return $this->belongsTo(Pegawai::class, 'removed_by_user_id', 'nik');
     }
+    /**
+     * [ACCESSOR]
+     * Mendapatkan nama installer (Pegawai atau Admin).
+     * Akan dipanggil oleh: $device->installer_name
+     */
+    public function getInstallerNameAttribute()
+    {
+        // 1. Cek relasi 'installer' (ke tabel pegawai) dulu.
+        //    ($this->installer merujuk ke fungsi relasi installer())
+        $pegawaiName = $this->installer?->nama;
+
+        if ($pegawaiName) {
+            return $pegawaiName; // Ditemukan! Langsung kembalikan.
+        }
+
+        // 2. Jika TIDAK ditemukan di pegawai, cek ke tabel 'admin'.
+        //    ($this->installed_by_user_id adalah nama kolom di tabel ini)
+        $isAdmin = DB::table('admin')
+                      ->whereRaw("usere = AES_ENCRYPT(?, 'nur')", [$this->installed_by_user_id])
+                      ->exists();
+
+        if ($isAdmin) {
+            return 'Admin Utama'; // Ini adalah admin!
+        }
+
+        // 3. Fallback: kembalikan ID aslinya.
+        return $this->installed_by_user_id;
+    }
 
     /**
      * [BARU] Accessor untuk mendapatkan nama petugas pemasang.
      *
      * Cara panggil di Blade: $device->installer_name
      */
-    public function getInstallerNameAttribute()
+     public function getAuthorNameAttribute()
     {
-        if ($this->installed_by_user_id === 'admin') {
-            return 'Admin';
+        // 1. Cek relasi 'pegawai' dulu.
+        //    Ini adalah operasi yang cepat, terutama jika di-eager-load.
+        $pegawaiName = $this->pegawai?->nama;
+
+        if ($pegawaiName) {
+            return $pegawaiName; // Ditemukan! Langsung kembalikan.
         }
 
-        // Ambil dari relasi 'installer'
-        return $this->installer?->nama ?? $this->installed_by_user_id;
+        // 2. Jika TIDAK ditemukan di pegawai (null),
+        //    baru kita cek ke tabel 'admin' (karena ini query ke DB).
+        $isAdmin = DB::table('admin')
+                      ->whereRaw("usere = AES_ENCRYPT(?, 'nur')", [$this->id_user])
+                      ->exists();
+
+        if ($isAdmin) {
+            return 'Admin Utama';
+        }
+
+        // 3. Jika bukan pegawai DAN bukan admin,
+        //    kembalikan id_user-nya sebagai fallback.
+        return $this->id_user;
     }
 
     /**
@@ -72,13 +116,31 @@ class PatientDevice extends Model
      *
      * Cara panggil di Blade: $device->remover_name
      */
+    /**
+     * [ACCESSOR]
+     * Mendapatkan nama remover (Pegawai atau Admin).
+     * Akan dipanggil oleh: $device->remover_name
+     */
     public function getRemoverNameAttribute()
     {
-        if ($this->removed_by_user_id === 'admin') {
-            return 'Admin';
+        // 1. Cek relasi 'remover' (ke tabel pegawai) dulu.
+        $pegawaiName = $this->remover?->nama;
+
+        if ($pegawaiName) {
+            return $pegawaiName; // Ditemukan!
         }
 
-        // Ambil dari relasi 'remover'
-        return $this->remover?->nama ?? $this->removed_by_user_id;
+        // 2. Jika TIDAK ditemukan di pegawai, cek ke tabel 'admin'.
+        //    ($this->removed_by_user_id adalah nama kolom di tabel ini)
+        $isAdmin = DB::table('admin')
+                      ->whereRaw("usere = AES_ENCRYPT(?, 'nur')", [$this->removed_by_user_id])
+                      ->exists();
+
+        if ($isAdmin) {
+            return 'Admin Utama'; // Ini adalah admin!
+        }
+
+        // 3. Fallback: kembalikan ID aslinya.
+        return $this->removed_by_user_id;
     }
 }

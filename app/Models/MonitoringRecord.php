@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class MonitoringRecord extends Model
 {
@@ -105,13 +106,29 @@ class MonitoringRecord extends Model
         return $this->belongsTo(Pegawai::class, 'id_user', 'nik');
     }
 
-    public function getAuthorNameAttribute()
+   public function getAuthorNameAttribute()
     {
-        if ($this->id_user === 'admin') {
-            return 'Admin Utama';
+        // 1. Cek relasi 'pegawai' dulu.
+        //    Ini adalah operasi yang cepat, terutama jika di-eager-load.
+        $pegawaiName = $this->pegawai?->nama;
+
+        if ($pegawaiName) {
+            return $pegawaiName; // Ditemukan! Langsung kembalikan.
         }
 
-        return $this->pegawai?->nama ?? $this->id_user;
+        // 2. Jika TIDAK ditemukan di pegawai (null),
+        //    baru kita cek ke tabel 'admin' (karena ini query ke DB).
+        $isAdmin = DB::table('admin')
+                      ->whereRaw("usere = AES_ENCRYPT(?, 'nur')", [$this->id_user])
+                      ->exists();
+
+        if ($isAdmin) {
+            return 'Admin Utama'; // Ini adalah admin!
+        }
+
+        // 3. Jika bukan pegawai DAN bukan admin,
+        //    kembalikan id_user-nya sebagai fallback.
+        return $this->id_user;
     }
 
 }

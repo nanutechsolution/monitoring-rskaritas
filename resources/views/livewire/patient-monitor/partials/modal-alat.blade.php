@@ -16,24 +16,24 @@
             <div class="p-6 space-y-4">
                 <div>
                     <label for="installation_date" class="block mb-2 text-sm font-medium text-gray-900">Tgl. Pasang</label>
-                    <input id="installation_date" type="datetime-local" wire:model="installation_date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5 {{ !$editingDeviceId ? 'bg-gray-200 cursor-not-allowed' : '' }}" {{ !$editingDeviceId ? 'readonly' : '' }}>
+                    <input id="installation_date" type="datetime-local" wire:model.defer="installation_date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5 {{ !$editingDeviceId ? 'bg-gray-200 cursor-not-allowed' : '' }}" {{ !$editingDeviceId ? 'readonly' : '' }}>
                     @error('installation_date') <span class="text-xs text-red-600 mt-1">{{ $message }}</span> @enderror
                 </div>
                 <div>
                     <label for="device_name" class="block mb-2 text-sm font-medium text-gray-900">Nama Alat</label>
-                    <input id="device_name" type="text" wire:model="device_name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5" placeholder="Contoh: CVC, ETT, Kateter Urin">
+                    <input id="device_name" type="text" wire:model.defer="device_name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5" placeholder="Contoh: CVC, ETT, Kateter Urin">
                     @error('device_name') <span class="text-xs text-red-600 mt-1">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="size" class="block mb-2 text-sm font-medium text-gray-900">Ukuran</label>
-                        <input id="size" type="text" wire:model="size" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5" placeholder="Contoh: 7 Fr">
+                        <input id="size" type="text" wire:model.defer="size" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5" placeholder="Contoh: 7 Fr">
                         @error('size') <span class="text-xs text-red-600 mt-1">{{ $message }}</span> @enderror
                     </div>
                     <div>
                         <label for="location" class="block mb-2 text-sm font-medium text-gray-900">Lokasi</label>
-                        <input id="location" type="text" wire:model="location" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5" placeholder="Contoh: V. Subklavia Ka">
+                        <input id="location" type="text" wire:model.defer="location" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5" placeholder="Contoh: V. Subklavia Ka">
                         @error('location') <span class="text-xs text-red-600 mt-1">{{ $message }}</span> @enderror
                     </div>
                 </div>

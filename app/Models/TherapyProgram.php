@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class TherapyProgram extends Model
 {
@@ -41,13 +42,26 @@ class TherapyProgram extends Model
      */
     public function getAuthorNameAttribute()
     {
-        // 1. Handle kasus 'admin' secara khusus
-        if ($this->id_user === 'admin') {
-            return 'Admin Utama';
+        // 1. Cek relasi 'pegawai' dulu.
+        //    Ini adalah operasi yang cepat, terutama jika di-eager-load.
+        $pegawaiName = $this->pegawai?->nama;
+
+        if ($pegawaiName) {
+            return $pegawaiName; // Ditemukan! Langsung kembalikan.
         }
 
-        // 2. Ambil nama dari relasi 'pegawai'
-        // 3. Jika tidak ada (data lama/aneh), tampilkan 'id_user'-nya
-        return $this->pegawai?->nama ?? $this->id_user;
+        // 2. Jika TIDAK ditemukan di pegawai (null),
+        //    baru kita cek ke tabel 'admin' (karena ini query ke DB).
+        $isAdmin = DB::table('admin')
+                      ->whereRaw("usere = AES_ENCRYPT(?, 'nur')", [$this->id_user])
+                      ->exists();
+
+        if ($isAdmin) {
+            return 'Admin Utama'; // Ini adalah admin!
+        }
+
+        // 3. Jika bukan pegawai DAN bukan admin,
+        //    kembalikan id_user-nya sebagai fallback.
+        return $this->id_user;
     }
 }

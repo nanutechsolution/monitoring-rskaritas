@@ -12,7 +12,7 @@ class KhanzaUserProvider extends EloquentUserProvider
     /**
      * Fungsi helper untuk membuat instance KhanzaUser dari data DB
      */
-    private function createKhanzaUserInstance($dbRow, $plainUsername)
+    private function createKhanzaUserInstance($dbRow, $plainUsername,  $isAdmin=false)
     {
         $user = new KhanzaUser();
 
@@ -25,9 +25,10 @@ class KhanzaUserProvider extends EloquentUserProvider
 
         // Set 'id_user' ke username plain-text yang dipakai login
         $attributes['id_user'] = $plainUsername;
+        $attributes['is_super_admin'] = $isAdmin;
 
-        $user->setRawAttributes($attributes); // Atur semua data
-        $user->exists = true; // Tandai ini sebagai "ada"
+        $user->setRawAttributes($attributes);
+        $user->exists = true;
 
         return $user;
     }
@@ -50,7 +51,7 @@ class KhanzaUserProvider extends EloquentUserProvider
             ->first();
 
         if ($adminRow) {
-            return $this->createKhanzaUserInstance($adminRow, $username);
+            return $this->createKhanzaUserInstance($adminRow, $username, true);
         }
 
         // 2. Cek user
@@ -59,7 +60,7 @@ class KhanzaUserProvider extends EloquentUserProvider
             ->first();
 
         if ($userRow) {
-            return $this->createKhanzaUserInstance($userRow, $username);
+            return $this->createKhanzaUserInstance($userRow, $username, false);
         }
 
         return null;
@@ -78,7 +79,7 @@ class KhanzaUserProvider extends EloquentUserProvider
             ->first();
 
         if ($adminRow) {
-            return $this->createKhanzaUserInstance($adminRow, $identifier);
+            return $this->createKhanzaUserInstance($adminRow, $identifier,true);
         }
 
         // 2. Cek user
@@ -87,7 +88,7 @@ class KhanzaUserProvider extends EloquentUserProvider
             ->first();
 
         if ($userRow) {
-            return $this->createKhanzaUserInstance($userRow, $identifier);
+            return $this->createKhanzaUserInstance($userRow, $identifier, false);
         }
 
         return null;

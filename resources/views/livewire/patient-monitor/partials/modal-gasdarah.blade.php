@@ -34,7 +34,7 @@
                 @foreach ($bloodGasFields as $field)
                 <div>
                     <label for="form_{{ $field['id'] }}" class="block text-sm font-medium text-gray-700">{{ $field['label'] }}</label>
-                    <input id="form_{{ $field['id'] }}" type="number" step="{{ $field['step'] }}" wire:model="{{ $field['id'] }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                    <input id="form_{{ $field['id'] }}" type="number" step="{{ $field['step'] }}" wire:model.defer="{{ $field['id'] }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
                     @error($field['id']) <span class="text-xs text-red-600">{{ $message }}</span> @enderror
                 </div>
                 @endforeach
