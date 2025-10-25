@@ -1,4 +1,1 @@
-<x-observasi-table
-    title="Rekap Data Observasi Pasien"
-    :records="$records"
-/>
+<livewire:observasi-table :cycleId="$currentCycleId" />

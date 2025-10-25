@@ -48,13 +48,67 @@
             <div class="overflow-x-auto py-3 -mx-3 scroll-smooth scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 <div class="flex gap-3 px-3 min-w-max snap-x snap-mandatory">
                     <!-- Catat Kejadian -->
-                    <button type="button" wire:click="openEventModal" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-green-50 transition-all">
-                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        <span class="font-medium text-gray-800">Catat Kejadian</span>
-                    </button>
+                    <div x-data="{ openEventModal: false }">
+                        <!-- Tombol buka modal -->
+                        <button type="button" @click="openEventModal = true" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-green-50 transition-all">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            <span class="font-medium text-gray-800">Catat Kejadian</span>
+                        </button>
 
+                        <!-- Modal -->
+                        <div x-show="openEventModal" x-cloak x-transition class="fixed inset-0 z-50 flex items-center justify-center">
+                            <!-- Overlay -->
+                            <div class="absolute inset-0 bg-gray-900 opacity-75" @click="openEventModal = false"></div>
+
+                            <!-- Konten modal -->
+                            <div class="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                                <h3 class="text-lg font-medium text-gray-900">Catat Kejadian</h3>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    Pilih semua kejadian yang terjadi pada waktu yang sama.
+                                </p>
+
+                                <div class="mt-4 space-y-2 border-t pt-4">
+                                    <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" wire:model.defer="event_cyanosis" class="rounded border-gray-300">
+                                            <span>Cyanosis</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" wire:model.defer="event_pucat" class="rounded border-gray-300">
+                                            <span>Pucat</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" wire:model.defer="event_ikterus" class="rounded border-gray-300">
+                                            <span>Ikterus</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" wire:model.defer="event_crt_less_than_2" class="rounded border-gray-300">
+                                            <span>CRT &lt; 2 detik</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" wire:model.defer="event_bradikardia" class="rounded border-gray-300">
+                                            <span>Bradikardia</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" wire:model.defer="event_stimulasi" class="rounded border-gray-300">
+                                            <span>Stimulasi</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mt-6 flex justify-end space-x-3">
+                                    <button type="button" @click="openEventModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                        Batal
+                                    </button>
+                                    <button type="button" @click="openEventModal = false" wire:click="saveEvent" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700">
+                                        Simpan Kejadian
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Tambah Obat -->
                     <button type="button" wire:click="openMedicationModal" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-yellow-50 flex-shrink-0 snap-start transition-all">
                         <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,16 +116,72 @@
                         </svg>
                         <span class="font-medium text-gray-800">Pemberian Obat</span>
                     </button>
+                    <div x-data="{ showBloodGasModal: false }">
+                        <!-- Tombol Buka Modal -->
+                        <button type="button" @click="showBloodGasModal = true" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-red-50 flex-shrink-0 snap-start transition-all">
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v6"></path>
+                            </svg>
+                            <span class="font-medium text-gray-800">Gas Darah</span>
+                        </button>
+                        <!-- Modal -->
+                        <div x-show="showBloodGasModal" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-sm">
+                            <div x-show="showBloodGasModal" x-transition.scale.origin.center @click.away="showBloodGasModal = false" x-on:close-blood-gas-modal.window="showBloodGasModal = false" class="relative w-full max-w-3xl bg-white rounded-lg shadow-xl flex flex-col max-h-[90vh]">
+                                <!-- Header -->
+                                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                                    <div>
+                                        <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">🩸 Catat Hasil Gas Darah</h3>
+                                        <p class="text-sm text-gray-500 mt-1">Masukkan data analisis gas darah (AGD) pasien.</p>
+                                    </div>
+                                    <button @click="showBloodGasModal = false" class="text-gray-500 hover:text-gray-700">✕</button>
+                                </div>
 
-                    <!-- Hasil Gas Darah -->
-                    <button type="button" wire:click="openBloodGasModal" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-red-50 flex-shrink-0 snap-start transition-all">
-                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v6"></path>
-                        </svg>
-                        <span class="font-medium text-gray-800">Gas Darah</span>
-                    </button>
+                                <!-- Body -->
+                                <div class="px-6 py-5 overflow-y-auto">
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-6">
+                                        <div>
+                                            <label for="form_taken_at" class="block text-sm font-medium text-gray-700">Waktu Pengambilan</label>
+                                            <input id="form_taken_at" type="datetime-local" wire:model.defer="taken_at" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                                            @error('taken_at') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                                        </div>
 
+                                        @php
+                                        $bloodGasFields = [
+                                        ['id' => 'gula_darah', 'label' => 'Gula Darah (BS)', 'step' => '0.1'],
+                                        ['id' => 'ph', 'label' => 'pH', 'step' => '0.01'],
+                                        ['id' => 'pco2', 'label' => 'PCO₂', 'step' => '0.1'],
+                                        ['id' => 'po2', 'label' => 'PO₂', 'step' => '0.1'],
+                                        ['id' => 'hco3', 'label' => 'HCO₃', 'step' => '0.1'],
+                                        ['id' => 'be', 'label' => 'BE', 'step' => '0.1'],
+                                        ['id' => 'sao2', 'label' => 'SaO₂', 'step' => '0.1'],
+                                        ];
+                                        @endphp
+
+                                        @foreach ($bloodGasFields as $field)
+                                        <div>
+                                            <label for="form_{{ $field['id'] }}" class="block text-sm font-medium text-gray-700">{{ $field['label'] }}</label>
+                                            <input id="form_{{ $field['id'] }}" type="number" step="{{ $field['step'] }}" wire:model.defer="{{ $field['id'] }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                                            @error($field['id']) <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <!-- Footer -->
+                                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+                                    <button type="button" @click="showBloodGasModal = false" class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition shadow-sm">
+                                        Batal
+                                    </button>
+
+                                    <button type="button" wire:click="saveBloodGasResult" class="px-5 py-2 text-sm font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 active:scale-[0.98] transition transform shadow-sm">
+                                        <span wire:loading.remove wire:target="saveBloodGasResult">💾 Simpan Hasil</span>
+                                        <span wire:loading wire:target="saveBloodGasResult">Menyimpan...</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Penilaian Nyeri PIPP -->
                     <button type="button" wire:click="openPippModal" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-purple-50 flex-shrink-0 snap-start transition-all">
                         <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

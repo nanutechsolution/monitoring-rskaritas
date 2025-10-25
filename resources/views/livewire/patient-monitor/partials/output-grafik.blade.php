@@ -1,55 +1,3 @@
- {{-- <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-     <div @class([ 'p-4 rounded-lg shadow-md text-white transition-colors duration-300' , 'bg-red-600'=> $latestHR > 160 || $latestHR < 100, 'bg-yellow-600'=> ($latestHR >= 100 && $latestHR <= 110) || ($latestHR>= 150 && $latestHR <= 160), 'bg-green-600'=> $latestHR > 110 && $latestHR < 150, 'bg-gray-400'=> is_null(value: $latestHR)
-                         ])>
-                         <div class="text-sm font-semibold uppercase">Heart Rate (HR)</div>
-                         <div class="text-3xl font-bold">
-                             {{ $latestHR ?? 'N/A' }} <span class="text-lg font-normal">bpm</span>
-                         </div>
-                         <div class="text-xs mt-1">
-                             Normal: 100 - 160
-                         </div>
-     </div>
-
-     <div @class([ 'p-4 rounded-lg shadow-md text-white transition-colors duration-300' , 'bg-red-600'=> $latestMAP < 40, 'bg-yellow-600'=> $latestMAP >= 40 && $latestMAP < 45, 'bg-green-600'=> $latestMAP >= 45,
-                 'bg-gray-400' => is_null($latestMAP)
-                 ])>
-                 <div class="text-sm font-semibold uppercase">Tensi & MAP</div>
-                 <div class="text-3xl font-bold">
-                     {{ $latestBPSystolic ?? 'N/A' }}/{{ $latestBPDiastolic ?? 'N/A' }}
-                 </div>
-                 <div class="text-sm mt-1 font-semibold">
-                     MAP: {{ $latestMAP ?? 'N/A' }} mmHg
-                 </div>
-                 <div class="text-xs">
-                     Target MAP: 40 - 60
-                 </div>
-     </div>
-
-     <div @class([ 'p-4 rounded-lg shadow-md text-white transition-colors duration-300' , 'bg-red-600'=> $latestRR > 60 || $latestRR < 20, 'bg-green-600'=> $latestRR >= 20 && $latestRR <= 60, 'bg-gray-400'=> is_null($latestRR)
-                 ])>
-                 <div class="text-sm font-semibold uppercase">Resp. Rate (RR)</div>
-                 <div class="text-3xl font-bold">
-                     {{ $latestRR ?? 'N/A' }} <span class="text-lg font-normal">x/menit</span>
-                 </div>
-                 <div class="text-xs mt-1">
-                     Normal (Neonatus): 20 - 60
-                 </div>
-     </div>
-
-     <div @class([ 'p-4 rounded-lg shadow-md text-white transition-colors duration-300' , 'bg-red-600'=> $latestTempSkin > 37.5 || $latestTempSkin < 36.5, 'bg-green-600'=> $latestTempSkin >= 36.5 && $latestTempSkin <= 37.5, 'bg-gray-400'=> is_null($latestTempSkin) && is_null($latestTempIncubator)
-                 ])>
-                 <div class="text-sm font-semibold uppercase">Temp. Kulit / Inkubator</div>
-                 <div class="text-3xl font-bold">
-                     {{ $latestTempSkin ? number_format($latestTempSkin, 1) : 'N/A' }} <span class="text-lg font-normal">&deg;C</span>
-                 </div>
-                 <div class="text-xs mt-1">
-                     Inkubator: {{ $latestTempIncubator ? number_format($latestTempIncubator, 1) : 'N/A' }} &deg;C
-                 </div>
-                 <div class="text-xs">
-                     Target Kulit: 36.5 - 37.5 &deg;C
-                 </div>
-     </div>
- </div> --}}
  <div wire:ignore x-data="{
         chart: null,
         init() {
@@ -100,7 +48,6 @@
                 }
             });
         },
-
         showNotification(event) {
             const message = event.detail[0]?.message || '✅ Data berhasil disimpan!';
             const notif = document.createElement('div');

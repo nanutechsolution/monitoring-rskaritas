@@ -1298,7 +1298,8 @@ class PatientMonitor extends Component
         // =========================
         $this->resetForm();
         $this->reloadRepeaterNames();
-        $this->dispatch('refresh-records');
+        // $this->dispatch('refresh-records');
+        $this->dispatch('refresh-observasi');
         $this->dispatch('record-saved');
     }
 
@@ -1544,12 +1545,11 @@ class PatientMonitor extends Component
                 'volume' => ''
             ])->toArray();
 
-            $this->therapy_program_history = $currentCycle->therapyPrograms()
-                ->with('pegawai') // Eager load relasi 'pegawai'
+            $this->therapy_program_history = TherapyProgram::with('pegawai')
+                ->where('monitoring_cycle_id', $this->currentCycleId)
+                ->orderByDesc('created_at')
                 ->get();
-            $this->therapy_program_history = TherapyProgram::where('monitoring_cycle_id', $this->currentCycleId)
-                ->orderBy('created_at', 'desc') // Terbaru di atas
-                ->get();
+
 
         } else {
             $this->currentCycleId = null;
@@ -1854,17 +1854,6 @@ class PatientMonitor extends Component
     }
 
 
-    public function openEventModal()
-    {
-        // Reset state sebelum membuka modal
-        $this->reset('event_cyanosis', 'event_pucat', 'event_ikterus', 'event_crt_less_than_2', 'event_bradikardia', 'event_stimulasi');
-        $this->showEventModal = true;
-    }
-
-    public function closeEventModal()
-    {
-        $this->showEventModal = false;
-    }
     public $selectedTab = 'ventilator';
 
     /**
@@ -1897,8 +1886,8 @@ class PatientMonitor extends Component
             'bradikardia' => $this->event_bradikardia,
             'stimulasi' => $this->event_stimulasi,
         ]);
-        $this->closeEventModal();
-        $this->dispatch('refresh-records');
+        // $this->dispatch('refresh-records');
+        $this->dispatch('refresh-observasi');
         $this->dispatch('record-saved', message: 'Kejadian berhasil dicatat!');
     }
     #[On('refresh-records')]
@@ -2035,18 +2024,6 @@ class PatientMonitor extends Component
         }
     }
 
-    public function openBloodGasModal()
-    {
-        $this->reset('gula_darah', 'ph', 'pco2', 'po2', 'hco3', 'be', 'sao2');
-        $this->taken_at = now()->format('Y-m-d\TH:i');
-        $this->showBloodGasModal = true;
-    }
-
-    public function closeBloodGasModal()
-    {
-        $this->showBloodGasModal = false;
-    }
-
     public function saveBloodGasResult()
     {
         $this->validate([
@@ -2059,6 +2036,7 @@ class PatientMonitor extends Component
             'be' => 'nullable|numeric',
             'sao2' => 'nullable|numeric',
         ]);
+
         $fields = [
             $this->gula_darah,
             $this->ph,
@@ -2073,27 +2051,30 @@ class PatientMonitor extends Component
             $this->dispatch('error-notification', ['message' => 'Minimal satu hasil gas darah harus diisi.']);
             return;
         }
-        if ($this->currentCycleId) {
-            BloodGasResult::create([
-                'monitoring_cycle_id' => $this->currentCycleId,
-                'id_user' => auth()->id(),
-                'taken_at' => $this->taken_at,
-                'gula_darah' => $this->gula_darah,
-                'ph' => $this->ph,
-                'pco2' => $this->pco2,
-                'po2' => $this->po2,
-                'hco3' => $this->hco3,
-                'be' => $this->be,
-                'sao2' => $this->sao2,
-            ]);
 
-            $this->closeBloodGasModal();
-            $this->dispatch('refresh-blood-gas');
-            $this->dispatch('record-saved', ['message' => 'Hasil Gas Darah berhasil dicatat!']);
-        } else {
+        if (!$this->currentCycleId) {
             $this->dispatch('error-notification', ['message' => 'Simpan data observasi pertama untuk membuat siklus.']);
+            return;
         }
+
+        BloodGasResult::create([
+            'monitoring_cycle_id' => $this->currentCycleId,
+            'id_user' => auth()->id(),
+            'taken_at' => $this->taken_at,
+            'gula_darah' => $this->gula_darah,
+            'ph' => $this->ph,
+            'pco2' => $this->pco2,
+            'po2' => $this->po2,
+            'hco3' => $this->hco3,
+            'be' => $this->be,
+            'sao2' => $this->sao2,
+        ]);
+
+        $this->dispatch('refresh-blood-gas');
+        $this->dispatch('record-saved', ['message' => 'Hasil Gas Darah berhasil dicatat!']);
+        $this->dispatch('close-blood-gas-modal');
     }
+
 
     #[On('refresh-blood-gas')]
     public function loadBloodGasOnly()
