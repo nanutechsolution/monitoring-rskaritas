@@ -131,7 +131,7 @@ class PatientMonitor extends Component
     }
     public function mount(string $no_rawat): void
     {
-        $this->no_rawat = $no_rawat;
+        $this->no_rawat = str_replace('_', '/', $no_rawat);
         $now = now();
         $cycleStartTime = $now->copy()->startOfDay()->addHours(6);
         if ($now->hour < 6) {

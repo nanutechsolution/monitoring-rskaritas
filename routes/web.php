@@ -19,8 +19,7 @@ Route::get('dashboard', PatientList::class)
 
 Route::get('monitoring/{no_rawat}', PatientMonitor::class)
     ->middleware(['auth'])
-    ->name('patient.monitor')
-    ->where('no_rawat', '\d{4}/\d{2}/\d{2}/\d+');
+    ->name('monitoring.nicu');
 Route::get('monitoring/{no_rawat}/report/{cycle_id}/report/pdf', [ReportController::class, 'generateReportPdf'])
     ->middleware(['auth'])
     ->name('monitoring.report.pdf');

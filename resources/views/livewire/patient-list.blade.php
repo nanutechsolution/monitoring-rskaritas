@@ -2,88 +2,170 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-            <!-- Header & Search Form -->
-            <div class="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h2 class="text-2xl font-semibold text-gray-800 leading-tight">
-                        Pasien Perawatan Intensif
-                    </h2>
-                    <p class="mt-1 text-sm text-gray-600">
-                        Pilih pasien untuk membuka lembar monitor.
-                    </p>
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800 leading-tight">
+                    Pasien Perawatan Intensif
+                </h2>
+                <p class="mt-1 text-sm text-gray-600">
+                    Pilih jenis monitor untuk pasien yang sesuai atau gunakan filter di bawah.
+                </p>
+            </div>
+
+            <div class="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                    {{-- Filter Tanggal Masuk --}}
+                    <div>
+                        <label for="filterDate" class="block text-sm font-medium text-gray-700">Tanggal Masuk</label>
+                        <input type="date" id="filterDate" wire:model.live="filterDate" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    {{-- Filter Bangsal --}}
+                    <div>
+                        <label for="filterWard" class="block text-sm font-medium text-gray-700">Bangsal</label>
+                        <select id="filterWard" wire:model.live="filterWard" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="">-- Semua Bangsal --</option>
+                            @foreach($wards as $ward)
+                            <option value="{{ $ward }}">{{ $ward }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    {{-- Search Input --}}
+                    <div class="sm:col-span-2 md:col-span-1">
+                        <label for="search" class="block text-sm font-medium text-gray-700">Cari Nama / RM</label>
+                        <div class="relative mt-1">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                            <input type="text" id="search" wire:model.live.debounce.300ms="search" placeholder="Ketik lalu tunggu..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out">
+                        </div>
+                    </div>
+                    {{-- Tombol Reset --}}
+                    <div class="flex justify-end items-end">
+                        <button wire:click="resetFilters" type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition ease-in-out duration-150">
+                            Reset Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
+            <div wire:loading.class.delay="opacity-50" class="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-200">
+                {{-- Tampilkan tabel hanya di layar medium (md) ke atas --}}
+                <table class="min-w-full divide-y divide-gray-200 hidden md:table">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pasien</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Info</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi & Masuk</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi Monitor</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @if($patients->total() > 0) {{-- Cek total hasil pagination --}}
+                        @foreach ($patients as $patient)
+                        <tr class="hover:bg-indigo-50/50 transition duration-150 ease-in-out group">
+                            {{-- Kolom Pasien --}}
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-semibold text-indigo-700 group-hover:text-indigo-800">{{ $patient->nm_pasien }}</div>
+                                <div class="text-xs text-gray-500">RM: {{ $patient->no_rkm_medis }}</div>
+                            </td>
+                            {{-- Kolom Info --}}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                <div>{{ $patient->jk_desc }}</div>
+                                <div class="text-xs text-gray-500">{{ $patient->umur }} thn</div>
+                            </td>
+                            {{-- Kolom Lokasi & Masuk --}}
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-800">{{ $patient->nm_bangsal }}</div>
+                                <div class="text-xs text-gray-500">
+                                    Masuk: {{ \Carbon\Carbon::parse($patient->tgl_masuk)->isoFormat('D MMM YY, HH:mm') }}
+                                </div>
+                            </td>
+                            {{-- Kolom Aksi Monitor --}}
+                            <td class="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
+                                <div class="flex items-center space-x-2">
+                                    {{-- Ganti link generik dengan tombol/link spesifik --}}
+                                    <a href="#" wire:navigate title="Monitor ICU" class="text-indigo-600 hover:text-indigo-900 p-1 hover:bg-indigo-100 rounded">ICU</a>
+                                    {{-- Tampilkan NICU jika relevan --}}
+                                    <a href="{{ route('monitoring.nicu', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate title="Monitor NICU" class="text-purple-600 hover:text-purple-900 p-1 hover:bg-purple-100 rounded">NICU</a>
+                                    {{-- Tampilkan PICU jika relevan --}}
+                                    <a href="#" wire:navigate title="Monitor PICU" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-100 rounded">PICU</a>
+                                    <a href="#" wire:navigate title="Monitor Anestesi" class="text-orange-600 hover:text-orange-900 p-1 hover:bg-orange-100 rounded">Anes</a>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                        @else
+                        {{-- Empty State Tabel --}}
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center">
+                                <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">Hasil Tidak Ditemukan</h3>
+                                <p class="mt-1 text-sm text-gray-500">Tidak ada pasien yang cocok dengan filter atau pencarian Anda.</p>
+                                <div class="mt-4">
+                                    <button wire:click="resetFilters" type="button" class="inline-flex items-center px-3 py-1 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        Reset Filter
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        @endif
+                    </tbody>
+                </table>
+
+                {{-- Tampilkan card hanya di layar kecil (di bawah md) --}}
+                <div class="divide-y divide-gray-200 md:hidden">
+                    @if($patients->total() > 0)
+                    @foreach ($patients as $patient)
+                    {{-- CARD PASIEN (Mobile View) --}}
+                    <div class="px-4 py-4"> {{-- Hapus <a> pembungkus --}}
+                        {{-- Bagian Info Pasien --}}
+                        <div class="flex items-center justify-between">
+                            <div class="truncate">
+                                <p class="text-base font-semibold text-indigo-700 truncate">{{ $patient->nm_pasien }}</p>
+                                <p class="text-xs text-gray-500">RM: {{ $patient->no_rkm_medis }}</p>
+                            </div>
+                            <div class="ml-2 flex-shrink-0">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    {{ $patient->nm_bangsal }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mt-2 space-y-1">
+                            <p class="flex items-center text-xs text-gray-600"><svg class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" ...></svg>{{ $patient->jk_desc }}, {{ $patient->umur }} thn</p>
+                            <p class="flex items-center text-xs text-gray-600"><svg class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" ...></svg>Masuk: {{ \Carbon\Carbon::parse($patient->tgl_masuk)->isoFormat('D MMM YY, HH:mm') }}</p>
+                        </div>
+                        {{-- Tombol Aksi di Bawah Info --}}
+                        <div class="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
+                            <a href="#" wire:navigate class="px-2 py-1 text-xs font-medium rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200">Monitor ICU</a>
+                            <a href="#" wire:navigate class="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-700 hover:bg-purple-200">Monitor NICU</a>
+                            <a href="#" wire:navigate class="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-700 hover:bg-green-200">Monitor PICU</a>
+                            <a href="#" wire:navigate class="px-2 py-1 text-xs font-medium rounded bg-orange-100 text-orange-700 hover:bg-orange-200">Monitor Anestesi</a>
+                        </div>
+                    </div>
+                    @endforeach
+                    @else
+                    {{-- Empty State Mobile --}}
+                    <div class="text-center px-4 py-12">
+                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">Hasil Tidak Ditemukan</h3>
+                        <p class="mt-1 text-sm text-gray-500">Coba kata kunci atau filter lain.</p>
+                        <div class="mt-4"> <button wire:click="resetFilters" type="button" class="inline-flex items-center px-3 py-1 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"> Reset Filter </button> </div>
+                    </div>
+                    @endif
                 </div>
 
-                <form wire:submit="runSearch" class="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-                    <div class="relative flex-1 sm:flex-auto">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                        </div>
-                        <input type="text" wire:model="search" placeholder="Cari nama atau No. RM..."
-                               class="block w-full sm:w-64 md:w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                    </div>
-
-                    <button type="submit"
-                            class="mt-2 sm:mt-0 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                        <span wire:loading.remove wire:target="runSearch">Cari</span>
-                        <span wire:loading wire:target="runSearch">Mencari...</span>
-                    </button>
-                </form>
+                {{-- Pagination Links --}}
+                @if($patients->hasPages())
+                <div class="px-4 py-3 border-t border-gray-200 sm:px-6 bg-white"> {{-- Tambah bg-white --}}
+                    {{ $patients->links() }}
+                </div>
+                @endif
             </div>
-
-            <!-- List Pasien -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <ul role="list" class="divide-y divide-gray-200">
-
-                    @if ($searchPerformed)
-                        @forelse ($patients as $patient)
-                            <li class="hover:bg-blue-50/50 transition duration-150 ease-in-out">
-                                <a href="{{ route('patient.monitor', ['no_rawat' => $patient->no_rawat]) }}" wire:navigate class="block w-full px-4 py-4 sm:px-6">
-                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-lg font-semibold text-blue-700 truncate">
-                                                {{ $patient->nm_pasien }}
-                                            </p>
-                                            <p class="text-sm text-gray-500 mt-1">
-                                                <span class="font-medium">RM:</span> {{ $patient->no_rkm_medis }}
-                                            </p>
-                                            <div class="mt-2 flex items-center text-sm text-gray-600">
-                                                <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                                    <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 10a7 7 0 10-14 0c0 2.493 1.698 4.988 3.355 6.584a13.733 13.733 0 002.273 1.765 11.842 11.842 0 00.757.433.62.62 0 00.28.14l.018.008.006.003zM10 11.25a1.25 1.25 0 100-2.5 1.25 1.25 0 000 2.5z" clip-rule="evenodd" />
-                                                </svg>
-                                                {{ $patient->nm_bangsal }}
-                                            </div>
-                                        </div>
-                                        <div class="ml-0 sm:ml-4 flex-shrink-0">
-                                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                        @empty
-                            <div class="text-center px-4 sm:px-6 py-12">
-                                <svg class="mx-auto h-12 w-12 sm:h-14 sm:w-14 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                </svg>
-                                <h3 class="mt-2 text-sm font-medium text-gray-900">Hasil Tidak Ditemukan</h3>
-                                <p class="mt-1 text-sm text-gray-500">Tidak ada pasien yang cocok dengan kriteria pencarian Anda.</p>
-                            </div>
-                        @endforelse
-                    @else
-                        <div class="text-center px-4 sm:px-6 py-12">
-                            <svg class="mx-auto h-12 w-12 sm:h-14 sm:w-14 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                            <h3 class="mt-2 text-sm font-medium text-gray-900">Mulai Mencari</h3>
-                            <p class="mt-1 text-sm text-gray-500">Masukkan nama atau nomor rekam medis pasien untuk memulai.</p>
-                        </div>
-                    @endif
-
-                </ul>
-            </div>
+            {{-- AKHIR LIST PASIEN --}}
 
         </div>
     </div>
