@@ -3,7 +3,6 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\MonitoringRecord;
-use Carbon\Carbon;
 
 class ObservasiTable extends Component
 {

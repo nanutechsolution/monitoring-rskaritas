@@ -62,7 +62,7 @@ class PatientHeader extends Component
                 'b.nm_bangsal as asal_bangsal'
                 // Tambahkan field lain jika diperlukan header, misal 'umur_kehamilan' dari 'pasien_bayi'?
             )
-             // Kondisi where stts_pulang mungkin perlu disesuaikan tergantung kapan header ini ditampilkan
+            // Kondisi where stts_pulang mungkin perlu disesuaikan tergantung kapan header ini ditampilkan
             ->where('ki.stts_pulang', '-') // Hanya ambil yang masih dirawat?
             ->where('rp.no_rawat', $this->no_rawat)
             ->orderBy('ki.tgl_masuk', 'desc') // Ambil data inap terakhir jika ada multiple?
@@ -70,7 +70,7 @@ class PatientHeader extends Component
 
         if (!$rawData) {
             // Beri pesan yang lebih sesuai jika hanya data pasien yang tidak ada
-             abort(404, 'Data registrasi atau kamar inap pasien tidak ditemukan.');
+            abort(404, 'Data registrasi atau kamar inap pasien tidak ditemukan.');
         }
 
         $this->patientData = $rawData; // Simpan data mentah jika perlu
