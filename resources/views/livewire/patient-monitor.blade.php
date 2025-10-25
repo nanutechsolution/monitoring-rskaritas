@@ -133,6 +133,7 @@
                         <div x-show="open" x-cloak x-transition.opacity.scale.80 class="fixed inset-0 z-50 flex items-center justify-center" @keydown.escape.window="open = false">
                             <!-- Overlay -->
                             <div class="absolute inset-0 bg-gray-900 opacity-75" @click="open = false"></div>
+
                             <!-- Isi Modal -->
                             <div class="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
                                 <h3 class="text-lg font-medium text-gray-900">Tambah Pemberian Obat</h3>
@@ -184,46 +185,39 @@
                             </div>
                         </div>
                     </div>
-                    <div x-data="{ openGasModal: false }">
+                    <div x-data="{ showBloodGasModal: false }">
                         <!-- Tombol Buka Modal -->
-                        <button type="button" @click="openGasModal = true" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-red-50 transition-all">
+                        <button type="button" @click="showBloodGasModal = true" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-red-50 flex-shrink-0 snap-start transition-all">
                             <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v6"></path>
                             </svg>
                             <span class="font-medium text-gray-800">Gas Darah</span>
                         </button>
 
                         <!-- Modal -->
-                        <div x-show="openGasModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
+                        <div x-show="showBloodGasModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm backdrop-saturate-150" @keydown.escape.window="showBloodGasModal = false">
                             <!-- Overlay -->
-                            <div class="absolute inset-0 bg-gray-900 opacity-75 transition-opacity" @click="openGasModal = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-75" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-75" x-transition:leave-end="opacity-0"></div>
+                            <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-all" x-show="showBloodGasModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="showBloodGasModal = false"></div>
 
-                            <!-- Box Modal -->
-                            <div x-show="openGasModal" @click.away="openGasModal = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-6 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-100" x-transition:leave-end="opacity-0 translate-y-6 scale-95" class="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl border border-gray-200 transition-all transform">
+                            <!-- Modal Box -->
+                            <div x-show="showBloodGasModal" @click.away="showBloodGasModal = false" x-on:close-blood-gas-modal.window="showBloodGasModal = false" class="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl drop-shadow-2xl border border-gray-100 transform transition-all p-0 overflow-hidden" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 scale-100" x-transition:leave-end="opacity-0 translate-y-8 scale-95">
                                 <!-- Header -->
-                                <div class="flex justify-between items-center border-b border-gray-200 pb-3">
+                                <div class="px-6 py-4 bg-gradient-to-r from-red-600/80 to-red-500/70 text-white flex justify-between items-center shadow-sm">
                                     <div>
-                                        <h3 class="text-lg font-semibold text-red-700 flex items-center gap-2">
-                                            🩸 Catat Hasil Gas Darah
-                                        </h3>
-                                        <p class="text-sm text-gray-500 mt-1">
-                                            Masukkan data analisis gas darah (AGD) pasien.
-                                        </p>
+                                        <h3 class="text-lg font-semibold flex items-center gap-2">🩸 Catat Hasil Gas Darah</h3>
+                                        <p class="text-sm opacity-90">Masukkan data analisis gas darah (AGD) pasien.</p>
                                     </div>
-                                    <button @click="openGasModal = false" class="text-gray-500 hover:text-red-600 transition">
-                                        ✕
-                                    </button>
+                                    <button @click="showBloodGasModal = false" class="text-white/80 hover:text-white transition">✕</button>
                                 </div>
 
                                 <!-- Body -->
-                                <div class="mt-5 space-y-4 overflow-y-auto max-h-[70vh]">
-                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div class="px-6 py-5 overflow-y-auto bg-white">
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-6">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700">Waktu Pengambilan</label>
-                                            <input type="datetime-local" wire:model.defer="taken_at" class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm">
-                                            @error('taken_at')
-                                            <span class="text-xs text-red-600">{{ $message }}</span>
-                                            @enderror
+                                            <label for="form_taken_at" class="block text-sm font-medium text-gray-700">Waktu Pengambilan</label>
+                                            <input id="form_taken_at" type="datetime-local" wire:model.defer="taken_at" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                            @error('taken_at') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
                                         </div>
 
                                         @php
@@ -240,59 +234,160 @@
 
                                         @foreach ($bloodGasFields as $field)
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700">{{ $field['label'] }}</label>
-                                            <input type="number" step="{{ $field['step'] }}" wire:model.defer="{{ $field['id'] }}" class="w-full mt-1 rounded-md border-gray-300 shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm">
-                                            @error($field['id'])
-                                            <span class="text-xs text-red-600">{{ $message }}</span>
-                                            @enderror
+                                            <label for="form_{{ $field['id'] }}" class="block text-sm font-medium text-gray-700">{{ $field['label'] }}</label>
+                                            <input id="form_{{ $field['id'] }}" type="number" step="{{ $field['step'] }}" wire:model.defer="{{ $field['id'] }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                            @error($field['id']) <span class="text-xs text-red-600">{{ $message }}</span> @enderror
                                         </div>
                                         @endforeach
                                     </div>
                                 </div>
 
                                 <!-- Footer -->
-                                <div class="mt-6 flex justify-end space-x-3 border-t border-gray-200 pt-4">
-                                    <button type="button" @click="openGasModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition">
+                                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end space-x-3">
+                                    <button type="button" @click="showBloodGasModal = false" class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition">
                                         Batal
                                     </button>
-
-                                    <button type="button" wire:click="saveBloodGasResult" wire:loading.attr="disabled" class="relative inline-flex items-center px-5 py-2 text-sm font-semibold text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 active:scale-95 transition transform overflow-hidden group">
-                                        <!-- Spinner -->
-                                        <svg wire:loading wire:target="saveBloodGasResult" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white absolute left-3 top-2.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z"></path>
-                                        </svg>
-
+                                    <button type="button" wire:click="saveBloodGasResult" class="px-5 py-2 text-sm font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700 active:scale-[0.98] transition transform shadow">
                                         <span wire:loading.remove wire:target="saveBloodGasResult">💾 Simpan Hasil</span>
                                         <span wire:loading wire:target="saveBloodGasResult">Menyimpan...</span>
-
-                                        <!-- Efek klik -->
-                                        <span class="absolute inset-0 bg-red-400 opacity-0 group-active:opacity-30 transition-opacity duration-200 rounded-md"></span>
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-
                     <!-- Penilaian Nyeri PIPP -->
-                    <button type="button" wire:click="openPippModal" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-purple-50 flex-shrink-0 snap-start transition-all">
-                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span class="font-medium text-gray-800">Penilaian Nyeri</span>
-                    </button>
-                    <!-- Program Terapi / Instruksi -->
-                    <button type="button" wire:click="openTherapyModal" class="flex items-center gap-2 px-5 py-2 bg-teal-600 text-white border rounded-lg shadow hover:shadow-md hover:bg-teal-700 flex-shrink-0 snap-start transition-all">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v10l5-5-5-5z"></path>
-                        </svg>
-                        <span class="font-medium">Program Terapi</span>
-                    </button>
+                    <div x-data="{ showPippModal: false }">
+
+                        <button type="button" @click="showPippModal = true" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-purple-50 flex-shrink-0 snap-start transition-all">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="font-medium text-gray-800">Penilaian Nyeri</span>
+                        </button>
+
+                        <div x-show="showPippModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-sm" style="display: none;">
+                            <div x-show="showPippModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" @click.away="showPippModal = false" x-data="{
+                gestational_age: '0',
+                behavioral_state: '0',
+                max_heart_rate: '0',
+                min_oxygen_saturation: '0',
+                brow_bulge: '0',
+                eye_squeeze: '0',
+                nasolabial_furrow: '0',
+                get totalScore() {
+                    return parseInt(this.gestational_age || 0)
+                         + parseInt(this.behavioral_state || 0)
+                         + parseInt(this.max_heart_rate || 0)
+                         + parseInt(this.min_oxygen_saturation || 0)
+                         + parseInt(this.brow_bulge || 0)
+                         + parseInt(this.eye_squeeze || 0)
+                         + parseInt(this.nasolabial_furrow || 0);
+                }
+            }" class="relative w-full max-w-4xl bg-white rounded-lg shadow-xl flex flex-col max-h-[90vh]">
+
+                                <div class="px-6 py-4 border-b border-gray-200">
+                                    <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                                        🍼 Penilaian Nyeri Prematur (PIPP)
+                                    </h3>
+                                    <p class="text-sm text-gray-500 mt-1">Gunakan panduan ini untuk menilai tingkat nyeri bayi prematur.</p>
+                                </div>
+
+
+                                <div class="px-6 py-5 overflow-y-auto">
+                                    @php
+                                    $pippFields = [
+                                    ['id' => 'gestational_age', 'label' => 'Usia Gestasi', 'options' => [
+                                    '0' => '≥ 36 mgg', '1' => '32–35 mgg + 6h', '2' => '28–31 mgg + 6h', '3' => '< 28 mgg' ]], ['id'=> 'behavioral_state', 'label' => 'Perilaku Bayi (15 detik)', 'options' => [
+                                        '0' => 'Aktif/bangun, mata terbuka', '1' => 'Diam/bangun, mata terbuka/tertutup', '2' => 'Aktif/tidur, mata tertutup', '3' => 'Tenang/tidur, gerak minimal'
+                                        ]],
+                                        ['id' => 'max_heart_rate', 'label' => 'Laju Nadi Maks (peningkatan)', 'options' => [
+                                        '0' => '0–4 dpm', '1' => '5–14 dpm', '2' => '15–24 dpm', '3' => '≥25 dpm'
+                                        ]],
+                                        ['id' => 'min_oxygen_saturation', 'label' => 'Saturasi O₂ Min (penurunan)', 'options' => [
+                                        '0' => '92–100%', '1' => '89–91%', '2' => '85–88%', '3' => '<85%' ]], ['id'=> 'brow_bulge', 'label' => 'Tarikan Alis (% waktu)', 'options' => [
+                                            '0' => 'Tidak ada (<9%)', '1'=> 'Minimum (10–39%)', '2' => 'Sedang (40–69%)', '3' => 'Maksimum (≥70%)'
+                                                ]],
+                                                ['id' => 'eye_squeeze', 'label' => 'Kerutan Mata (% waktu)', 'options' => [
+                                                '0' => 'Tidak ada (<9%)', '1'=> 'Minimum (10–39%)', '2' => 'Sedang (40–69%)', '3' => 'Maksimum (≥70%)'
+                                                    ]],
+                                                    ['id' => 'nasolabial_furrow', 'label' => 'Alur Nasolabial (% waktu)', 'options' => [
+                                                    '0' => 'Tidak ada (<9%)', '1'=> 'Minimum (10–39%)', '2' => 'Sedang (40–69%)', '3' => 'Maksimum (≥70%)'
+                                                        ]],
+                                                        ];
+                                                        @endphp
+
+                                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-6">
+                                                            <div class="col-span-full">
+                                                                <label class="block text-sm font-medium text-gray-700 mb-1">🕒 Waktu Penilaian</label>
+                                                                <div class="w-full max-w-xs rounded-lg bg-gray-100 text-gray-800 px-3 py-2 text-sm border border-gray-200">
+                                                                    {{ \Carbon\Carbon::parse($pipp_assessment_time ?? now())->format('d M Y, H:i') }}
+                                                                </div>
+                                                            </div>
+
+                                                            @foreach ($pippFields as $field)
+                                                            <div>
+                                                                <label for="{{ $field['id'] }}" class="block text-sm font-medium text-gray-700 mb-1">{{ $field['label'] }}</label>
+                                                                <select id="{{ $field['id'] }}" x-model="{{ $field['id'] }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm">
+                                                                    @foreach ($field['options'] as $value => $label)
+                                                                    <option value="{{ $value }}">{{ $label }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                            @endforeach
+                                                        </div>
+
+                                                        <div class="mt-8 space-y-4 border-t border-gray-200 pt-6">
+                                                            <div class="text-lg font-semibold text-center">
+                                                                Total Skor PIPP:
+                                                                <span class="text-3xl font-bold transition-all duration-300" :class="{
+                                'text-green-600': totalScore <= 6,
+                                'text-yellow-600': totalScore > 6 && totalScore <= 12,
+                                'text-red-600': totalScore > 12
+                            }" x-text="totalScore"></span>
+                                                            </div>
+
+                                                            <div class="text-sm text-gray-700 p-4 rounded-lg max-w-lg mx-auto space-y-2">
+                                                                <strong class="block mb-2 text-center text-base">💡 Rekomendasi Intervensi</strong>
+                                                                <div x-show="totalScore <= 6" class="p-3 bg-green-50 rounded-md text-green-800 border border-green-200"><strong>0–6:</strong> Lanjutkan tatalaksana & pemantauan rutin.</div>
+                                                                <div x-show="totalScore > 6 && totalScore <= 12" class="p-3 bg-yellow-50 rounded-md text-yellow-800 border border-yellow-200"><strong>7–12:</strong> Berikan intervensi non-farmakologis (kenyamanan, sukrosa oral).</div>
+                                                                <div x-show="totalScore > 12" class="p-3 bg-red-50 rounded-md text-red-800 border border-red-200"><strong>>12:</strong> Pertimbangkan intervensi farmakologis (Parasetamol/Narkotik/Sedasi).</div>
+                                                            </div>
+                                                        </div>
+                                </div>
+
+                                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+                                    <button type="button" @click="showPippModal = false" class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition shadow-sm">
+                                        Batal
+                                    </button>
+                                    <button type="button" @click="$wire.savePippScore({
+                        gestational_age: gestational_age,
+                        behavioral_state: behavioral_state,
+                        max_heart_rate: max_heart_rate,
+                        min_oxygen_saturation: min_oxygen_saturation,
+                        brow_bulge: brow_bulge,
+                        eye_squeeze: eye_squeeze,
+                        nasolabial_furrow: nasolabial_furrow,
+                        total_score: totalScore
+                    }).then(() => {
+                        showPippModal = false; // Tutup modal setelah berhasil disimpan
+                    })" wire:loading.attr="disabled" wire:loading.class="opacity-75" wire:target="savePippScore" class="px-5 py-2 text-sm font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 active:scale-[0.98] transition transform shadow-sm">
+                                        <span wire:loading.remove wire:target="savePippScore">
+                                            💾 Simpan Skor PIPP
+                                        </span>
+                                        <span wire:loading wire:target="savePippScore">
+                                            Menyimpan...
+                                        </span>
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <livewire:therapy-program-modal :current-cycle-id="$currentCycleId" :no-rawat="$no_rawat" wire:key="'therapy-modal-'.$currentCycleId" />
                 </div>
             </div>
         </div>
-
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-1">
                 <form wire:submit="saveRecord" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -398,10 +493,5 @@
             </div>
         </div>
     </div>
-    {{-- @include('livewire.patient-monitor.partials.modal-kejadian-cepat') --}}
-    @include('livewire.patient-monitor.partials.modal-pipp')
     @include('livewire.patient-monitor.partials.modal-alat')
-    {{-- @include('livewire.patient-monitor.partials.modal-obat') --}}
-    {{-- @include('livewire.patient-monitor.partials.modal-gasdarah') --}}
-    @include('livewire.patient-monitor.partials.modal-progam-terapi')
 </div>

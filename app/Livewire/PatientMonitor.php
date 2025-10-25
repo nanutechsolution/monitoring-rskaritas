@@ -8,7 +8,6 @@ use App\Models\MonitoringCycle;
 use App\Models\MonitoringRecord;
 use App\Models\PatientDevice;
 use App\Models\PippAssessment;
-use App\Models\TherapyProgram;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use iio\libmergepdf\Merger;
@@ -18,7 +17,6 @@ use Illuminate\View\View;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Locked;
 class PatientMonitor extends Component
 {
@@ -48,8 +46,6 @@ class PatientMonitor extends Component
     public Collection $pippAssessments;
     #[Locked]
     public Collection $recentMedicationNames;
-    #[Locked]
-    public Collection $therapy_program_history;
     // Properties for PIPP Modal
     public bool $showPippModal = false;
     public $pipp_assessment_time;
@@ -66,8 +62,6 @@ class PatientMonitor extends Component
     public bool $showDeviceModal = false;
     public $device_name, $size, $location, $installation_date;
     public $editingDeviceId = null; // Untuk mode edit/hapus
-    public $therapy_program;
-    public $clinical_problems;
     public $currentCycleId;
     public ?MonitoringCycle $currentCycle = null;
 
@@ -125,7 +119,6 @@ class PatientMonitor extends Component
     public $previousBalance24h = null;
 
 
-    public $current_therapy_program_text = '';
     /**
      * Method ini akan dipanggil oleh wire:poll untuk menyegarkan jam.
      */
@@ -216,17 +209,12 @@ class PatientMonitor extends Component
         $this->deviceToRemoveDetails = null;
     }
 
-    /**
-     * [DIUBAH] Fungsi 'removeDevice' Anda diganti namanya
-     * menjadi 'confirmRemoveDevice' dan dipanggil dari modal.
-     */
     public function confirmRemoveDevice()
     {
         $deviceId = $this->deviceToRemoveId; // Ambil ID dari properti
         if (!$deviceId) {
             return; // Jika tidak ada ID, hentikan
         }
-
         $device = PatientDevice::find($deviceId);
 
         // Validasi keamanan
@@ -931,8 +919,6 @@ class PatientMonitor extends Component
         $this->pippAssessments = new \Illuminate\Database\Eloquent\Collection();
         $this->recentMedicationNames = new \Illuminate\Support\Collection();
         $this->fluidRecords = new Collection();
-        $this->therapy_program_history = new Collection();
-        // $this->loadPatientDevices();
         $this->taken_at = now()->format('Y-m-d\TH:i');
         $this->selectedDate = now()->format('Y-m-d');
     }
@@ -1054,19 +1040,7 @@ class PatientMonitor extends Component
             ->get();
     }
 
-    /**
-     * Mencatat waktu cabut alat (TIDAK MENGHAPUS).
-     */
 
-    /**
-     * Helper untuk memuat ulang daftar nama infus/enteral
-     * berdasarkan SEMUA data di siklus saat ini.
-     */
-    /**
-     * Helper untuk memuat ulang daftar nama infus/enteral.
-     * Prioritas: Nama dari siklus saat ini.
-     * Fallback: Nama dari siklus sebelumnya.
-     */
     private function reloadRepeaterNames()
     {
         // Koleksi default jika tidak ada data
@@ -1135,17 +1109,13 @@ class PatientMonitor extends Component
     }
     public function saveRecord(): void
     {
-        // ===============================================
-        // 1. NORMALISASI DATA (Perbaikan Case-Sensitive "Puasa")
-        // ===============================================
-        // Ubah 'Puasa' (atau 'PUASA') menjadi 'puasa' SEBELUM validasi
         $enteralData = $this->enteral_intakes;
         foreach ($enteralData as $index => $enteral) {
             if (isset($enteral['name']) && strtolower($enteral['name']) === 'puasa') {
                 $enteralData[$index]['name'] = 'puasa';
             }
         }
-        $this->enteral_intakes = $enteralData; // Simpan kembali data yang sudah bersih
+        $this->enteral_intakes = $enteralData;
 
         // ===============================================
         // 2. VALIDASI (Perbaikan untuk mengizinkan baris kosong)
@@ -1370,7 +1340,6 @@ class PatientMonitor extends Component
     public $latestMAP = null;
     public function loadRecords(): void
     {
-
         if (!$this->readyToLoad) {
             $this->records = new \Illuminate\Database\Eloquent\Collection();
             $this->medications = new \Illuminate\Database\Eloquent\Collection();
@@ -1378,36 +1347,22 @@ class PatientMonitor extends Component
             $this->pippAssessments = new \Illuminate\Database\Eloquent\Collection();
             $this->recentMedicationNames = new \Illuminate\Support\Collection();
             $this->fluidRecords = new Collection();
-            $this->therapy_program_history = new Collection();
             return;
         }
         // Pastikan kita mulai dari awal hari tanggal yang dipilih
         $targetDate = Carbon::parse(time: $this->selectedDate)->startOfDay();
-
         // Asumsi default: siklus dimulai jam 6 pagi pada tanggal yang dipilih
         $cycleStartTime = $targetDate->copy()->addHours(6);
-
-
-
-        // Kasus khusus: Jika tanggal yang dipilih adalah HARI INI, DAN jam SEKARANG < 6 pagi,
-        // maka siklus yang relevan dimulai KEMARIN jam 6 pagi.
         if ($targetDate->isToday() && now()->hour < 6) {
             $cycleStartTime->subDay();
         }
-        // Untuk tanggal selain hari ini, $cycleStartTime sudah benar (mulai jam 6 di tanggal tsb)
-
-        // Cari siklus saat ini (berdasarkan $cycleStartTime yang sudah benar)
         $currentCycle = MonitoringCycle::where('no_rawat', $this->no_rawat)
             ->where('start_time', $cycleStartTime)
             ->first();
-
-        // Cari siklus sebelumnya
         $previousCycleStartTime = $cycleStartTime->copy()->subDay();
         $previousCycle = MonitoringCycle::where('no_rawat', $this->no_rawat)
             ->where('start_time', $previousCycleStartTime)
             ->first();
-
-        // 1. Hitung & Simpan Balance Siklus Kemarin (jika perlu)
         if ($previousCycle && is_null($previousCycle->calculated_balance_24h)) {
             $this->calculateAndSaveBalance($previousCycle);
             // Muat ulang data previousCycle setelah disimpan
@@ -1420,8 +1375,6 @@ class PatientMonitor extends Component
         // 3. Muat Data Siklus Saat Ini
         if ($currentCycle) {
             $this->currentCycleId = $currentCycle->id;
-            $this->therapy_program = $currentCycle->therapy_program;
-            $this->clinical_problems = $currentCycle->clinical_problems;
             $this->daily_iwl = $currentCycle->daily_iwl;
 
             $this->medications = Medication::with('pegawai')->where('monitoring_cycle_id', $currentCycle->id)->orderBy('given_at', 'desc')->get();
@@ -1544,17 +1497,8 @@ class PatientMonitor extends Component
                 'name' => $name,
                 'volume' => ''
             ])->toArray();
-
-            $this->therapy_program_history = TherapyProgram::with('pegawai')
-                ->where('monitoring_cycle_id', $this->currentCycleId)
-                ->orderByDesc('created_at')
-                ->get();
-
-
         } else {
             $this->currentCycleId = null;
-            $this->therapy_program = '';
-            $this->clinical_problems = '';
             $this->medications = new Collection();
             $this->daily_iwl = null;
             $this->balance24h = 0;
@@ -1629,69 +1573,34 @@ class PatientMonitor extends Component
             $this->updatedSelectedDate($this->selectedDate);
         }
     }
-    public function openPippModal()
-    {
-        $this->reset(
-            'gestational_age',
-            'behavioral_state',
-            'max_heart_rate',
-            'min_oxygen_saturation',
-            'brow_bulge',
-            'eye_squeeze',
-            'nasolabial_furrow',
-            'pipp_total_score'
-        );
-        $this->pipp_assessment_time = now()->format('Y-m-d\TH:i');
-        $this->showPippModal = true;
-    }
 
-    public function closePippModal()
+    public function savePippScore($data)
     {
-        $this->showPippModal = false;
-    }
-
-    public function savePippScore()
-    {
-        // Calculate total score
-        $total = (int) $this->gestational_age + (int) $this->behavioral_state + (int) $this->max_heart_rate +
-            (int) $this->min_oxygen_saturation + (int) $this->brow_bulge + (int) $this->eye_squeeze +
-            (int) $this->nasolabial_furrow;
-        $this->pipp_total_score = $total;
-
-        $this->validate([
-            'pipp_assessment_time' => 'required|date',
-            'gestational_age' => 'required|integer|min:0|max:3',
-            'behavioral_state' => 'required|integer|min:0|max:3',
-            'max_heart_rate' => 'required|integer|min:0|max:3',
-            'min_oxygen_saturation' => 'required|integer|min:0|max:3',
-            'brow_bulge' => 'required|integer|min:0|max:3',
-            'eye_squeeze' => 'required|integer|min:0|max:3',
-            'nasolabial_furrow' => 'required|integer|min:0|max:3',
-        ]);
+        $totalScore = $data['total_score'];
+        $this->skala_nyeri = $totalScore;
 
         if ($this->currentCycleId) {
             PippAssessment::create([
                 'monitoring_cycle_id' => $this->currentCycleId,
                 'id_user' => auth()->id(),
-                'assessment_time' => $this->pipp_assessment_time,
-                'gestational_age' => $this->gestational_age,
-                'behavioral_state' => $this->behavioral_state,
-                'max_heart_rate' => $this->max_heart_rate,
-                'min_oxygen_saturation' => $this->min_oxygen_saturation,
-                'brow_bulge' => $this->brow_bulge,
-                'eye_squeeze' => $this->eye_squeeze,
-                'nasolabial_furrow' => $this->nasolabial_furrow,
-                'total_score' => $this->pipp_total_score,
+                'assessment_time' => $this->pipp_assessment_time ?? now(),
+                'gestational_age' => $data['gestational_age'],
+                'behavioral_state' => $data['behavioral_state'],
+                'max_heart_rate' => $data['max_heart_rate'],
+                'min_oxygen_saturation' => $data['min_oxygen_saturation'],
+                'brow_bulge' => $data['brow_bulge'],
+                'eye_squeeze' => $data['eye_squeeze'],
+                'nasolabial_furrow' => $data['nasolabial_furrow'],
+                'total_score' => $totalScore,
             ]);
-            $this->skala_nyeri = $this->pipp_total_score;
-            $this->closePippModal();
+
             $this->dispatch('refresh-pip');
-            // $this->loadRecords(); // Reload data
             $this->dispatch('record-saved', ['message' => 'Penilaian Nyeri (PIPP) berhasil dicatat!']);
         } else {
             $this->dispatch('error-notification', ['message' => 'Simpan data observasi pertama untuk membuat siklus.']);
         }
     }
+
     #[On('refresh-pip')]
     public function loadPippOnly()
     {
@@ -1736,122 +1645,11 @@ class PatientMonitor extends Component
 
 
 
-    public $showTherapyModal = false;
-    /**
-     * Fungsi untuk membuka modal dan mengisi 5 textarea
-     * dengan data dari riwayat program terapi TERBARU.
-     */
-    public function openTherapyModal()
-    {
-        $this->showTherapyModal = true;
-
-        // 1. Ambil data program TERBARU dari riwayat yang sudah di-load
-        //    (Logika Anda di sini sudah benar)
-        $latestProgram = $this->therapy_program_history->first();
-
-        // 2. Cek apakah ada riwayat
-        if ($latestProgram) {
-
-            // 3. TIDAK PERLU PARSING / SPLITTING LAGI
-            //    Sekarang kita langsung ambil dari 5 kolom yang terpisah
-            //    sesuai dengan struktur tabel baru.
-
-            $this->therapy_program_masalah = $latestProgram->masalah_klinis;
-            $this->therapy_program_program = $latestProgram->program_terapi;
-            $this->therapy_program_enteral = $latestProgram->nutrisi_enteral;
-            $this->therapy_program_parenteral = $latestProgram->nutrisi_parenteral;
-            $this->therapy_program_lab = $latestProgram->pemeriksaan_lab;
-
-        } else {
-            // 4. Jika TIDAK ADA riwayat, pastikan 5 properti itu kosong.
-            //    (Lebih baik menggunakan reset() agar bersih)
-            $this->reset([
-                'therapy_program_masalah',
-                'therapy_program_program',
-                'therapy_program_enteral',
-                'therapy_program_parenteral',
-                'therapy_program_lab',
-            ]);
-        }
-    }
-
-    // Fungsi ini sudah benar, biarkan saja
-    public function closeTherapyModal()
-    {
-        $this->showTherapyModal = false;
-    }
-    public $therapy_program_program;
-    public $therapy_program_enteral;
-    public $therapy_program_parenteral;
-    public $therapy_program_masalah;
-    public $therapy_program_lab;
-
     /**
      * GANTI FUNGSI LAMA ANDA DENGAN YANG INI
      */
-    public function saveTherapyProgram()
-    {
-        if (!$this->currentCycleId) {
-            $this->dispatch('error-notification', message: 'Simpan data observasi pertama untuk membuat siklus terapi.');
-            return;
-        }
 
-        // 1. Validasi (Sama seperti sebelumnya)
-        $this->validate([
-            'therapy_program_masalah' => 'required|string',
-            'therapy_program_program' => 'required|string',
-            'therapy_program_enteral' => 'required|string',
-            'therapy_program_parenteral' => 'required|string',
-            'therapy_program_lab' => 'required|string',
-        ]);
 
-        $latestProgram = TherapyProgram::where('monitoring_cycle_id', $this->currentCycleId)
-            ->latest()
-            ->first();
-
-        $currentUserId = Auth::id();
-        if (
-            $latestProgram &&
-            $latestProgram->masalah_klinis === $this->therapy_program_masalah &&
-            $latestProgram->program_terapi === $this->therapy_program_program &&
-            $latestProgram->nutrisi_enteral === $this->therapy_program_enteral &&
-            $latestProgram->nutrisi_parenteral === $this->therapy_program_parenteral &&
-            $latestProgram->pemeriksaan_lab === $this->therapy_program_lab &&
-            $latestProgram->id_user === $currentUserId
-        ) {
-            // Jika SAMA PERSIS, baru kita stop.
-            $this->dispatch('notify', 'Info: Tidak ada perubahan pada program terapi.');
-            $this->closeTherapyModal();
-            return;
-        }
-
-        // 4. Simpan sebagai riwayat BARU
-        TherapyProgram::create([
-            'monitoring_cycle_id' => $this->currentCycleId,
-            'no_rawat' => $this->no_rawat,
-            'id_user' => $currentUserId,
-            'masalah_klinis' => $this->therapy_program_masalah,
-            'program_terapi' => $this->therapy_program_program,
-            'nutrisi_enteral' => $this->therapy_program_enteral,
-            'nutrisi_parenteral' => $this->therapy_program_parenteral,
-            'pemeriksaan_lab' => $this->therapy_program_lab
-        ]);
-
-        $this->dispatch('refresh-therapy-history');
-        $this->dispatch('record-saved', message: 'Program Terapi berhasil disimpan!');
-        $this->closeTherapyModal();
-    }
-
-    #[On('refresh-therapy-history')]
-    public function loadTherapyHistoryOnly()
-    {
-        if ($this->currentCycleId) {
-            $this->therapy_program_history = TherapyProgram::where('monitoring_cycle_id', $this->currentCycleId)
-                ->with('pegawai') // Eager load data perawat/dokter
-                ->orderBy('created_at', 'desc') // Tampilkan yang terbaru di atas
-                ->get();
-        }
-    }
 
 
     public $selectedTab = 'ventilator';
