@@ -1972,18 +1972,6 @@ class PatientMonitor extends Component
 
         $this->reloadRepeaterNames();
     }
-    public function openMedicationModal()
-    {
-        $this->reset('medication_name', 'dose', 'route');
-        $this->given_at = now()->format('Y-m-d\TH:i');
-        $this->showMedicationModal = true;
-    }
-
-    public function closeMedicationModal()
-    {
-        $this->showMedicationModal = false;
-    }
-
     public function saveMedication()
     {
         $this->validate([
@@ -2003,13 +1991,13 @@ class PatientMonitor extends Component
                 'given_at' => $this->given_at,
             ]);
 
-            $this->closeMedicationModal();
             $this->dispatch('refresh-medications');
             $this->dispatch('record-saved', ['message' => 'Pemberian obat berhasil dicatat!']);
         } else {
             $this->dispatch('error-notification', ['message' => 'Simpan data observasi pertama untuk membuat siklus.']);
         }
     }
+
 
 
     #[On('refresh-medications')]
