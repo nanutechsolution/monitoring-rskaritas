@@ -385,7 +385,7 @@
                         </div>
                     </div>
                     <livewire:therapy-program-modal :current-cycle-id="$currentCycleId" :no-rawat="$no_rawat" wire:key="'therapy-modal-'.$currentCycleId" />
-                </div>
+                    </div>
             </div>
         </div>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -493,5 +493,5 @@
             </div>
         </div>
     </div>
-    @include('livewire.patient-monitor.partials.modal-alat')
+    {{-- @include('livewire.patient-monitor.partials.modal-alat') --}}
 </div>

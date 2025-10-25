@@ -17,6 +17,7 @@ use Illuminate\View\View;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Locked;
 class PatientMonitor extends Component
 {
@@ -59,9 +60,6 @@ class PatientMonitor extends Component
     public $total_score = 0; // Calculated score
 
     // Properti untuk Modal Alat
-    public bool $showDeviceModal = false;
-    public $device_name, $size, $location, $installation_date;
-    public $editingDeviceId = null; // Untuk mode edit/hapus
     public $currentCycleId;
     public ?MonitoringCycle $currentCycle = null;
 
@@ -182,36 +180,18 @@ class PatientMonitor extends Component
             return null;
         }
     }
-    public $showRemoveDeviceModal = false;
-    public $deviceToRemoveId = null;
-    public $deviceToRemoveDetails = null; // Untuk menyimpan data alat yg akan dilepas
 
     /**
      * [BARU] Membuka modal konfirmasi lepas alat
      */
-    public function openRemoveModal($deviceId)
-    {
-        $device = PatientDevice::find($deviceId);
-        if ($device && $device->no_rawat === $this->no_rawat) {
-            $this->deviceToRemoveId = $device->id;
-            $this->deviceToRemoveDetails = $device; // Simpan data alat untuk ditampilkan
-            $this->showRemoveDeviceModal = true;
-        }
-    }
 
     /**
      * [BARU] Menutup modal konfirmasi lepas alat
      */
-    public function closeRemoveModal()
-    {
-        $this->showRemoveDeviceModal = false;
-        $this->deviceToRemoveId = null;
-        $this->deviceToRemoveDetails = null;
-    }
 
-    public function confirmRemoveDevice()
+    public function confirmRemoveDevice($deviceId)
     {
-        $deviceId = $this->deviceToRemoveId; // Ambil ID dari properti
+
         if (!$deviceId) {
             return; // Jika tidak ada ID, hentikan
         }
@@ -229,7 +209,6 @@ class PatientMonitor extends Component
         }
 
         // Tutup modal setelah selesai
-        $this->closeRemoveModal();
     }
 
     public function generateReportPdf($no_rawat, $cycle_id)
@@ -952,71 +931,35 @@ class PatientMonitor extends Component
             ->orderBy('installation_date')
             ->get();
     }
-    public function openDeviceModal($deviceId = null)
+
+    public function saveDevice($data)
     {
-        // Reset form
-        $this->reset('device_name', 'size', 'location', 'installation_date', 'editingDeviceId');
+        $validated = Validator::make($data, [
+            'device_name' => 'required|string|max:255',
+            'size' => 'nullable|string|max:100',
+            'location' => 'nullable|string|max:255',
+            'installation_date' => 'required|date_format:Y-m-d\TH:i',
+        ])->validate();
 
-        if ($deviceId) {
-            $device = PatientDevice::find($deviceId);
-            if ($device && $device->no_rawat === $this->no_rawat) {
-                $this->editingDeviceId = $deviceId;
-                $this->device_name = $device->device_name;
-                $this->size = $device->size;
-                $this->location = $device->location;
-                $this->installation_date = $device->installation_date->format('Y-m-d\TH:i');
-            }
-        } else {
-            // Mode Tambah Baru - set default tanggal
-            $this->installation_date = now()->format('Y-m-d\TH:i');
-        }
-
-        $this->showDeviceModal = true;
-    }
-
-    public function closeDeviceModal()
-    {
-        $this->showDeviceModal = false;
-        $this->reset('device_name', 'size', 'location', 'installation_date', 'editingDeviceId');
-    }
-
-    public function saveDevice()
-    {
-        // 1. Validasi data yang bisa diisi pengguna
-        $this->validate([
-            'device_name' => 'required|string',
-            'size' => 'nullable|string',
-            'location' => 'nullable|string',
-        ]);
-
-        // 2. Siapkan data dasar (yang selalu di-update)
-        $data = [
-            'no_rawat' => $this->no_rawat,
-            'device_name' => $this->device_name,
-            'size' => $this->size,
-            'location' => $this->location,
-        ];
-
-        if ($this->editingDeviceId) {
-            $device = PatientDevice::find($this->editingDeviceId);
-            if ($device && $device->no_rawat === $this->no_rawat) {
-                $device->update($data); // Hanya update $data
-                $this->dispatch('record-saved', ['message' => 'Data alat berhasil diperbarui!']);
-            }
-        } else {
-            $this->validate([
-                'installation_date' => 'required|date_format:Y-m-d\TH:i',
+        try {
+            // 2. Langsung 'Create', tidak ada logika 'Update'
+            PatientDevice::create([
+                'no_rawat' => $this->no_rawat,
+                'device_name' => $validated['device_name'],
+                'size' => $validated['size'],
+                'location' => $validated['location'],
+                'installation_date' => $validated['installation_date'],
+                'installed_by_user_id' => auth()->id(),
             ]);
 
-            // Tambahkan 'installation_date' HANYA saat membuat data baru
-            $data['installation_date'] = $this->installation_date;
-            $data['installed_by_user_id'] = auth()->id();
-            PatientDevice::create($data);
             $this->dispatch('record-saved', ['message' => 'Alat baru berhasil ditambahkan!']);
-        }
+            $this->dispatch('refresh-devices'); // Refresh daftar alat
+            return true; // Sinyal sukses untuk Alpine .then()
 
-        $this->closeDeviceModal();
-        $this->dispatch('refresh-devices');
+        } catch (\Exception $e) {
+            $this->dispatch('error-notification', ['message' => 'Gagal menyimpan: ' . $e->getMessage()]);
+            return false; // Sinyal gagal untuk Alpine .then()
+        }
     }
     #[On('refresh-devices')]
     public function loadPatientDevicesOnly()
