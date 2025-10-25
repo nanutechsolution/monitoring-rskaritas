@@ -312,12 +312,12 @@ class PatientMonitor extends Component
             ]);
 
             $this->dispatch('record-saved', ['message' => 'Alat baru berhasil ditambahkan!']);
-            $this->dispatch('refresh-devices'); // Refresh daftar alat
-            return true; // Sinyal sukses untuk Alpine .then()
+            $this->dispatch('refresh-devices');
+            return true;
 
         } catch (\Exception $e) {
             $this->dispatch('error-notification', ['message' => 'Gagal menyimpan: ' . $e->getMessage()]);
-            return false; // Sinyal gagal untuk Alpine .then()
+            return false;
         }
     }
     #[On('refresh-devices')]
@@ -341,8 +341,6 @@ class PatientMonitor extends Component
             ->orderBy('installation_date')
             ->get();
     }
-
-
     private function reloadRepeaterNames()
     {
         // Koleksi default jika tidak ada data
