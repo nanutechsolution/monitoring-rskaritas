@@ -8,11 +8,8 @@ use App\Models\MonitoringCycle;
 use App\Models\MonitoringRecord;
 use App\Models\PatientDevice;
 use App\Models\PippAssessment;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use iio\libmergepdf\Merger;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -24,7 +21,6 @@ class PatientMonitor extends Component
     public bool $readyToLoad = false;
     public string $activeTab = 'observasi';
 
-
     #[Locked]
     public $patient;
     public string $no_rawat;
@@ -32,7 +28,6 @@ class PatientMonitor extends Component
     public $temp_incubator, $temp_skin, $hr, $rr;
     public $blood_pressure_systolic, $blood_pressure_diastolic;
     public $sat_o2, $irama_ekg, $skala_nyeri, $humidifier_inkubator;
-
     #[Locked]
     public Collection $records;
     #[Locked]
@@ -48,12 +43,10 @@ class PatientMonitor extends Component
     #[Locked]
     public Collection $recentMedicationNames;
     // Properties for PIPP Modal
-    public bool $showPippModal = false;
     public $pipp_assessment_time;
     public $gestational_age = 0, $behavioral_state = 0, $max_heart_rate = 0;
     public $min_oxygen_saturation = 0, $brow_bulge = 0, $eye_squeeze = 0, $nasolabial_furrow = 0;
     public $pipp_total_score = 0;
-
     public $assessment_time;
     public $facial_expression = 0, $cry = 0, $breathing_pattern = 0;
     public $arms_movement = 0, $legs_movement = 0, $state_of_arousal = 0;
@@ -77,7 +70,6 @@ class PatientMonitor extends Component
     public bool $event_bradikardia = false;
     public bool $event_stimulasi = false;
     public $selectedDate;
-
     public string $activeOutputTab = 'ringkasan';
     public $respiratory_mode;
     public $spontan_fio2, $spontan_flow;
@@ -85,8 +77,6 @@ class PatientMonitor extends Component
     public $hfo_fio2, $hfo_frekuensi, $hfo_map, $hfo_amplitudo, $hfo_it;
     public $monitor_mode, $monitor_fio2, $monitor_peep, $monitor_pip;
     public $monitor_tv_vte, $monitor_rr_spontan, $monitor_p_max, $monitor_ie;
-
-
     // Properti untuk Keseimbangan Cairan
     public $intake_ogt, $intake_oral;
     public $output_urine, $output_bab, $output_residu;
@@ -96,15 +86,11 @@ class PatientMonitor extends Component
     public array $parenteral_intakes = [];
     public array $enteral_intakes = [];
 
-
-
     // Properti untuk Modal Obat
-    public bool $showMedicationModal = false;
     public $medication_name, $dose, $route, $given_at;
 
 
     // Properti untuk Modal Blood Gas
-    public bool $showBloodGasModal = false;
     public $taken_at;
     public $gula_darah, $ph, $pco2, $po2, $hco3, $be, $sao2;
 
@@ -117,26 +103,12 @@ class PatientMonitor extends Component
     public $previousBalance24h = null;
 
 
-    /**
-     * Method ini akan dipanggil oleh wire:poll untuk menyegarkan jam.
-     */
-    public function updateRecordTime()
-    {
-        // Hanya perbarui waktu jika user sedang melihat tab 'observasi' utama
-        // dan belum memilih tanggal di masa lalu.
-        // if ($this->activeTab === 'observasi' && Carbon::parse($this->selectedDate)->isToday()) {
-        // $this->record_time = now()->format('Y-m-d\TH:i');
-        // }
-    }
     public function loadData()
     {
         $this->readyToLoad = true;
-
-        // Panggil fungsi pemuat data Anda yang sudah ada
         $this->loadRecords();
         $this->loadPatientDevices();
     }
-
 
     public function confirmRemoveDevice($deviceId)
     {
@@ -157,83 +129,10 @@ class PatientMonitor extends Component
             $this->dispatch('record-saved', ['message' => 'Alat berhasil dilepas!']);
         }
 
-        // Tutup modal setelah selesai
     }
-
-
-
-
-    public $umur_kehamilan;
-    public $berat_lahir;
-    public $umur_bayi;
-    public $umur_koreksi;
-    public $cara_persalinan;
-    public $info_rujukan;
-    public $jaminan;
-    public $status_rujukan;
-
-    public $asal_bangsal;
-    public $asal_poli;
     public function mount(string $no_rawat): void
     {
         $this->no_rawat = $no_rawat;
-        $rawData = DB::table('reg_periksa as rp')
-            ->join('pasien as p', 'rp.no_rkm_medis', '=', 'p.no_rkm_medis')
-            ->join('kamar_inap as ki', 'rp.no_rawat', '=', 'ki.no_rawat')
-            ->join('dokter as d', 'rp.kd_dokter', '=', 'd.kd_dokter')
-            ->join('penjab as pj', 'rp.kd_pj', '=', 'pj.kd_pj')
-            ->leftJoin('pasien_bayi as pb', 'p.no_rkm_medis', '=', 'pb.no_rkm_medis')
-            ->join('kamar as k', 'ki.kd_kamar', '=', 'k.kd_kamar')
-            ->join('bangsal as b', 'k.kd_bangsal', '=', 'b.kd_bangsal')
-            ->select(
-                'p.nm_pasien',
-                'p.no_rkm_medis',
-                'p.tgl_lahir',
-                'p.jk',
-                'pb.berat_badan',
-                'pb.proses_lahir',
-                'ki.tgl_masuk',
-                'ki.diagnosa_awal',
-                'd.nm_dokter',
-                'pj.png_jawab as jaminan',
-                'rp.tgl_registrasi',
-                'rp.no_rawat',
-                'rp.stts as status_rujukan',
-                'b.nm_bangsal as asal_bangsal'
-            )
-            ->where('ki.stts_pulang', '-')
-            ->where('rp.no_rawat', $this->no_rawat)
-            ->orderBy('ki.tgl_masuk', 'desc')
-            ->first();
-        if (!$rawData) {
-            abort(404, 'Data registrasi atau kamar inap pasien tidak ditemukan.');
-        }
-        $this->patient = $rawData;
-        $this->berat_lahir = $rawData?->berat_badan ?? null;
-        $this->cara_persalinan = $rawData?->proses_lahir ?? 'Unknown';
-        $this->jaminan = $rawData?->jaminan ?? null;
-        $this->status_rujukan = $rawData?->status_rujukan ?? null;
-        $this->asal_bangsal = $rawData?->asal_bangsal ?? null;
-
-        // Kalkulasi Usia
-        $tanggalLahir = isset($rawData->tgl_lahir) ? Carbon::parse($rawData->tgl_lahir) : null;
-
-        $this->umur_bayi = $tanggalLahir ? $tanggalLahir->diffInDays(now()) : null;
-        $mingguKehamilan = (int) $this->umur_kehamilan;
-        $mingguKehamilan = isset($this->umur_kehamilan) ? (int) $this->umur_kehamilan : 0;
-        if ($mingguKehamilan > 0 && $mingguKehamilan < 37) {
-            $mingguPrematur = 40 - $mingguKehamilan;
-            $tanggalCukupBulan = $tanggalLahir->copy()->addWeeks($mingguPrematur);
-            $this->umur_koreksi = $tanggalCukupBulan->diffInWeeks(now());
-        } else {
-            $this->umur_koreksi = null;
-        }
-
-        if (!$this->patient) {
-            abort(404);
-        }
-
-        // --- CARI SIKLUS SAAT INI DI MOUNT ---
         $now = now();
         $cycleStartTime = $now->copy()->startOfDay()->addHours(6);
         if ($now->hour < 6) {
@@ -262,29 +161,19 @@ class PatientMonitor extends Component
     }
     public function loadPatientDevices(): void
     {
-        if (!$this->readyToLoad) {
-            $this->patientDevices = new \Illuminate\Database\Eloquent\Collection();
-            return; // Hentikan eksekusi
-        }
-        if (!$this->currentCycle) {
+        if (!$this->readyToLoad || !$this->currentCycle) { // Tambahkan cek $this->currentCycle
             $this->patientDevices = new \Illuminate\Database\Eloquent\Collection();
             return;
         }
 
-        // 2. Tentukan batas waktu siklus (ini sudah timestamp)
-        $cycleStart = $this->currentCycle->start_time; // Misal: '2025-10-22 06:00:00'
-        $cycleEnd = $this->currentCycle->end_time;     // Misal: '2025-10-23 05:59:59'
-        // 3. Kueri Logika Klinis yang AKURAT
-        $this->patientDevices = PatientDevice::where('no_rawat', $this->no_rawat)
-            // Logika 1: Alat harus dipasang SEBELUM siklus ini BERAKHIR
-            // (Kita asumsikan installation_date sekarang adalah DATETIME)
+        $cycleStart = $this->currentCycle->start_time;
+        $cycleEnd = $this->currentCycle->end_time;
+
+        $this->patientDevices = PatientDevice::with(['installer', 'remover'])
+            ->where('no_rawat', $this->no_rawat)
             ->where('installation_date', '<=', $cycleEnd)
-            // Logika 2: DAN (Alatnya belum dicabut ATAU dicabut SETELAH siklus ini DIMULAI)
             ->where(function ($query) use ($cycleStart) {
-                // Masih terpasang (belum dicabut)
                 $query->whereNull('removal_date')
-                    // ATAU dicabutnya nanti (setelah siklus mulai),
-                    // yang berarti alat itu aktif di dalam siklus ini.
                     ->orWhere('removal_date', '>=', $cycleStart);
             })
             ->orderBy('installation_date')
@@ -323,16 +212,16 @@ class PatientMonitor extends Component
     #[On('refresh-devices')]
     public function loadPatientDevicesOnly()
     {
-        if (!$this->readyToLoad) {
+        if (!$this->readyToLoad || !$this->currentCycle) {
             $this->patientDevices = new \Illuminate\Database\Eloquent\Collection();
             return;
         }
 
-        // Ambil logika kueri dari fungsi loadPatientDevices() Anda yang lama
         $cycleStart = $this->currentCycle->start_time;
         $cycleEnd = $this->currentCycle->end_time;
 
-        $this->patientDevices = PatientDevice::where('no_rawat', $this->no_rawat)
+        $this->patientDevices = PatientDevice::with(['installer', 'remover'])
+            ->where('no_rawat', $this->no_rawat)
             ->where('installation_date', '<=', $cycleEnd)
             ->where(function ($query) use ($cycleStart) {
                 $query->whereNull('removal_date')

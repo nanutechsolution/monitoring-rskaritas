@@ -1,35 +1,35 @@
+<div class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
     <div x-data="{
-        showAddDeviceModal: false,
-        deviceName: '',
-        deviceSize: '',
-        deviceLocation: '',
-        installationDate: '',
+    showAddDeviceModal: false,
+    deviceName: '',
+    deviceSize: '',
+    deviceLocation: '',
+    installationDate: '',
 
-        showRemoveModal: false,
-        deviceToRemove: null,
+    showRemoveModal: false,
+    deviceToRemove: null,
 
-        // Fungsi ini dipanggil tombol '+ Tambah Alat'
-        newDeviceForm() {
-            this.deviceName = '';
-            this.deviceSize = '';
-            this.deviceLocation = '';
-            this.installationDate = '{{ now()->format('Y-m-d\TH:i') }}';
-            this.showAddDeviceModal = true;
-        },
+    // Fungsi ini dipanggil tombol '+ Tambah Alat'
+    newDeviceForm() {
+        this.deviceName = '';
+        this.deviceSize = '';
+        this.deviceLocation = '';
+        this.installationDate = '{{ now()->format('Y-m-d\TH:i') }}';
+        this.showAddDeviceModal = true;
+    },
 
-        // Fungsi ini dipanggil tombol 'Lepas'
-        removeDevice(device) {
-            this.deviceToRemove = device;
-            this.showRemoveModal = true;
-        },
+    // Fungsi ini dipanggil tombol 'Lepas'
+    removeDevice(device) {
+        this.deviceToRemove = device;
+        this.showRemoveModal = true;
+    },
 
-        // Fungsi untuk menutup & membersihkan modal lepas
-        closeRemoveModal() {
-            this.showRemoveModal = false;
-            this.deviceToRemove = null;
-        }
-    }">
-
+    // Fungsi untuk menutup & membersihkan modal lepas
+    closeRemoveModal() {
+        this.showRemoveModal = false;
+        this.deviceToRemove = null;
+    }
+}">
         <div class="p-6 text-gray-900">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
                 <h3 class="text-lg font-medium">Alat Terpasang</h3>
@@ -53,14 +53,14 @@
                                     <span class="font-medium bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
                                         Dipasang: {{ $device->installation_date->format('d M Y, H:i') }}
                                     </span>
-                                    <span class="text-gray-600 ml-1">(oleh: {{ $device->installer->nama ?? 'N/A' }})</span>
+                                    <span class="text-gray-600 ml-1">(oleh: {{ $device->installer_name ?? 'N/A' }})</span>
                                 </div>
                                 @if($device->removal_date)
                                 <div>
                                     <span class="font-medium bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
                                         Dilepas: {{ $device->removal_date->format('d M Y, H:i') }}
                                     </span>
-                                    <span class="text-gray-600 ml-1">(oleh: {{ $device->remover->nama ?? 'N/A' }})</span>
+                                    <span class="text-gray-600 ml-1">(oleh: {{ $device->remover_name ?? 'N/A' }})</span>
                                 </div>
                                 @endif
                             </div>
@@ -68,13 +68,13 @@
 
                         <div class="flex-shrink-0 ml-4 flex space-x-2">
                             @if (is_null($device->removal_date))
-                            <button type="button" @click="$nextTick(() => removeDevice({
-        id: {{ $device->id }},
-        name: '{{ e($device->device_name) }}',
-        size: '{{ e($device->size ?? '') }}',
-        location: '{{ e($device->location ?? '') }}',
-        installed: '{{ $device->installation_date->format('d M Y, H:i') }}'
-    }))" class="text-sm text-red-600 hover:text-red-800">
+                            <button type="button" @click="removeDevice({
+                                id: {{ $device->id }},
+                                name: '{{ e($device->device_name) }}',
+                                size: '{{ e($device->size ?? '') }}',
+                                location: '{{ e($device->location ?? '') }}',
+                                installed: '{{ $device->installation_date->format('d M Y, H:i') }}'
+                            })" class="text-sm text-red-600 hover:text-red-800">
                                 Lepas
                             </button>
                             @endif
@@ -137,15 +137,15 @@
                         Batal
                     </button>
                     <button type="button" wire:loading.attr="disabled" wire:target="saveDevice" @click="$wire.saveDevice({
-                            device_name: deviceName,
-                            size: deviceSize,
-                            location: deviceLocation,
-                            installation_date: installationDate
-                        }).then((success) => {
-                            if (success) {
-                                showAddDeviceModal = false;
-                            }
-                        })" class="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 focus:ring-4 focus:outline-none focus:ring-teal-300">
+                        device_name: deviceName,
+                        size: deviceSize,
+                        location: deviceLocation,
+                        installation_date: installationDate
+                    }).then((success) => {
+                        if (success) {
+                            showAddDeviceModal = false;
+                        }
+                    })" class="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 focus:ring-4 focus:outline-none focus:ring-teal-300">
                         <span wire:loading.remove wire:target="saveDevice">
                             Simpan Alat
                         </span>
@@ -195,8 +195,8 @@
                         Batal
                     </button>
                     <button type="button" @click="$wire.confirmRemoveDevice(deviceToRemove.id).then(() => {
-                            closeRemoveModal();
-                        })" wire:loading.attr="disabled" wire:target="confirmRemoveDevice" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-300">
+                        closeRemoveModal();
+                    })" wire:loading.attr="disabled" wire:target="confirmRemoveDevice" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-300">
                         <span wire:loading.remove wire:target="confirmRemoveDevice">Ya, Lepas Sekarang</span>
                         <span wire:loading wire:target="confirmRemoveDevice">Memproses...</span>
                     </button>
@@ -204,3 +204,4 @@
             </div>
         </div>
     </div>
+</div>

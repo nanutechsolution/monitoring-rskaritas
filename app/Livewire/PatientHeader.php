@@ -10,8 +10,8 @@ use Illuminate\View\View; // Import View
 
 class PatientHeader extends Component
 {
-    #[Locked] // Data pasien tidak berubah setelah load awal
-    public $patientData; // Ganti nama dari $patient agar lebih jelas ini data mentah
+    #[Locked]
+    public $patientData;
 
     public string $no_rawat;
 
@@ -30,12 +30,10 @@ class PatientHeader extends Component
     public ?string $status_rujukan = null;
     public ?string $asal_bangsal = null;
     public ?int $umur_koreksi = null; // Umur koreksi dalam minggu (jika prematur)
-    public $umur_kehamilan; // Diasumsikan ini ada (mungkin perlu disesuaikan asalnya)
-
-
-    public function mount(string $no_rawat): void
+    public ?int $umur_kehamilan = null;
+    public function mount(string $noRawat): void
     {
-        $this->no_rawat = $no_rawat;
+        $this->no_rawat = $noRawat;
         $rawData = DB::table('reg_periksa as rp')
             ->join('pasien as p', 'rp.no_rkm_medis', '=', 'p.no_rkm_medis')
             ->join('kamar_inap as ki', 'rp.no_rawat', '=', 'ki.no_rawat')
@@ -73,7 +71,7 @@ class PatientHeader extends Component
             abort(404, 'Data registrasi atau kamar inap pasien tidak ditemukan.');
         }
 
-        $this->patientData = $rawData; // Simpan data mentah jika perlu
+        $this->patientData = $rawData;
 
         // Assign ke properti publik untuk view
         $this->nama_pasien = $rawData->nm_pasien;
@@ -89,13 +87,10 @@ class PatientHeader extends Component
         $this->jaminan = $rawData->jaminan ?? null;
         $this->status_rujukan = $rawData->status_rujukan ?? null;
         $this->asal_bangsal = $rawData->asal_bangsal ?? null;
-
         // --- Kalkulasi Usia ---
         $tanggalLahirCarbon = isset($rawData->tgl_lahir) ? Carbon::parse($rawData->tgl_lahir) : null;
-
         if ($tanggalLahirCarbon) {
             $this->umur_bayi = $tanggalLahirCarbon->diffInDays(now());
-
             // Kalkulasi Umur Koreksi (asumsi $this->umur_kehamilan sudah diisi dari sumber lain)
             // PASTIKAN $this->umur_kehamilan memiliki nilai yang benar sebelum kalkulasi ini
             $mingguKehamilan = isset($this->umur_kehamilan) ? (int) $this->umur_kehamilan : 0;
@@ -106,7 +101,7 @@ class PatientHeader extends Component
                 // Hitung selisih minggu dari tanggal cukup bulan ke sekarang
                 $this->umur_koreksi = $tanggalCukupBulan->diffInWeeks(now());
             } else {
-                $this->umur_koreksi = null; // Tidak perlu umur koreksi jika lahir cukup bulan
+                $this->umur_koreksi = null;
             }
         } else {
             $this->umur_bayi = null;
@@ -116,7 +111,6 @@ class PatientHeader extends Component
 
     public function render(): View
     {
-        // Pastikan nama view sesuai dengan nama file blade
         return view('livewire.patient-header');
     }
 }
