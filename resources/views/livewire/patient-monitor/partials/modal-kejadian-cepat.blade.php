@@ -1,48 +1,78 @@
-<div x-data="{ open: @entangle('showEventModal').live }" x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
-    <!-- Overlay -->
-    <div class="absolute inset-0 bg-gray-900 opacity-75" @click="open = false"></div>
+  <div x-data="{ openEventModal: false }">
+      <!-- Tombol buka modal -->
+      <button type="button" @click="openEventModal = true" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-green-50 transition-all">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          <span class="font-medium text-gray-800">Catat Kejadian</span>
+      </button>
 
-    <!-- Konten modal -->
-    <div x-transition class="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-        <h3 class="text-lg font-medium text-gray-900">Catat Kejadian</h3>
-        <p class="text-sm text-gray-500 mt-1">Pilih semua kejadian yang terjadi pada waktu yang sama.</p>
+      <!-- Modal -->
+      <div x-show="openEventModal" x-cloak x-transition.opacity.scale.80 class="fixed inset-0 z-50 flex items-center justify-center">
+          <!-- Overlay -->
+          <div class="absolute inset-0 bg-gray-900 opacity-75" @click="openEventModal = false"></div>
 
-        <div class="mt-4 space-y-2 border-t pt-4">
-            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" wire:model.defer="event_cyanosis" class="rounded border-gray-300">
-                    <span>Cyanosis</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" wire:model.defer="event_pucat" class="rounded border-gray-300">
-                    <span>Pucat</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" wire:model.defer="event_ikterus" class="rounded border-gray-300">
-                    <span>Ikterus</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" wire:model.defer="event_crt_less_than_2" class="rounded border-gray-300">
-                    <span>CRT &lt; 2 detik</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" wire:model.defer="event_bradikardia" class="rounded border-gray-300">
-                    <span>Bradikardia</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" wire:model.defer="event_stimulasi" class="rounded border-gray-300">
-                    <span>Stimulasi</span>
-                </label>
-            </div>
-        </div>
+          <!-- Konten modal -->
+          <div class="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md transition-all transform scale-100">
+              <h3 class="text-lg font-medium text-gray-900">Catat Kejadian</h3>
+              <p class="text-sm text-gray-500 mt-1">
+                  Pilih semua kejadian yang terjadi pada waktu yang sama.
+              </p>
 
-        <div class="mt-6 flex justify-end space-x-3">
-            <button type="button" @click="open = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-                Batal
-            </button>
-            <button type="button" wire:click="saveEvent" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700">
-                Simpan Kejadian
-            </button>
-        </div>
-    </div>
-</div>
+              <div class="mt-4 space-y-2 border-t pt-4">
+                  <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                      <label class="flex items-center space-x-2">
+                          <input type="checkbox" wire:model.defer="event_cyanosis" class="rounded border-gray-300">
+                          <span>Cyanosis</span>
+                      </label>
+                      <label class="flex items-center space-x-2">
+                          <input type="checkbox" wire:model.defer="event_pucat" class="rounded border-gray-300">
+                          <span>Pucat</span>
+                      </label>
+                      <label class="flex items-center space-x-2">
+                          <input type="checkbox" wire:model.defer="event_ikterus" class="rounded border-gray-300">
+                          <span>Ikterus</span>
+                      </label>
+                      <label class="flex items-center space-x-2">
+                          <input type="checkbox" wire:model.defer="event_crt_less_than_2" class="rounded border-gray-300">
+                          <span>CRT &lt; 2 detik</span>
+                      </label>
+                      <label class="flex items-center space-x-2">
+                          <input type="checkbox" wire:model.defer="event_bradikardia" class="rounded border-gray-300">
+                          <span>Bradikardia</span>
+                      </label>
+                      <label class="flex items-center space-x-2">
+                          <input type="checkbox" wire:model.defer="event_stimulasi" class="rounded border-gray-300">
+                          <span>Stimulasi</span>
+                      </label>
+                  </div>
+              </div>
+
+              <!-- Tombol aksi -->
+              <div class="mt-6 flex justify-end space-x-3">
+                  <button type="button" @click="openEventModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                      Batal
+                  </button>
+
+                  <button type="button" wire:click="saveEvent" @click="openEventModal = false" wire:loading.attr="disabled" wire:loading.class="opacity-75 cursor-wait" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 transition ease-in-out duration-150 overflow-hidden group">
+                      <!-- Spinner saat loading -->
+                      <svg wire:loading wire:target="saveEvent" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white absolute left-3 top-2.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z"></path>
+                      </svg>
+
+                      <!-- Teks tombol -->
+                      <span wire:loading.remove wire:target="saveEvent">
+                          Simpan Kejadian
+                      </span>
+                      <span wire:loading wire:target="saveEvent">
+                          Menyimpan...
+                      </span>
+
+                      <!-- Efek kilau animasi saat diklik -->
+                      <span class="absolute inset-0 bg-indigo-400 opacity-0 group-active:opacity-30 transition-opacity duration-200 rounded-md"></span>
+                  </button>
+              </div>
+          </div>
+      </div>
+  </div>

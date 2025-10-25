@@ -94,7 +94,6 @@ class PatientMonitor extends Component
     public $taken_at;
     public $gula_darah, $ph, $pco2, $po2, $hco3, $be, $sao2;
 
-
     public $daily_iwl; // Input untuk IWL harian
     public $totalIntake24h = 0;
     public $totalOutput24h = 0;
@@ -305,21 +304,14 @@ class PatientMonitor extends Component
             }
         }
         $this->enteral_intakes = $enteralData;
-
-        // ===============================================
-        // 2. VALIDASI (Perbaikan untuk mengizinkan baris kosong)
-        // ===============================================
         $this->validate([
             'record_time' => 'required|date',
-            // 'name' hanya wajib jika 'volume' diisi
             'parenteral_intakes.*.name' => 'required_with:parenteral_intakes.*.volume|nullable|string',
-            // Izinkan volume 0
             'parenteral_intakes.*.volume' => 'nullable|numeric|min:0',
             'enteral_intakes.*.name' => 'required_with:enteral_intakes.*.volume|nullable|string',
             'enteral_intakes.*.volume' => 'nullable|numeric|min:0|exclude_if:enteral_intakes.*.name,puasa',
         ]);
 
-        // Daftar field Anda (sudah benar)
         $fieldsToCheck = [
             'temp_incubator',
             'temp_skin',
@@ -379,10 +371,6 @@ class PatientMonitor extends Component
             $this->addError('record', 'Minimal satu field harus diisi.');
             return;
         }
-
-        // =========================
-        // Tentukan cycle (Sudah Benar)
-        // =========================
         $now = Carbon::parse($this->record_time);
         $cycleStartTime = $now->copy()->startOfDay()->addHours(6);
         if ($now->hour < 6) {
@@ -394,10 +382,6 @@ class PatientMonitor extends Component
             ['no_rawat' => $this->no_rawat, 'start_time' => $cycleStartTime],
             ['end_time' => $cycleEndTime]
         );
-
-        // =========================
-        // Simpan record (Sudah Benar)
-        // =========================
         $record = MonitoringRecord::updateOrCreate(
             [
                 'monitoring_cycle_id' => $cycle->id,
@@ -415,12 +399,7 @@ class PatientMonitor extends Component
             )
         );
 
-        // =========================
-        // Simpan parenteral (Perbaikan untuk volume '0')
-        // =========================
         foreach ($this->parenteral_intakes as $intake) {
-            // Perbaikan: Ganti 'empty' dengan cek 'null' atau string kosong
-            // Ini PENTING agar volume '0' bisa disimpan
             if (!isset($intake['volume']) || $intake['volume'] === '' || $intake['volume'] === null) {
                 continue; // Lewati baris kosong
             }
@@ -464,7 +443,6 @@ class PatientMonitor extends Component
     /**
      * Mencatat event observasi tunggal (seperti Cyanosis, Pucat, dll.)
      */
-
     public function resetForm(): void
     {
         $this->reset([
@@ -986,55 +964,41 @@ class PatientMonitor extends Component
         }
     }
 
-    public function saveBloodGasResult()
+    public function saveBloodGasResult($data)
     {
-        $this->validate([
-            'taken_at' => 'required|date',
+        $validated = Validator::make($data, [
+            'taken_at' => 'required|date_format:Y-m-d\TH:i',
             'gula_darah' => 'nullable|numeric',
-            'ph' => 'nullable|numeric',
-            'pco2' => 'nullable|numeric',
-            'po2' => 'nullable|numeric',
-            'hco3' => 'nullable|numeric',
+            'ph' => 'nullable|numeric|between:6.5,8.0',
+            'pco2' => 'nullable|numeric|min:0',
+            'po2' => 'nullable|numeric|min:0',
+            'hco3' => 'nullable|numeric|min:0',
             'be' => 'nullable|numeric',
-            'sao2' => 'nullable|numeric',
-        ]);
-
-        $fields = [
-            $this->gula_darah,
-            $this->ph,
-            $this->pco2,
-            $this->po2,
-            $this->hco3,
-            $this->be,
-            $this->sao2,
-        ];
-
-        if (collect($fields)->filter(fn($v) => $v !== null && $v !== '')->isEmpty()) {
+            'sao2' => 'nullable|numeric|between:0,100',
+        ])->validate();
+        $results = collect($validated)->except('taken_at');
+        if ($results->filter(fn($v) => $v !== null && $v !== '')->isEmpty()) {
             $this->dispatch('error-notification', ['message' => 'Minimal satu hasil gas darah harus diisi.']);
-            return;
+            return false; // Sinyal gagal
         }
 
         if (!$this->currentCycleId) {
             $this->dispatch('error-notification', ['message' => 'Simpan data observasi pertama untuk membuat siklus.']);
-            return;
+            return false; // Sinyal gagal
         }
-
-        BloodGasResult::create([
-            'monitoring_cycle_id' => $this->currentCycleId,
-            'id_user' => auth()->id(),
-            'taken_at' => $this->taken_at,
-            'gula_darah' => $this->gula_darah,
-            'ph' => $this->ph,
-            'pco2' => $this->pco2,
-            'po2' => $this->po2,
-            'hco3' => $this->hco3,
-            'be' => $this->be,
-            'sao2' => $this->sao2,
-        ]);
-
-        $this->dispatch('refresh-blood-gas');
-        $this->dispatch('record-saved', ['message' => 'Hasil Gas Darah berhasil dicatat!']);
-        $this->dispatch('close-blood-gas-modal');
+        try {
+            BloodGasResult::create([
+                'monitoring_cycle_id' => $this->currentCycleId,
+                'id_user' => auth()->id(),
+            ] + $validated);
+            $this->dispatch('refresh-blood-gas');
+            $this->dispatch('record-saved', ['message' => 'Hasil Gas Darah berhasil dicatat!']);
+            $this->dispatch('close-blood-gas-modal');
+            return true;
+        } catch (\Exception $e) {
+            $this->dispatch('error-notification', ['message' => 'Gagal menyimpan gas darah: ' . $e->getMessage()]);
+            return false; // Sinyal gagal
+        }
     }
 
 
