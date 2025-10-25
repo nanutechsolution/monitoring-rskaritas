@@ -42,72 +42,10 @@
                 <div class="flex gap-3 px-3 min-w-max snap-x snap-mandatory">
                     <!-- Catat Kejadian -->
                     @include('livewire.patient-monitor.partials.modal-kejadian-cepat')
-                    <div x-data="{ open: false }">
-                        <!-- Tombol Buka Modal -->
-                        <button @click="open = true" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-yellow-50 flex-shrink-0 snap-start transition-all">
-                            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m4-4H8"></path>
-                            </svg>
-                            <span class="font-medium text-gray-800">Pemberian Obat</span>
-                        </button>
-                        <!-- Modal -->
-                        <div x-show="open" x-cloak x-transition.opacity.scale.80 class="fixed inset-0 z-50 flex items-center justify-center" @keydown.escape.window="open = false">
-                            <!-- Overlay -->
-                            <div class="absolute inset-0 bg-gray-900 opacity-75" @click="open = false"></div>
-
-                            <!-- Isi Modal -->
-                            <div class="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
-                                <h3 class="text-lg font-medium text-gray-900">Tambah Pemberian Obat</h3>
-                                <div class="mt-4 space-y-4 border-t pt-4">
-                                    <div>
-                                        <label class="block text-sm font-medium">Waktu Pemberian</label>
-                                        <input type="datetime-local" wire:model.defer="given_at" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 cursor-not-allowed">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium">Nama Obat</label>
-                                        <input id="medication_name" type="text" wire:model.defer="medication_name" list="recent-meds" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Ketik atau pilih dari riwayat...">
-                                        <datalist id="recent-meds">
-                                            @foreach($recentMedicationNames as $name)
-                                            <option value="{{ $name }}">
-                                                @endforeach
-                                        </datalist>
-                                    </div>
-
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium">Dosis</label>
-                                            <input type="text" wire:model.defer="dose" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Contoh: 3x80mg">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium">Rute</label>
-                                            <input type="text" wire:model.defer="route" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Contoh: IV">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mt-6 flex justify-end space-x-3">
-                                    <button type="button" @click="open = false" class="px-4 py-2 text-sm font-medium bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-                                        Batal
-                                    </button>
-
-                                    <button type="button" wire:click="saveMedication" @click="open = false" wire:loading.attr="disabled" wire:loading.class="opacity-75 cursor-wait" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 transition ease-in-out duration-150">
-
-                                        <svg wire:loading wire:target="saveMedication" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-
-                                        <span wire:loading.remove wire:target="saveMedication">Simpan Obat</span>
-                                        <span wire:loading wire:target="saveMedication">Menyimpan...</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    @include('livewire.patient-monitor.partials.modal-obat')
                     @include('livewire.patient-monitor.partials.modal-gasdarah')
                     <!-- Penilaian Nyeri PIPP -->
                     <div x-data="{ showPippModal: false }">
-
                         <button type="button" @click="showPippModal = true" class="flex items-center gap-2 px-5 py-2 bg-white border rounded-lg shadow hover:shadow-md hover:bg-purple-50 flex-shrink-0 snap-start transition-all">
                             <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>

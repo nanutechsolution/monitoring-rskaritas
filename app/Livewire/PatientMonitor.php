@@ -924,34 +924,39 @@ class PatientMonitor extends Component
 
         $this->reloadRepeaterNames();
     }
-    public function saveMedication()
+    public function saveMedication($data)
     {
-        $this->validate([
-            'medication_name' => 'required|string',
-            'dose' => 'required|string',
-            'route' => 'required|string',
-            'given_at' => 'required|date',
-        ]);
+        $validated = Validator::make($data, [
+            'medication_name' => 'required|string|max:255',
+            'dose' => 'required|string|max:100',
+            'route' => 'required|string|max:100',
+            'given_at' => 'required|date_format:Y-m-d\TH:i',
+        ])->validate();
 
         if ($this->currentCycleId) {
-            Medication::create([
-                'monitoring_cycle_id' => $this->currentCycleId,
-                'id_user' => auth()->id(),
-                'medication_name' => $this->medication_name,
-                'dose' => $this->dose,
-                'route' => $this->route,
-                'given_at' => $this->given_at,
-            ]);
+            try {
+                Medication::create([
+                    'monitoring_cycle_id' => $this->currentCycleId,
+                    'id_user' => auth()->id(),
+                    // Ambil nilai dari $validated (atau $data), bukan $this->...
+                    'medication_name' => $validated['medication_name'],
+                    'dose' => $validated['dose'],
+                    'route' => $validated['route'],
+                    'given_at' => $validated['given_at'],
+                ]);
 
-            $this->dispatch('refresh-medications');
-            $this->dispatch('record-saved', ['message' => 'Pemberian obat berhasil dicatat!']);
+                $this->dispatch('refresh-medications'); // Refresh tabel riwayat obat
+                $this->dispatch('record-saved', ['message' => 'Pemberian obat berhasil dicatat!']);
+                return true;
+            } catch (\Exception $e) {
+                $this->dispatch('error-notification', ['message' => 'Gagal menyimpan obat: ' . $e->getMessage()]);
+                return false;
+            }
         } else {
             $this->dispatch('error-notification', ['message' => 'Simpan data observasi pertama untuk membuat siklus.']);
+            return false;
         }
     }
-
-
-
     #[On('refresh-medications')]
     public function loadMedicationsOnly()
     {
