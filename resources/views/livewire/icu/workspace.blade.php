@@ -40,20 +40,14 @@
     </div>
 
     <div class="mt-6">
-
         <div>
             @if ($activeTab == 'input')
             <livewire:icu.monitor-sheet :cycle="$cycle" :key="'input-'.$cycle->id" lazy />
-
             @elseif ($activeTab == 'laporan')
-
             <livewire:icu.observation-grid :cycle="$cycle" :key="'laporan-'.$cycle->id" lazy />
-
             @elseif ($activeTab == 'statis')
-            {{-- KONTEN TAB DATA STATIS --}}
             <div class="bg-white shadow rounded-lg">
                 <form wire:submit.prevent="saveStaticData">
-
                     <div class="p-4 border-b">
                         <h3 class="text-lg font-semibold text-gray-900">Edit Data Statis Harian</h3>
                         <p class="text-sm text-gray-600">Mengisi data terapi, penunjang, catatan, alat, tube, dll.</p>

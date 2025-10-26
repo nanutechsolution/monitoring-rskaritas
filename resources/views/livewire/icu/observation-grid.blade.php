@@ -1,5 +1,5 @@
-<div class="container mx-auto p-6 space-y-6">
-    <div class="bg-white shadow rounded-lg p-2 flex space-x-2">
+<div class="container mx-auto  space-y-6">
+    {{-- <div class="bg-white shadow rounded-lg p-2 flex space-x-2">
         <button wire:click="$set('filterShift', 'all')" class="px-4 py-2 rounded-md text-sm font-medium {{ $filterShift == 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700' }}">
             Semua (24 Jam)
         </button>
@@ -12,7 +12,7 @@
         <button wire:click="$set('filterShift', 'malam')" class="px-4 py-2 rounded-md text-sm font-medium {{ $filterShift == 'malam' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700' }}">
             Shift Malam (21-07)
         </button>
-    </div>
+    </div> --}}
     <div x-data="{
         chartData: JSON.parse($el.getAttribute('data-chart')),
         initChart() {
@@ -73,7 +73,6 @@
             <canvas id="icuChart"></canvas>
         </div>
     </div>
-
     <div class="bg-white shadow rounded-lg overflow-hidden">
         <div class="overflow-x-auto relative max-h-[80vh]">
             <table class="w-full text-sm text-left text-gray-500">
