@@ -140,7 +140,7 @@
                         {{-- Tombol Aksi di Bawah Info --}}
                         <div class="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
                             <a href="#" wire:navigate class="px-2 py-1 text-xs font-medium rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200">Monitor ICU</a>
-                            <a href="#" wire:navigate class="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-700 hover:bg-purple-200">Monitor NICU</a>
+                            <a href="{{ route('monitoring.nicu', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-700 hover:bg-purple-200">Monitor NICU</a>
                             <a href="#" wire:navigate class="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-700 hover:bg-green-200">Monitor PICU</a>
                             <a href="#" wire:navigate class="px-2 py-1 text-xs font-medium rounded bg-orange-100 text-orange-700 hover:bg-orange-200">Monitor Anestesi</a>
                         </div>
