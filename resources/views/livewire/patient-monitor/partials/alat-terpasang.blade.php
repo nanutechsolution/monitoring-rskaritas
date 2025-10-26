@@ -38,55 +38,78 @@
                 </button>
             </div>
 
-            <div class="space-y-3">
-                @forelse ($patientDevices as $device)
-                <div class="border border-gray-200 p-3 rounded-lg shadow-sm" wire:key="device-{{ $device->id }}">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-base font-semibold text-gray-800 truncate">{{ $device->device_name }}</p>
-                            <p class="text-sm text-gray-600">
-                                @if($device->size) <span class="font-medium">Size:</span> {{ $device->size }} @endif
-                                @if($device->location) <span class="ml-2 font-medium">Lokasi:</span> {{ $device->location }} @endif
-                            </p>
-                            <div class="text-xs mt-2 space-y-1">
-                                <div>
-                                    <span class="font-medium bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                                        Dipasang: {{ $device->installation_date->format('d M Y, H:i') }}
-                                    </span>
-                                    <span class="text-gray-600 ml-1">(oleh: {{ $device->installer_name ?? 'N/A' }})</span>
-                                </div>
-                                @if($device->removal_date)
-                                <div>
-                                    <span class="font-medium bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
-                                        Dilepas: {{ $device->removal_date->format('d M Y, H:i') }}
-                                    </span>
-                                    <span class="text-gray-600 ml-1">(oleh: {{ $device->remover_name ?? 'N/A' }})</span>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
+            {{-- LIST ALAT DENGAN SCROLL HORIZONTAL DI MOBILE --}}
+            <div x-data="{
+        scrolled: false,
+        end: false,
+        checkScroll(e) {
+            this.scrolled = e.target.scrollLeft > 10;
+            this.end = e.target.scrollWidth - e.target.clientWidth - e.target.scrollLeft < 10;
+        }
+    }" class="relative">
+                {{-- Bayangan kiri-kanan sebagai indikator scroll --}}
+                <div x-show="scrolled" x-transition.opacity class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none sm:hidden"></div>
+                <div x-show="!end" x-transition.opacity class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none sm:hidden"></div>
 
-                        <div class="flex-shrink-0 ml-4 flex space-x-2">
-                            @if (is_null($device->removal_date))
-                            <button type="button" @click="removeDevice({
+                {{-- Kontainer scroll --}}
+                <div class="overflow-x-auto sm:overflow-visible scroll-smooth snap-x snap-mandatory" @scroll="checkScroll">
+                    <div class="flex sm:block space-x-4 sm:space-x-0 sm:space-y-3 pb-2">
+                        @forelse ($patientDevices as $device)
+                        <div class="flex-shrink-0 snap-start border border-gray-200 bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 min-w-[260px] sm:min-w-0" wire:key="device-{{ $device->id }}">
+                            <div class="flex justify-between items-start w-full">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-base font-semibold text-gray-800 truncate">{{ $device->device_name }}</p>
+                                    <p class="text-sm text-gray-600">
+                                        @if($device->size)
+                                        <span class="font-medium">Size:</span> {{ $device->size }}
+                                        @endif
+                                        @if($device->location)
+                                        <span class="ml-2 font-medium">Lokasi:</span> {{ $device->location }}
+                                        @endif
+                                    </p>
+                                    <div class="text-xs mt-2 space-y-1">
+                                        <div>
+                                            <span class="font-medium bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                                                Dipasang: {{ $device->installation_date->format('d M Y, H:i') }}
+                                            </span>
+                                            <span class="text-gray-600 ml-1">(oleh: {{ $device->installer_name ?? 'N/A' }})</span>
+                                        </div>
+                                        @if($device->removal_date)
+                                        <div>
+                                            <span class="font-medium bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
+                                                Dilepas: {{ $device->removal_date->format('d M Y, H:i') }}
+                                            </span>
+                                            <span class="text-gray-600 ml-1">(oleh: {{ $device->remover_name ?? 'N/A' }})</span>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- Tombol Lepas --}}
+                                @if (is_null($device->removal_date))
+                                <div class="flex-shrink-0 ml-4">
+                                    <button type="button" @click="removeDevice({
                                 id: {{ $device->id }},
                                 name: '{{ e($device->device_name) }}',
                                 size: '{{ e($device->size ?? '') }}',
                                 location: '{{ e($device->location ?? '') }}',
                                 installed: '{{ $device->installation_date->format('d M Y, H:i') }}'
-                            })" class="text-sm text-red-600 hover:text-red-800">
-                                Lepas
-                            </button>
-                            @endif
+                            })" class="text-sm text-red-600 hover:text-red-800 font-medium">
+                                        Lepas
+                                    </button>
+                                </div>
+                                @endif
+                            </div>
                         </div>
+                        @empty
+                        <div class="text-center p-4 border border-dashed rounded-lg w-full">
+                            <p class="text-sm text-gray-500">Belum ada data alat terpasang untuk siklus ini.</p>
+                        </div>
+                        @endforelse
                     </div>
                 </div>
-                @empty
-                <div class="text-center p-4 border border-dashed rounded-lg">
-                    <p class="text-sm text-gray-500">Belum ada data alat terpasang untuk siklus ini.</p>
-                </div>
-                @endforelse
             </div>
+
         </div>
         <div x-show="showAddDeviceModal" x-on:keydown.escape.window="showAddDeviceModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
 
