@@ -14,7 +14,7 @@
                 data: { datasets: [
                     { label: 'Temp inkubator', data: chartData.temp_incubator, borderColor: 'green', tension: 0.1, spanGaps: true, },
                     { label: 'Temp Skin', data: chartData.temp_skin,spanGaps: true, borderColor: 'blue', tension: 0.1, },
-                    { label: 'Heart Rate', data: chartData.hr,spanGaps: true, borderColor: 'red', tension: 0.1, },
+                    { label: 'Heart Rate', data: chartData.hr,spanGaps: true, borderColor: 'indigo', tension: 0.1, },
                     { label: 'Resp. Rate', data: chartData.rr,spanGaps: true, borderColor: 'black', tension: 0.1, },
                     {label: 'Tensi Sistolik',data: chartData.bp_systolic,borderColor: 'rgba(255,0,0,1)', fill: false,
                         tension: 0.1,
@@ -70,9 +70,9 @@
                 setTimeout(() => notif.remove(), 300);
             }, 4000);
         }
-    }" x-init="init()" x-on:update-chart.window="updateChart($event)" x-on:record-saved.window="showNotification($event)" x-on:error-notification.window="showErrorNotification($event)" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+    }" x-init="init()" x-on:update-chart.window="updateChart($event)" x-on:record-saved.window="showNotification($event)" x-on:error-notification.window="showErrorNotification($event)" class="bg-white overflow-hidden shadow-sm ">
      <div class="p-6 text-gray-900">
          <h3 class="text-lg font-medium">Tren Hemodinamik</h3>
-         <div class="relative mt-4 h-64"><canvas x-ref="canvas"></canvas></div>
+         <div class="relative mt-4 h-72"><canvas x-ref="canvas"></canvas></div>
      </div>
  </div>

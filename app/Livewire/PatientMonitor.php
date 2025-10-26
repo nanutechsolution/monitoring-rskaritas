@@ -189,7 +189,6 @@ class PatientMonitor extends Component
         ])->validate();
 
         try {
-            // 2. Langsung 'Create', tidak ada logika 'Update'
             PatientDevice::create([
                 'no_rawat' => $this->no_rawat,
                 'device_name' => $validated['device_name'],
@@ -199,8 +198,9 @@ class PatientMonitor extends Component
                 'installed_by_user_id' => auth()->id(),
             ]);
 
-            $this->dispatch('record-saved', ['message' => 'Alat baru berhasil ditambahkan!']);
             $this->dispatch('refresh-devices');
+            $this->dispatch('record-saved', ['message' => 'Alat baru berhasil ditambahkan!']);
+
             return true;
 
         } catch (\Exception $e) {
@@ -211,6 +211,7 @@ class PatientMonitor extends Component
     #[On('refresh-devices')]
     public function loadPatientDevicesOnly()
     {
+        ($this->readyToLoad);
         if (!$this->readyToLoad || !$this->currentCycle) {
             $this->patientDevices = new \Illuminate\Database\Eloquent\Collection();
             return;
@@ -684,23 +685,6 @@ class PatientMonitor extends Component
         }
         $this->reloadRepeaterNames();
         $this->dispatch('repeaters-ready');
-    }
-    /**
-     * FUNGSI BARU 1:
-     * Mengambil data dari riwayat yang diklik dan mengisinya ke form input.
-     */
-    public function loadHistoryToForm($programId)
-    {
-        // Cari program dari riwayat yang sudah di-load (ini lebih efisien)
-        $program = $this->therapy_program_history->find($programId);
-
-        if ($program) {
-            $this->therapy_program_masalah = $program->masalah_klinis;
-            $this->therapy_program_program = $program->program_terapi;
-            $this->therapy_program_enteral = $program->nutrisi_enteral;
-            $this->therapy_program_parenteral = $program->nutrisi_parenteral;
-            $this->therapy_program_lab = $program->pemeriksaan_lab;
-        }
     }
 
     /**

@@ -1,29 +1,4 @@
-<div x-data="{ open: false }" class="bg-white p-4 shadow rounded-lg border border-gray-200">
-    {{-- HEADER UTAMA --}}
-    <div class="flex justify-between items-center">
-        <div>
-            <div class="font-semibold text-gray-800 text-lg">
-                {{ $nama_pasien ?? 'Nama Pasien' }}
-            </div>
-            <div class="text-gray-500 text-sm">RM: {{ $no_rkm_medis ?? '-' }}</div>
-        </div>
-
-        {{-- Tombol Expand Desktop & Mobile --}}
-        <button
-            @click="open = !open"
-            class="inline-flex items-center text-gray-500 hover:text-gray-700 text-sm font-medium"
-        >
-            <span x-text="open ? 'Sembunyikan' : 'Lihat detail'"></span>
-            <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-            <svg x-show="open" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-            </svg>
-        </button>
-    </div>
-
-    {{-- DETAIL (Toggle & Responsive Grid) --}}
+ {{-- DETAIL (Toggle & Responsive Grid) --}}
     <div
         class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm"
         x-show="open"
@@ -82,4 +57,3 @@
             </div>
         </div>
     </div>
-</div>

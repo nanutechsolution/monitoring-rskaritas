@@ -68,7 +68,7 @@ foreach ($records as $r) {
                 ->values();
         @endphp
 
-        <div class="bg-white shadow-sm rounded-lg overflow-x-auto p-4">
+        <div class="bg-white shadow-sm  overflow-x-auto p-4">
             <h4 class="text-md font-semibold mb-3">{{ $sectionTitle }}</h4>
             <table class="min-w-max border border-gray-200 text-sm">
                 <thead class="bg-gray-100 sticky top-0 z-10">

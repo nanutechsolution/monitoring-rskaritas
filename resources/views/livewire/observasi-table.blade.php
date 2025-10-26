@@ -77,13 +77,13 @@ $categories = [
         <div class="space-y-6">
             @foreach($categories as $catName => $params)
             @if($categoryJamList[$catName]->isNotEmpty())
-            <div class="rounded-xl overflow-x-auto border border-gray-100 shadow-sm">
+            <div class="overflow-x-auto border border-gray-100 shadow-sm">
                 <div class="p-4 {{ $categoryBg[$catName] }}">
                     <h3 class="text-lg font-semibold mb-3">{{ $catName }}</h3>
                     <table class="min-w-max border border-gray-200 text-sm">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="sticky left-0 bg-gray-100 px-3 py-2 font-medium text-left z-10">Parameter</th>
+                                <th class="sticky p-6 left-0 bg-gray-100 px-3 py-2 font-medium text-left z-10">Parameter</th>
                                 @foreach($categoryJamList[$catName] as $jam)
                                 <th class="border px-2 py-1 text-center font-medium">{{ $jam }}</th>
                                 @endforeach

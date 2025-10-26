@@ -32,7 +32,7 @@ foreach ($medications as $med) {
 $highlightThreshold = 500;
 @endphp
 
-<div class="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+<div class="bg-white shadow-lg  overflow-hidden border border-gray-100">
     <div class="p-6">
         <div class="flex items-center justify-between border-b pb-3 mb-3">
             <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">

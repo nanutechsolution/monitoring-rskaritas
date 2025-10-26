@@ -173,11 +173,11 @@ class ReportController extends Controller // Ganti nama controller
         $bloodGasParameters = [
             'gula_darah' => 'Gula Darah',
             'ph' => 'pH',
-            'pco2' => 'PCO₂',
-            'po2' => 'PO₂',
-            'hco3' => 'HCO₃⁻',
+            'pco2' => 'PCO2',
+            'po2' => 'PO2',
+            'hco3' => 'HCO3',
             'be' => 'BE',
-            'sao2' => 'SaO₂',
+            'sao2' => 'SaO2',
         ];
         // Inisialisasi matriks data kosong
         $bloodGasMatrix = [];

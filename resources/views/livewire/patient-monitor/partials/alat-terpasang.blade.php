@@ -38,7 +38,7 @@
                 </button>
             </div>
 
-            {{-- LIST ALAT DENGAN SCROLL HORIZONTAL DI MOBILE --}}
+            {{-- LIST ALAT DENGAN SCROLL TERBATAS DI DESKTOP --}}
             <div x-data="{
         scrolled: false,
         end: false,
@@ -47,12 +47,15 @@
             this.end = e.target.scrollWidth - e.target.clientWidth - e.target.scrollLeft < 10;
         }
     }" class="relative">
-                {{-- Bayangan kiri-kanan sebagai indikator scroll --}}
+                {{-- Bayangan kiri-kanan sebagai indikator scroll di mobile --}}
                 <div x-show="scrolled" x-transition.opacity class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none sm:hidden"></div>
                 <div x-show="!end" x-transition.opacity class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none sm:hidden"></div>
 
-                {{-- Kontainer scroll --}}
-                <div class="overflow-x-auto sm:overflow-visible scroll-smooth snap-x snap-mandatory" @scroll="checkScroll">
+                {{-- Kontainer utama --}}
+                <div class="
+            overflow-x-auto sm:overflow-x-hidden scroll-smooth snap-x snap-mandatory
+            sm:max-h-[400px] sm:overflow-y-auto sm:scrollbar-thin sm:scrollbar-thumb-gray-300 sm:scrollbar-track-gray-100
+        " @scroll="checkScroll">
                     <div class="flex sm:block space-x-4 sm:space-x-0 sm:space-y-3 pb-2">
                         @forelse ($patientDevices as $device)
                         <div class="flex-shrink-0 snap-start border border-gray-200 bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 min-w-[260px] sm:min-w-0" wire:key="device-{{ $device->id }}">
@@ -111,7 +114,7 @@
             </div>
 
         </div>
-        <div x-show="showAddDeviceModal" x-on:keydown.escape.window="showAddDeviceModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div x-show="showAddDeviceModal"x-cloak x-on:keydown.escape.window="showAddDeviceModal = false" class="fixed inset-0 z-50 flex items-center justify-center p-4">
 
             <div x-show="showAddDeviceModal" x-transition.opacity class="absolute inset-0 bg-gray-900/75" @click="showAddDeviceModal = false"></div>
 
@@ -177,7 +180,7 @@
                 </div>
             </div>
         </div>
-        <div x-show="showRemoveModal" x-on:keydown.escape.window="closeRemoveModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div x-show="showRemoveModal" x-cloak x-on:keydown.escape.window="closeRemoveModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div x-show="showRemoveModal" x-transition.opacity class="absolute inset-0 bg-gray-900/75" @click="closeRemoveModal()"></div>
             <div x-show="showRemoveModal" x-transition class="relative bg-white rounded-lg shadow-xl w-full max-w-md">
                 <div class="flex items-center justify-between p-4 border-b">
@@ -197,15 +200,15 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-lg font-medium text-gray-900">Anda yakin ingin melepas alat ini?</p>
-                            <div x-show="deviceToRemove" class="mt-2 border-l-4 border-gray-200 pl-3 text-sm text-gray-700 space-y-1" style="display: none;">
+                            <div x-show="deviceToRemove" class="mt-2 border-l-4 border-gray-200 pl-3 text-sm text-gray-700 space-y-1">
                                 <p><strong x-text="deviceToRemove?.name"></strong></p>
                                 <p>
-                                    <span x-show="deviceToRemove?.size">Size: <span x-text="deviceToRemove.size"></span> | </span>
-                                    <span x-show="deviceToRemove?.location">Lokasi: <span x-text="deviceToRemove.location"></span></span>
-                                    </S PAN>
-                                    <p class="text-xs text-gray-500">
-                                        Dipasang: <span x-text="deviceToRemove?.installed"></span>
-                                    </p>
+                                    <span x-show="deviceToRemove?.size">Size: <span x-text="deviceToRemove?.size"></span> | </span>
+                                    <span x-show="deviceToRemove?.location">Lokasi: <span x-text="deviceToRemove?.location"></span></span>
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    Dipasang: <span x-text="deviceToRemove?.installed"></span>
+                                </p>
                             </div>
                             <p class="mt-3 text-sm text-gray-600">
                                 Tindakan ini akan mencatat waktu lepas alat pada <strong>waktu sekarang</strong>.

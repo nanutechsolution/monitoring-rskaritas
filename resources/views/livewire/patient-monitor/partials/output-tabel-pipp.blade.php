@@ -1,4 +1,4 @@
-  <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+  <div class="bg-white overflow-hidden shadow-sm ">
       <div class="p-6 text-gray-900">
           <h3 class="text-lg font-medium border-b pb-3">Riwayat Penilaian Nyeri (PIPP)</h3>
           <div class="overflow-x-auto mt-4">

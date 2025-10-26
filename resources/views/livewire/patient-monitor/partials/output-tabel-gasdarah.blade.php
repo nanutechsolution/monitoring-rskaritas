@@ -1,4 +1,4 @@
-<div class="bg-white p-5 rounded-2xl shadow-md overflow-x-auto border border-gray-200">
+<div class="bg-white p-5  shadow-md overflow-x-auto border border-gray-200">
     <h3 class="text-xl font-bold mb-5 border-b-2 pb-2 text-blue-900 tracking-wide">
         Riwayat Gas Darah
     </h3>
@@ -16,7 +16,7 @@
     @endphp
 
     <table class="min-w-full border-collapse text-sm">
-    <thead class="bg-blue-700 text-white text-xs uppercase sticky top-0">
+    <thead class="  text-xs uppercase sticky top-0">
         <tr>
             <th class="px-4 py-3 text-left w-40">Parameter</th>
             @foreach ($bloodGasResults as $result)

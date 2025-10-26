@@ -86,12 +86,14 @@
                             <td class="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
                                 <div class="flex items-center space-x-2">
                                     {{-- Ganti link generik dengan tombol/link spesifik --}}
-                                    {{-- <a href="#" wire:navigate title="Monitor ICU" class="text-indigo-600 hover:text-indigo-900 p-1 hover:bg-indigo-100 rounded">ICU</a> --}}
+                                    <a href="{{ route('monitoring.icu.history', ['noRawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate title="Buka Modul ICU" class="text-indigo-600 hover:text-indigo-900 p-1 hover:bg-indigo-100 rounded">
+                                        Monitoring ICU
+                                    </a>
                                     {{-- Tampilkan NICU jika relevan --}}
                                     <a href="{{ route('monitoring.nicu', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate title="Monitor NICU" class="text-purple-600 hover:text-purple-900 p-1 hover:bg-purple-100 rounded">NICU</a>
                                     {{-- Tampilkan PICU jika relevan --}}
-                                    {{-- <a href="#" wire:navigate title="Monitor PICU" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-100 rounded">PICU</a> --}}
-                                    {{-- <a href="#" wire:navigate title="Monitor Anestesi" class="text-orange-600 hover:text-orange-900 p-1 hover:bg-orange-100 rounded">Anes</a> --}}
+                                    <a href="#" wire:navigate title="Monitor PICU" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-100 rounded">PICU</a>
+                                    <a href="#" wire:navigate title="Monitor Anestesi" class="text-orange-600 hover:text-orange-900 p-1 hover:bg-orange-100 rounded">Anes</a>
                                 </div>
                             </td>
                         </tr>
