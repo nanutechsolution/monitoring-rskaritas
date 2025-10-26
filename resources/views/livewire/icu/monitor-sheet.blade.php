@@ -13,26 +13,32 @@
                         <div>
                             <label for="suhu" class="block text-sm font-medium text-gray-700">Suhu (°C)</label>
                             <input type="number" step="0.1" wire:model.defer="ttvState.suhu" id="suhu" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            @error('ttvState.xs') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label for="nadi" class="block text-sm font-medium text-gray-700">Nadi (x/mnt)</label>
                             <input type="number" wire:model.defer="ttvState.nadi" id="nadi" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            @error('ttvState.nadi') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label for="rr" class="block text-sm font-medium text-gray-700">RR (x/mnt)</label>
                             <input type="number" wire:model.defer="ttvState.rr" id="rr" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            @error('ttvState.rr') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label for="spo2" class="block text-sm font-medium text-gray-700">SpO2 (%)</label>
                             <input type="number" wire:model.defer="ttvState.spo2" id="spo2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            @error('ttvState.spo2') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label for="tensi_sistol" class="block text-sm font-medium text-gray-700">Tensi (Sistol)</label>
                             <input type="number" wire:model.defer="ttvState.tensi_sistol" id="tensi_sistol" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            @error('ttvState.tensi_sistol') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label for="tensi_diastol" class="block text-sm font-medium text-gray-700">Tensi (Diastol)</label>
                             <input type="number" wire:model.defer="ttvState.tensi_diastol" id="tensi_diastol" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            @error('ttvState.tensi_diastol') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label for="irama_ekg" class="block text-sm font-medium text-gray-700">Irama EKG</label>
@@ -88,14 +94,17 @@
                             <div>
                                 <label for="gcs_e" class="block text-sm font-medium text-gray-700">GCS (E)</label>
                                 <input type="number" wire:model.defer="ttvState.gcs_e" id="gcs_e" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                @error('ttvState.gcs_e') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label for="gcs_v" class="block text-sm font-medium text-gray-700">GCS (V)</label>
                                 <input type="number" wire:model.defer="ttvState.gcs_v" id="gcs_v" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                @error('ttvState.gcs_v') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label for="gcs_m" class="block text-sm font-medium text-gray-700">GCS (M)</label>
                                 <input type="number" wire:model.defer="ttvState.gcs_m" id="gcs_m" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                @error('ttvState.gcs_m') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="col-span-2 md:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4 border-t pt-4 mt-2">
@@ -124,10 +133,12 @@
                         <div>
                             <label for="kesadaran" class="block text-sm font-medium text-gray-700">Kesadaran</label>
                             <input type="text" wire:model.defer="ttvState.kesadaran" id="kesadaran" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="cth: CM, Apatis">
+                            @error('ttvState.kesadaran') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label for="nyeri" class="block text-sm font-medium text-gray-700">Skala Nyeri (0-10)</label>
                             <input type="number" wire:model.defer="ttvState.nyeri" id="nyeri" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            @error('ttvState.nyeri') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                     </div>
 
@@ -136,7 +147,6 @@
                             Simpan TTV & Observasi
                         </button>
 
-                        {{-- Notifikasi Sukses TTV --}}
                         @if (session()->has('message-ttv'))
                         <span class="text-green-600 text-sm font-medium">
                             {{ session('message-ttv') }}
@@ -157,10 +167,12 @@
                             <div>
                                 <label for="cm_jenis" class="block text-sm font-medium text-gray-700">Jenis Cairan Masuk</label>
                                 <input type="text" wire:model.defer="cairanMasukState.cairan_masuk_jenis" id="cm_jenis" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500" placeholder="cth: Infus RL, Minum, Enteral">
+                                @error('cairanMasukState.cairan_masuk_jenis') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label for="cm_volume" class="block text-sm font-medium text-gray-700">Volume (ml)</label>
                                 <input type="number" wire:model.defer="cairanMasukState.cairan_masuk_volume" id="cm_volume" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                                @error('cairanMasukState.cairan_masuk_volume') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="p-4 bg-gray-50 flex justify-between items-center rounded-b-lg">
@@ -183,10 +195,12 @@
                             <div>
                                 <label for="ck_jenis" class="block text-sm font-medium text-gray-700">Jenis Cairan Keluar</label>
                                 <input type="text" wire:model.defer="cairanKeluarState.cairan_keluar_jenis" id="ck_jenis" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500" placeholder="cth: Urine, NGT, Drain">
+                                @error('cairanKeluarState.cairan_keluar_jenis') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label for="ck_volume" class="block text-sm font-medium text-gray-700">Volume (ml)</label>
                                 <input type="number" wire:model.defer="cairanKeluarState.cairan_keluar_volume" id="ck_volume" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500">
+                                @error('cairanKeluarState.cairan_keluar_volume') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="p-4 bg-gray-50 flex justify-between items-center rounded-b-lg">
