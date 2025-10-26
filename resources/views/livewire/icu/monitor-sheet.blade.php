@@ -1,8 +1,6 @@
 <div wire:poll.5s class="container mx-auto p-6 space-y-6">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         <div class="lg:col-span-2 space-y-6">
-
             <form wire:submit.prevent="saveTtv">
                 <div class="bg-white shadow rounded-lg">
                     <div class="p-4 border-b">

@@ -1,36 +1,40 @@
-<div class="container mx-auto p-6 space-y-6">
+<div class="container mx-auto p-4 sm:p-6 space-y-6">
 
-    <div class="bg-white shadow-lg rounded-lg p-6 border-l-4 border-blue-600">
-        <div class="flex justify-between items-start">
+    <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 border-l-4 border-blue-600">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
             <div>
-                <h2 class="text-3xl font-bold text-gray-800">{{ $registrasi->pasien->nm_pasien }}</h2>
-                <p class="text-lg text-gray-600">
+                <h2 class="text-xl sm:text-3xl font-bold text-gray-800 leading-snug">
+                    {{ $registrasi->pasien->nm_pasien }}
+                </h2>
+                <p class="text-sm sm:text-lg text-gray-600">
                     <span class="font-semibold">No. RM:</span> {{ $registrasi->pasien->no_rkm_medis }} |
                     <span class="font-semibold">No. Rawat:</span> {{ $registrasi->no_rawat }}
                 </p>
-                <div class="mt-2">
-                    <span class="font-semibold text-lg text-gray-700">Lembar Observasi:</span>
-                    <span class="text-lg text-blue-700 font-bold">{{ $cycle->sheet_date->isoFormat('dddd, D MMMM Y') }}</span>
-                    <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Hari Rawat ke-{{ $cycle->hari_rawat_ke }}</span>
+                <div class="mt-1 sm:mt-2">
+                    <span class="font-semibold text-sm sm:text-lg text-gray-700">Lembar Observasi:</span>
+                    <span class="text-sm sm:text-lg text-blue-700 font-bold">{{ $cycle->sheet_date->isoFormat('dddd, D MMMM Y') }}</span>
+                    <span class="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                        Hari Rawat ke-{{ $cycle->hari_rawat_ke }}
+                    </span>
                 </div>
             </div>
-            <div class="text-right">
-                {{-- Tombol kembali ke Halaman Riwayat --}}
-                <a href="{{ route('monitoring.icu.history', ['noRawat' => str_replace('/', '_', $registrasi->no_rawat)]) }}" wire:navigate class="text-sm text-gray-600 hover:text-blue-600">
+
+            <div class="text-left sm:text-right">
+                <a href="{{ route('monitoring.icu.history', ['noRawat' => str_replace('/', '_', $registrasi->no_rawat)]) }}" wire:navigate class="text-xs sm:text-sm text-gray-600 hover:text-blue-600">
                     &larr; Kembali ke Riwayat Pasien
                 </a>
             </div>
         </div>
     </div>
 
-    <div class="bg-white shadow rounded-lg p-2 flex space-x-2">
-        <button wire:click="$set('activeTab', 'input')" class="px-5 py-2 rounded-md text-sm font-medium {{ $activeTab == 'input' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+    <div class="bg-white shadow rounded-lg p-2 flex flex-wrap gap-2 sm:space-x-2">
+        <button wire:click="$set('activeTab', 'input')" class="flex-1 sm:flex-none px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-medium {{ $activeTab == 'input' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
             Input Real-time
         </button>
-        <button wire:click="$set('activeTab', 'laporan')" class="px-5 py-2 rounded-md text-sm font-medium {{ $activeTab == 'laporan' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+        <button wire:click="$set('activeTab', 'laporan')" class="flex-1 sm:flex-none px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-medium {{ $activeTab == 'laporan' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
             Laporan & Grafik
         </button>
-        <button wire:click="$set('activeTab', 'statis')" class="px-5 py-2 rounded-md text-sm font-medium {{ $activeTab == 'statis' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+        <button wire:click="$set('activeTab', 'statis')" class="flex-1 sm:flex-none px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-medium {{ $activeTab == 'statis' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
             Data Statis
         </button>
     </div>
