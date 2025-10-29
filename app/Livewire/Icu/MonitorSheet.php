@@ -135,6 +135,7 @@ class MonitorSheet extends Component
             'pupil_right_reflex' => null,
             'clinical_note' => null,
             'medication_administration' => null,
+            'fall_risk_assessment' => null,
 
         ];
 
@@ -197,6 +198,7 @@ class MonitorSheet extends Component
             'ttvState.pupil_right_reflex' => 'nullable|string|in:+,-',
             'ttvState.clinical_note' => 'nullable|string',
             'ttvState.medication_administration' => 'nullable|string',
+            'ttvState.fall_risk_assessment' => 'nullable|string|max:50',
         ], [
             'ttvState.*.numeric' => 'Kolom harus angka.',
             'ttvState.*.min' => 'Nilai terlalu rendah.',

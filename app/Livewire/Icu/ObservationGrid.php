@@ -74,7 +74,6 @@ class ObservationGrid extends Component
             ['key' => 'tensi', 'label' => 'Tensi', 'group' => 'HEMODINAMIK'],
             ['key' => 'map', 'label' => 'MAP', 'group' => 'HEMODINAMIK'],
             ['key' => 'rr', 'label' => 'RR (x/mnt)', 'group' => 'RESPIRASI'],
-            ['key' => 'cvp', 'label' => 'CVP', 'group' => 'RESPIRASI'],
         ];
     }
 
@@ -92,11 +91,10 @@ class ObservationGrid extends Component
         $rrData = [];
         $sistolData = [];
         $diastolData = [];
-        $cvpData = [];
         $mapData = [];
 
         $ttvRecords = $this->allRecords->filter(function ($record) {
-            return $record->suhu || $record->nadi || $record->tensi_sistol || $record->rr || $record->cvp || $record->map;
+            return $record->suhu || $record->nadi || $record->tensi_sistol || $record->rr || $record->map;
         });
 
         foreach ($ttvRecords as $record) {
@@ -106,7 +104,6 @@ class ObservationGrid extends Component
             $rrData[] = $record->rr ?? null;
             $sistolData[] = $record->tensi_sistol ?? null;
             $diastolData[] = $record->tensi_diastol ?? null;
-            $cvpData[] = $record->cvp ?? null;
             $mapData[] = $record->map ?? null;
         }
 
@@ -155,13 +152,7 @@ class ObservationGrid extends Component
                     'backgroundColor' => 'rgba(217, 119, 6, 0.2)',
                     'yAxisID' => 'yTtv',
                 ],
-                [
-                    'label' => 'CVP',
-                    'data' => $cvpData,
-                    'borderColor' => 'rgb(249, 115, 22)', // orange-600
-                    'backgroundColor' => 'rgba(249, 115, 22, 0.2)',
-                    'yAxisID' => 'yCvp', // Pakai sumbu Y ketiga
-                ],
+
             ],
         ];
     }

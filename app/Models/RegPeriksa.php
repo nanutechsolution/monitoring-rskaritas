@@ -95,5 +95,13 @@ class RegPeriksa extends Model
         return $this->belongsTo(Penjab::class, 'kd_pj', 'kd_pj');
     }
 
+    /**
+     * Relasi one-to-many: Satu registrasi bisa punya BANYAK DPJP Ranap.
+     */
+    public function dpjpRanap(): HasMany
+    {
+        // Foreign key di tabel 'dpjp_ranap' adalah 'no_rawat'
+        return $this->hasMany(DpjpRanap::class, 'no_rawat', 'no_rawat');
+    }
 
 }

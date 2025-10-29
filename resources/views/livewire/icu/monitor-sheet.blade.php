@@ -153,7 +153,11 @@
                             <input type="number" wire:model.defer="ttvState.nyeri" id="nyeri" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @error('ttvState.nyeri') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
-
+                        <div class="col-span-1 md:col-span-1">
+                            <label for="fall_risk" class="block text-sm font-meadium text-gray-700">Risiko Jatuh</label>
+                            <input type="text" wire:model.defer="ttvState.fall_risk_assessment" id="fall_risk" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="Skor/Kategori/Ket">
+                            @error('ttvState.fall_risk_assessment') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
                         <div class="col-span-full mt-4 border-t pt-4">
                             <h4 class="font-semibold text-gray-700 text-sm mb-2">Catatan & Tindakan</h4>
                         </div>

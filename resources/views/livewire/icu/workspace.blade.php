@@ -75,14 +75,72 @@
 
                     <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                         <div>
+                            <label for="ventilator_notes" class="block text-sm font-medium text-gray-700">Catatan Pola Ventilasi Harian</label>
+                            <textarea wire:model.defer="staticState.ventilator_notes" id="ventilator_notes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Tulis ringkasan setting ventilator, rencana weaning, dll..."></textarea>
+                            @error('staticState.ventilator_notes') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <hr>
+
+                        <div>
                             <label for="terapi_parenteral" class="block text-sm font-medium text-gray-700">Terapi Obat (Parenteral)</label>
                             <textarea wire:model.defer="staticState.terapi_obat_parenteral" id="terapi_parenteral" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                             @error('staticState.terapi_obat_parenteral') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        {{-- Target Nutrisi Parenteral --}}
+                        <div class="space-y-2 pt-2 pl-4 border-l-2 border-gray-200">
+                            <h4 class="text-md font-semibold text-gray-800">Target Nutrisi Parenteral (24 Jam)</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pl-4">
+                                <div>
+                                    <label for="par_vol" class="block text-xs font-medium text-gray-600">Volume (ml)</label>
+                                    <input type="number" step="0.1" wire:model.defer="staticState.parenteral_target_volume" id="par_vol" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                    @error('staticState.parenteral_target_volume') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label for="par_kal" class="block text-xs font-medium text-gray-600">Kalori (kkal)</label>
+                                    <input type="number" wire:model.defer="staticState.parenteral_target_kalori" id="par_kal" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                    @error('staticState.parenteral_target_kalori') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label for="par_pro" class="block text-xs font-medium text-gray-600">Protein (g)</label>
+                                    <input type="number" wire:model.defer="staticState.parenteral_target_protein" id="par_pro" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                    @error('staticState.parenteral_target_protein') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label for="par_lem" class="block text-xs font-medium text-gray-600">Lemak (g)</label>
+                                    <input type="number" wire:model.defer="staticState.parenteral_target_lemak" id="par_lem" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                    @error('staticState.parenteral_target_lemak') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label for="terapi_enteral" class="block text-sm font-medium text-gray-700">Terapi Obat (Enteral / Lain-lain)</label>
                             <textarea wire:model.defer="staticState.terapi_obat_enteral_lain" id="terapi_enteral" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                             @error('staticState.terapi_obat_enteral_lain') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="space-y-2 pt-2 pl-4 border-l-2 border-gray-200">
+                            <h4 class="text-md font-semibold text-gray-800">Target Nutrisi Enteral (24 Jam)</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pl-4">
+                                <div>
+                                    <label for="ent_vol" class="block text-xs font-medium text-gray-600">Volume (ml)</label>
+                                    <input type="number" step="0.1" wire:model.defer="staticState.enteral_target_volume" id="ent_vol" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                    @error('staticState.enteral_target_volume') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label for="ent_kal" class="block text-xs font-medium text-gray-600">Kalori (kkal)</label>
+                                    <input type="number" wire:model.defer="staticState.enteral_target_kalori" id="ent_kal" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                    @error('staticState.enteral_target_kalori') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label for="ent_pro" class="block text-xs font-medium text-gray-600">Protein (g)</label>
+                                    <input type="number" wire:model.defer="staticState.enteral_target_protein" id="ent_pro" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                    @error('staticState.enteral_target_protein') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label for="ent_lem" class="block text-xs font-medium text-gray-600">Lemak (g)</label>
+                                    <input type="number" wire:model.defer="staticState.enteral_target_lemak" id="ent_lem" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                                    @error('staticState.enteral_target_lemak') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label for="pemeriksaan_penunjang" class="block text-sm font-medium text-gray-700">Pemeriksaan Penunjang (Lab, EKG, dll)</label>
@@ -122,6 +180,13 @@
                                 <p class="text-sm text-gray-500 py-2">Belum ada alat/tube terpasang yang dicatat.</p>
                                 @endforelse
                             </div>
+                        </div>
+
+                        <hr class="mt-4">
+                        <div>
+                            <label for="wound_notes" class="block text-sm font-medium text-gray-700">Catatan Luka</label>
+                            <textarea wire:model.defer="staticState.wound_notes" id="wound_notes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Catat observasi luka, jenis perawatan, dll..."></textarea>
+                            @error('staticState.wound_notes') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                     </div>
 

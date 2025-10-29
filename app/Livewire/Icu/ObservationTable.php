@@ -63,6 +63,7 @@ class ObservationTable extends Component
             ['key' => 'pupil', 'label' => 'Pupil (Ki/Ka)', 'group' => 'OBSERVASI'],
             ['key' => 'kesadaran', 'label' => 'Kesadaran', 'group' => 'OBSERVASI'],
             ['key' => 'nyeri', 'label' => 'Nyeri (0-10)', 'group' => 'OBSERVASI'],
+            ['key' => 'fall_risk_assessment', 'label' => 'Risiko Jatuh', 'group' => 'OBSERVASI'],
 
             ['key' => 'cairan_masuk', 'label' => 'Cairan Masuk', 'group' => 'CAIRAN'],
             ['key' => 'cairan_keluar', 'label' => 'Cairan Keluar', 'group' => 'CAIRAN'],

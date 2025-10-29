@@ -157,7 +157,7 @@
 </head>
 
 <body>
-    <table class="patient-header">
+    {{-- <table class="patient-header">
         <tr>
             <td class="label">Nama Pasien</td>
             <td class="value">{{ $patient->nm_pasien ?? 'N/A' }}</td>
@@ -167,12 +167,10 @@
         <tr>
             <td class="label">Tanggal Lahir</td>
             <td class="value">{{ $patient->tgl_lahir ? \Carbon\Carbon::parse($patient->tgl_lahir)->isoFormat('D MMM YYYY') : 'N/A' }}</td>
-
-            {{-- INI TAMBAHANNYA --}}
             <td class="label">Ruang Rawat</td>
             <td class="value">{{ $patient->asal_bangsal ?? 'N/A' }}</td>
         </tr>
-    </table>
+    </table> --}}
     <h3 class="cppt-title">CATATAN PERKEMBANGAN PASIEN TERINTEGRASI (CPPT / SOAP)</h3>
 
     <table class="cppt-table">

@@ -597,8 +597,7 @@ class ReportController extends Controller
         $monitoringBinary = $pdfMonitoring->output();
         $pdfSoap = Pdf::loadView('pdf.soap', $dataForSoap)
             ->setPaper('a4', 'potrait');
-        // dd(strlen($pdfSoap->output()));
-        $soapBinary = $pdfSoap->output(); // <-- string PDF binary
+        $soapBinary = $pdfSoap->output();
         // --- 4. Gabungkan dua PDF ---
         $merger = new Merger;
         $merger->addRaw($monitoringBinary);
@@ -621,22 +620,33 @@ class ReportController extends Controller
     public function printPdf(string $noRawat, string $sheetDate)
     {
         $noRawatDb = str_replace('_', '/', $noRawat);
-
         // 1. Load Data Cycle (Mirip logic mount() di Workspace)
         $cycle = MonitoringCycleIcu::where('no_rawat', $noRawatDb)
             ->where('sheet_date', $sheetDate)
             ->with(relations: [
                 'registrasi.pasien',
-                'dpjpDokter',
                 'records' => function ($query) {
                     $query->with('inputter:nik,nama')->orderBy('observation_time', 'asc');
-                }
+                },
+                'devices'
             ])
             ->firstOrFail();
-
-        // 2. Load Data Tambahan (Ruangan, Asal) - Mirip logic mount()
-        $registrasi = RegPeriksa::with('poliklinik')
+        $cpptRecords = \App\Models\PemeriksaanRanap::with('pegawai')
+            ->where('no_rawat', $cycle->no_rawat)
+            ->whereRaw("CONCAT(tgl_perawatan, ' ', jam_rawat) >= ?", [$cycle->start_time])
+            ->whereRaw("CONCAT(tgl_perawatan, ' ', jam_rawat) <= ?", [$cycle->end_time])
+            ->orderBy('tgl_perawatan', 'asc')
+            ->orderBy('jam_rawat', 'asc')
+            ->get();
+        $diagnosaPasien = DB::table('diagnosa_pasien')
+            ->join('penyakit', 'diagnosa_pasien.kd_penyakit', '=', 'penyakit.kd_penyakit')
+            ->where('diagnosa_pasien.no_rawat', $noRawatDb)
+            ->where('diagnosa_pasien.status', 'Ranap') // Hanya ambil diagnosa Ranap
+            ->orderBy('diagnosa_pasien.prioritas', 'asc') // Urutkan berdasarkan prioritas
+            ->pluck('penyakit.nm_penyakit');
+        $registrasi = RegPeriksa::with(['pasien', 'poliklinik', 'penjab', 'dpjpRanap.dokter'])
             ->where('no_rawat', $noRawatDb)->firstOrFail();
+        $dpjpDokters = $registrasi->dpjpRanap->map(fn($dpjp) => $dpjp->dokter)->filter();
         $originatingWardName = $registrasi->poliklinik->nm_poli ?? 'N/A';
         $currentKamarInap = KamarInap::where('no_rawat', $noRawatDb)
             ->orderBy('tgl_masuk', 'desc')->orderBy('jam_masuk', 'desc')
@@ -675,7 +685,7 @@ class ReportController extends Controller
         $allParameters = $this->getReportParameters();
         $setting = DB::table('setting')->first();
         // 4. Load View Cetak dengan Data
-        $pdf = Pdf::loadView('pdf.icu.print-report', [
+        $dataForPdf = [
             'cycle' => $cycle,
             'registrasi' => $registrasi,
             'allParameters' => $allParameters,
@@ -692,13 +702,33 @@ class ReportController extends Controller
             'iwl' => $iwl,
             'balance24Jam' => $balance24Jam,
             'previousBalance' => $previousBalance,
-        ]);
-        // 5. Atur Opsi PDF (Landscape, A4)
-        $pdf->setPaper('a4', 'landscape');
+            'dpjpDokters' => $dpjpDokters,
+            'diagnosaPasien' => $diagnosaPasien,
+        ];
+        $dataForSoap = [
+            'dataForSoap' => $cpptRecords,
+            'patient' => $registrasi,
 
-        // 6. Tampilkan PDF di Browser (atau download)
-        // return $pdf->download('laporan-icu-'.$noRawatDb.'-'.$sheetDate.'.pdf'); // Opsi Download
-        return $pdf->stream('laporan-icu-' . $noRawat . '-' . $sheetDate . '.pdf'); // Opsi Tampil Langsung
+        ];
+
+        $pdfMonitoring = Pdf::loadView('pdf.icu.print-report', $dataForPdf)
+            ->setPaper('a3', 'landscape');
+        $monitoringBinary = $pdfMonitoring->output();
+
+        $pdfSoap = Pdf::loadView('pdf.soap', $dataForSoap)
+            ->setPaper('a4', 'potrait');
+        $soapBinary = $pdfSoap->output();
+        $merger = new Merger;
+        $merger->addRaw($monitoringBinary);
+        $merger->addRaw($soapBinary);
+        $mergedPdf = $merger->merge();
+        // --- 5. Simpan / stream hasilnya ---
+        $sanitizedNoRawat = str_replace('/', '_', $noRawat);
+        $pdfFilename = 'laporan-icu-' . $sanitizedNoRawat . '-' . $cycle->start_time->format('Ymd') . '.pdf';
+
+        return response($mergedPdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="' . $pdfFilename . '"');
     }
 
     /**
@@ -731,7 +761,7 @@ class ReportController extends Controller
             ['key' => 'cuff_pressure', 'label' => 'Cuff Pressure', 'group' => 'OBSERVASI'], // Pindah ke sini
             ['key' => 'pupil', 'label' => 'Pupil (Ki/Ka)', 'group' => 'OBSERVASI'],
             ['key' => 'gcs', 'label' => 'GCS', 'group' => 'OBSERVASI'],
-
+            ['key' => 'fall_risk_assessment', 'label' => 'Risiko Jatuh', 'group' => 'OBSERVASI'],
             // --- CAIRAN ---
             ['key' => 'cairan_masuk', 'label' => 'Cairan Masuk', 'group' => 'CAIRAN'],
             ['key' => 'cairan_keluar', 'label' => 'Cairan Keluar', 'group' => 'CAIRAN'],

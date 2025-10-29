@@ -6,6 +6,8 @@ use App\Models\KamarInap;
 use App\Models\MonitoringCycleIcu;
 use App\Models\MonitoringDevice;
 use App\Models\RegPeriksa;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -22,20 +24,26 @@ class Workspace extends Component
     // Properti untuk mengatur tab
     public string $activeTab = 'input';
     public array $staticState = [];
-
+    public Collection $dpjpDokters;
     public bool $showDeviceModal = false;
     /**
-     * Method 'mount' ini adalah inti dari halaman kerja.
-     * Dia memuat 1 cycle spesifik berdasarkan noRawat dan sheetDate.
+     *  memuat 1 cycle spesifik berdasarkan noRawat dan sheetDate.
      */
     public function mount(string $noRawat, ?string $sheetDate = null)
     {
         $this->noRawatDb = str_replace('_', '/', $noRawat);
 
-        $this->registrasi = RegPeriksa::with(['pasien', 'poliklinik'])
+        $this->registrasi = RegPeriksa::with([
+            'pasien',
+            'poliklinik',
+            'penjab',
+            'dpjpRanap.dokter'
+        ])
             ->where('no_rawat', $this->noRawatDb)
             ->firstOrFail();
-
+        $this->dpjpDokters = $this->registrasi->dpjpRanap->map(function ($dpjp) {
+            return $dpjp->dokter;
+        })->filter();
         // Ambil Nama Asal Ruangan
         $this->originatingWardName = $this->registrasi->poliklinik->nm_poli ?? 'N/A';
 
@@ -67,10 +75,9 @@ class Workspace extends Component
         $this->cycle = MonitoringCycleIcu::firstOrCreate(
             [
                 'no_rawat' => $this->noRawatDb,
-                'sheet_date' => $targetDate, // Tanggal RS sudah benar
+                'sheet_date' => $targetDate,
             ],
             [
-                'diagnosa' => $this->registrasi->penyakit->nm_penyakit ?? 'Belum ada diagnosa',
                 'asal_ruangan' => $this->originatingWardName,
                 'hari_rawat_ke' => now()->diffInDays($this->registrasi->tgl_registrasi) + 1,
                 'start_time' => $targetDateCarbon->copy()->startOfDay()->addHours($hospitalDayStartHour),
@@ -80,9 +87,9 @@ class Workspace extends Component
 
         // 4. Logic BC Kumulatif (jika baru dibuat)
         if ($this->cycle->wasRecentlyCreated) {
-            if ($this->registrasi->kd_dokter) {
-                $this->cycle->dpjpDokter()->attach($this->registrasi->kd_dokter);
-            }
+            // if ($this->registrasi->kd_dokter) {
+            //     $this->cycle->dpjpDokter()->attach($this->registrasi->kd_dokter);
+            // }
             $previousHospitalDate = \Carbon\Carbon::parse($targetDate)->subDay()->toDateString();
             $previousCycle = MonitoringCycleIcu::where('no_rawat', $this->noRawatDb)
                 ->where('sheet_date', $previousHospitalDate)
@@ -97,7 +104,7 @@ class Workspace extends Component
         }
 
         // 5. Load relasi yang dibutuhkan
-        $this->cycle->load('registrasi.pasien', 'dpjpDokter', 'devices');
+        $this->cycle->load('registrasi.pasien', 'devices');
         $this->initializeStaticState();
     }
 
@@ -157,12 +164,21 @@ class Workspace extends Component
     {
         $this->staticState = [
             'daily_iwl' => $this->cycle->daily_iwl,
+            'ventilator_notes' => $this->cycle->ventilator_notes,
             'terapi_obat_parenteral' => $this->cycle->terapi_obat_parenteral,
             'terapi_obat_enteral_lain' => $this->cycle->terapi_obat_enteral_lain,
             'pemeriksaan_penunjang' => $this->cycle->pemeriksaan_penunjang,
             'catatan_lain_lain' => $this->cycle->catatan_lain_lain,
-            'alat_terpasang' => $this->cycle->alat_terpasang,
-            'tube_terpasang' => $this->cycle->tube_terpasang,
+            'enteral_target_volume' => $this->cycle->enteral_target_volume,
+            'enteral_target_kalori' => $this->cycle->enteral_target_kalori,
+            'enteral_target_protein' => $this->cycle->enteral_target_protein,
+            'enteral_target_lemak' => $this->cycle->enteral_target_lemak,
+            'parenteral_target_volume' => $this->cycle->parenteral_target_volume,
+            'parenteral_target_kalori' => $this->cycle->parenteral_target_kalori,
+            'parenteral_target_protein' => $this->cycle->parenteral_target_protein,
+            'parenteral_target_lemak' => $this->cycle->parenteral_target_lemak,
+            'wound_notes' => $this->cycle->wound_notes,
+
         ];
     }
 
@@ -173,7 +189,18 @@ class Workspace extends Component
     {
         // Validasi
         $this->validate([
+            'staticState.ventilator_notes' => 'nullable|string',
             'staticState.*' => 'nullable|string',
+            'staticState.wound_notes' => 'nullable|string',
+            'staticState.enteral_target_volume' => 'nullable|numeric|min:0',
+            'staticState.enteral_target_kalori' => 'nullable|integer|min:0',
+            'staticState.enteral_target_protein' => 'nullable|integer|min:0',
+            'staticState.enteral_target_lemak' => 'nullable|integer|min:0',
+            'staticState.parenteral_target_volume' => 'nullable|numeric|min:0',
+            'staticState.parenteral_target_kalori' => 'nullable|integer|min:0',
+            'staticState.parenteral_target_protein' => 'nullable|integer|min:0',
+            'staticState.parenteral_target_lemak' => 'nullable|integer|min:0',
+
         ]);
 
         $this->cycle->update($this->staticState);

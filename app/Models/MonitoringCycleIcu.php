@@ -45,23 +45,6 @@ class MonitoringCycleIcu extends Model
     }
 
     /**
-     * Relasi many-to-many: Satu lembar cycle bisa memiliki BANYAK DPJP (Dokter).
-     */
-    public function dpjpDokter(): BelongsToMany
-    {
-        // Model Dokter,
-        // nama tabel pivot,
-        // foreign key tabel ini,
-        // foreign key tabel dokter
-        return $this->belongsToMany(
-            Dokter::class,
-            'dpjp_monitoring_cycle_icu',
-            'monitoring_cycle_icu_id',
-            'kd_dokter'
-        );
-    }
-
-    /**
      * Relasi one-to-one (inverse): Satu lembar cycle milik SATU data registrasi.
      */
     public function registrasi(): BelongsTo
@@ -78,4 +61,6 @@ class MonitoringCycleIcu extends Model
     {
         return $this->hasMany(MonitoringDevice::class, 'monitoring_cycle_icu_id');
     }
+
+
 }

@@ -1,18 +1,4 @@
 <div class="container mx-auto  space-y-6">
-    {{-- <div class="bg-white shadow rounded-lg p-2 flex space-x-2">
-        <button wire:click="$set('filterShift', 'all')" class="px-4 py-2 rounded-md text-sm font-medium {{ $filterShift == 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700' }}">
-    Semua (24 Jam)
-    </button>
-    <button wire:click="$set('filterShift', 'pagi')" class="px-4 py-2 rounded-md text-sm font-medium {{ $filterShift == 'pagi' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700' }}">
-        Shift Pagi (07-14)
-    </button>
-    <button wire:click="$set('filterShift', 'siang')" class="px-4 py-2 rounded-md text-sm font-medium {{ $filterShift == 'siang' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700' }}">
-        Shift Siang (14-21)
-    </button>
-    <button wire:click="$set('filterShift', 'malam')" class="px-4 py-2 rounded-md text-sm font-medium {{ $filterShift == 'malam' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700' }}">
-        Shift Malam (21-07)
-    </button>
-</div> --}}
 <div x-data="{
         chartData: JSON.parse($el.getAttribute('data-chart')),
         initChart() {
@@ -46,23 +32,10 @@
                             type: 'linear',
                             position: 'right',
                             title: { display: true, text: 'Suhu (°C)' },
-                            min: 34,
+                            min: 30,
                             suggestedMax: 42,
                             grid: { drawOnChartArea: false },
                         },
-                        yCvp: {
-                                 type: 'linear',
-                                 position: 'right',
-                                 title: { display: true, text: 'CVP' },
-                                 min: -5,
-                                 suggestedMax: 20,
-                                 grid: {
-                                     drawOnChartArea: false,
-                                 },
-                                 ticks: {
-                                     color: 'rgb(249, 115, 22)',
-                                 }
-                             }
                     }
                 }
             });
