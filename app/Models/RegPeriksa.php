@@ -85,4 +85,15 @@ class RegPeriksa extends Model
     }
 
 
+    /**
+     * Relasi many-to-one: Satu registrasi periksa milik SATU Penanggung Jawab (Penjab).
+     */
+    public function penjab(): BelongsTo
+    {
+        // Foreign key di tabel ini ('reg_periksa') adalah 'kd_pj'
+        // Primary key di tabel 'penjab' adalah 'kd_pj'
+        return $this->belongsTo(Penjab::class, 'kd_pj', 'kd_pj');
+    }
+
+
 }

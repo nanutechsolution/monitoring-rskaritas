@@ -29,5 +29,9 @@ Route::get('monitoring/{no_rawat}/report/{cycle_id}/report/pdf', [ReportControll
     ->middleware(['auth'])
     ->name('monitoring.report.pdf');
 
+Route::get('/icu/workspace/{noRawat}/{sheetDate}/print', [ReportController::class, 'printPdf'])
+    ->middleware('auth')
+    ->name('monitoring.icu.print');
+
 
 require __DIR__ . '/auth.php';

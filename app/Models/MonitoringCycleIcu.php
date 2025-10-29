@@ -69,4 +69,13 @@ class MonitoringCycleIcu extends Model
         // Memanggil model RegPeriksa, terhubung via foreign key 'no_rawat'
         return $this->belongsTo(RegPeriksa::class, 'no_rawat', 'no_rawat');
     }
+
+
+    /**
+     * Relasi one-to-many: Satu lembar cycle bisa punya BANYAK alat/tube terpasang.
+     */
+    public function devices(): HasMany
+    {
+        return $this->hasMany(MonitoringDevice::class, 'monitoring_cycle_icu_id');
+    }
 }

@@ -1,7 +1,6 @@
 <div class="max-w-7xl  mx-auto p-4 sm:p-6 space-y-6">
     <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 border-l-4 border-blue-600">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-
             <div>
                 <h2 class="text-xl sm:text-3xl font-bold text-gray-800 leading-snug">
                     {{ $registrasi->pasien->nm_pasien }}
@@ -22,7 +21,12 @@
                 <a href="{{ route('monitoring.icu.history', ['noRawat' => str_replace('/', '_', $registrasi->no_rawat)]) }}" wire:navigate class="text-xs sm:text-sm text-gray-600 hover:text-blue-600 mb-2 block"> {{-- Tambah mb-2 block --}}
                     &larr; Kembali ke Riwayat Pasien
                 </a>
-
+                <a href="{{ route('monitoring.icu.print', [
+                        'noRawat' => str_replace('/', '_', $registrasi->no_rawat),
+                        'sheetDate' => $cycle->sheet_date->toDateString()
+                    ]) }}" target="_blank" {{-- Buka di tab baru --}} class="inline-block mt-2 ml-2 bg-gray-600 text-white px-3 py-1 rounded-md shadow text-xs font-medium hover:bg-gray-700">
+                    Cetak PDF
+                </a>
                 <div class="mt-1 text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1"> {{-- Atur spacing --}}
                     <p><span class="font-semibold inline-block w-24">Instalasi</span>:
                         {{ $cycle->registrasi->kamarInap->sortByDesc('tgl_masuk')->first()?->kamar?->bangsal?->nm_bangsal ?? 'N/A' }}
@@ -70,48 +74,54 @@
                     </div>
 
                     <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                        {{-- Textarea Terapi Parenteral --}}
                         <div>
                             <label for="terapi_parenteral" class="block text-sm font-medium text-gray-700">Terapi Obat (Parenteral)</label>
                             <textarea wire:model.defer="staticState.terapi_obat_parenteral" id="terapi_parenteral" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                             @error('staticState.terapi_obat_parenteral') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
-
-                        {{-- Textarea Terapi Enteral --}}
                         <div>
                             <label for="terapi_enteral" class="block text-sm font-medium text-gray-700">Terapi Obat (Enteral / Lain-lain)</label>
                             <textarea wire:model.defer="staticState.terapi_obat_enteral_lain" id="terapi_enteral" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                             @error('staticState.terapi_obat_enteral_lain') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
-
-                        {{-- Textarea Pemeriksaan Penunjang --}}
                         <div>
                             <label for="pemeriksaan_penunjang" class="block text-sm font-medium text-gray-700">Pemeriksaan Penunjang (Lab, EKG, dll)</label>
                             <textarea wire:model.defer="staticState.pemeriksaan_penunjang" id="pemeriksaan_penunjang" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                             @error('staticState.pemeriksaan_penunjang') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
-
-                        {{-- Textarea Catatan Lain-lain --}}
                         <div>
                             <label for="catatan_lain_lain" class="block text-sm font-medium text-gray-700">Catatan Lain-lain</label>
                             <textarea wire:model.defer="staticState.catatan_lain_lain" id="catatan_lain_lain" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                             @error('staticState.catatan_lain_lain') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
-
                         <hr>
-
-                        {{-- Textarea Alat Terpasang --}}
-                        <div>
-                            <label for="alat_terpasang" class="block text-sm font-medium text-gray-700">ALAT (IV Line, Arteri, CVP, dll)</label>
-                            <textarea wire:model.defer="staticState.alat_terpasang" id="alat_terpasang" rows="4" placeholder="cth: IV Line, Tangan Kiri, 27/10/2025" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
-                            @error('staticState.alat_terpasang') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                        </div>
-
-                        {{-- Textarea Tube Terpasang --}}
-                        <div>
-                            <label for="tube_terpasang" class="block text-sm font-medium text-gray-700">TUBE (ET, NGT, Kateter, dll)</label>
-                            <textarea wire:model.defer="staticState.tube_terpasang" id="tube_terpasang" rows="4" placeholder="cth: Urine Kateter, 27/10/2025, No. 16" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
-                            @error('staticState.tube_terpasang') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        <div class="pt-2">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-md font-semibold text-gray-800">Alat Terpasang & Tube</h4>
+                                <button type="button" wire:click="$set('showDeviceModal', true)" class="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600">
+                                    + Tambah
+                                </button>
+                            </div>
+                            <div class="space-y-3 pl-4 border-l-2 border-gray-200">
+                                @forelse ($cycle->devices as $device)
+                                <div class="text-sm border-b pb-2">
+                                    <p class="font-semibold text-gray-900">
+                                        {{ $device->device_name }}
+                                        <span class="text-xs font-normal text-gray-500">({{ $device->device_category }})</span>
+                                    </p>
+                                    <div class="grid grid-cols-3 gap-x-4 text-xs text-gray-600 mt-1">
+                                        <span><span class="font-medium">Ukuran:</span> {{ $device->ukuran ?: '-' }}</span>
+                                        <span><span class="font-medium">Lokasi:</span> {{ $device->lokasi ?: '-' }}</span>
+                                        <span><span class="font-medium">Tgl Pasang:</span> {{ $device->tanggal_pasang ? $device->tanggal_pasang->format('d/m/Y') : '-' }}</span>
+                                    </div>
+                                    {{-- Tombol Edit/Hapus bisa ditambahkan di sini --}}
+                                    {{-- <button wire:click="editDevice({{ $device->id }})">Edit</button> --}}
+                                    {{-- <button wire:click="deleteDevice({{ $device->id }})">Hapus</button> --}}
+                                </div>
+                                @empty
+                                <p class="text-sm text-gray-500 py-2">Belum ada alat/tube terpasang yang dicatat.</p>
+                                @endforelse
+                            </div>
                         </div>
                     </div>
 
@@ -230,8 +240,10 @@
                     </div>
                 </div>
             </div>
-
             @endif
         </div>
     </div>
+    @if($showDeviceModal)
+    <livewire:icu.device-modal :cycleId="$cycle->id" wire:key="'device-modal-'.$cycle->id" />
+    @endif
 </div>

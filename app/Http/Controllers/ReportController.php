@@ -5,15 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\MonitoringCycle;
 use App\Models\Medication;
 use App\Models\BloodGasResult;
+use App\Models\KamarInap;
+use App\Models\MonitoringCycleIcu;
 use App\Models\PippAssessment;
 use App\Models\MonitoringRecord;
+use App\Models\RegPeriksa;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use iio\libmergepdf\Merger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class ReportController extends Controller // Ganti nama controller
+class ReportController extends Controller
 {
     /**
      * Method untuk generate PDF report.
@@ -609,6 +612,122 @@ class ReportController extends Controller // Ganti nama controller
         return response($mergedPdf)
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="' . $pdfFilename . '"');
+    }
+
+
+    /**
+     * Generate PDF report for a specific ICU monitoring cycle.
+     */
+    public function printPdf(string $noRawat, string $sheetDate)
+    {
+        $noRawatDb = str_replace('_', '/', $noRawat);
+
+        // 1. Load Data Cycle (Mirip logic mount() di Workspace)
+        $cycle = MonitoringCycleIcu::where('no_rawat', $noRawatDb)
+            ->where('sheet_date', $sheetDate)
+            ->with(relations: [
+                'registrasi.pasien',
+                'dpjpDokter',
+                'records' => function ($query) {
+                    $query->with('inputter:nik,nama')->orderBy('observation_time', 'asc');
+                }
+            ])
+            ->firstOrFail();
+
+        // 2. Load Data Tambahan (Ruangan, Asal) - Mirip logic mount()
+        $registrasi = RegPeriksa::with('poliklinik')
+            ->where('no_rawat', $noRawatDb)->firstOrFail();
+        $originatingWardName = $registrasi->poliklinik->nm_poli ?? 'N/A';
+        $currentKamarInap = KamarInap::where('no_rawat', $noRawatDb)
+            ->orderBy('tgl_masuk', 'desc')->orderBy('jam_masuk', 'desc')
+            ->with(['kamar.bangsal'])->first();
+        $currentRoomName = 'N/A';
+        $currentInstallasiName = 'N/A';
+        if ($currentKamarInap && $currentKamarInap->kamar) {
+            $currentRoomName = ($currentKamarInap->kamar->bangsal->nm_bangsal ?? '')
+                . ' / ' . ($currentKamarInap->kamar->kd_kamar ?? '');
+            $currentInstallasiName = $currentKamarInap->kamar->bangsal->nm_bangsal ?? 'N/A';
+        }
+        $uniqueParenteralFluids = $cycle->records
+            ->where('is_parenteral', true)
+            ->whereNotNull('cairan_masuk_volume')
+            ->pluck('cairan_masuk_jenis')
+            ->unique()
+            ->sort();
+
+        $uniqueEnteralFluids = $cycle->records
+            ->where('is_enteral', true)
+            ->whereNotNull('cairan_masuk_volume')
+            ->pluck('cairan_masuk_jenis')
+            ->unique()
+            ->sort();
+        // 3. Siapkan daftar Parameter (Ambil dari Komponen atau definisikan ulang)
+        // Cara 1: Instansiasi komponen (agak kurang ideal)
+        // $observationTableComponent = new \App\Livewire\Icu\ObservationTable($cycle);
+        // $allParameters = $observationTableComponent->parameters();
+        // Cara 2: Definisikan ulang di sini (lebih aman)
+        $allParameters = $this->getReportParameters();
+        $setting = DB::table('setting')->first();
+        // 4. Load View Cetak dengan Data
+        $pdf = Pdf::loadView('pdf.icu.print-report', [
+            'cycle' => $cycle,
+            'registrasi' => $registrasi,
+            'allParameters' => $allParameters,
+            'currentInstallasiName' => $currentInstallasiName,
+            'currentRoomName' => $currentRoomName,
+            'originatingWardName' => $originatingWardName,
+            'allRecords' => $cycle->records,
+            'setting' => $setting,
+            'uniqueParenteralFluids' => $uniqueParenteralFluids,
+            'uniqueEnteralFluids' => $uniqueEnteralFluids,
+        ]);
+        // 5. Atur Opsi PDF (Landscape, A4)
+        $pdf->setPaper('a4', 'landscape');
+
+        // 6. Tampilkan PDF di Browser (atau download)
+        // return $pdf->download('laporan-icu-'.$noRawatDb.'-'.$sheetDate.'.pdf'); // Opsi Download
+        return $pdf->stream('laporan-icu-' . $noRawat . '-' . $sheetDate . '.pdf'); // Opsi Tampil Langsung
+    }
+
+    /**
+     * Helper: Daftar Parameter untuk Laporan Cetak.
+     * (Salin dari ObservationTable.php atau definisikan sesuai kebutuhan cetak)
+     */
+    private function getReportParameters(): array
+    {
+        return [
+            ['key' => 'suhu', 'label' => 'Suhu (°C)', 'group' => 'HEMODINAMIK'],
+            ['key' => 'nadi', 'label' => 'Nadi', 'group' => 'HEMODINAMIK'],
+            ['key' => 'tensi', 'label' => 'Tensi', 'group' => 'HEMODINAMIK'],
+            ['key' => 'map', 'label' => 'MAP', 'group' => 'HEMODINAMIK'],// --- RESPIRASI ---
+            ['key' => 'ventilator_mode', 'label' => 'Mode Ventilator', 'group' => 'RESPIRASI'], // Pindah ke atas grup
+            ['key' => 'ventilator_pinsp', 'label' => 'Vent. P Insp', 'group' => 'RESPIRASI'],
+            ['key' => 'ventilator_peep', 'label' => 'Vent. PEEP', 'group' => 'RESPIRASI'],
+            ['key' => 'rr', 'label' => 'RR (x/mnt)', 'group' => 'RESPIRASI'],
+            ['key' => 'ventilator_f', 'label' => 'Vent. F (Freq)', 'group' => 'RESPIRASI'], // Dekatkan RR & Freq
+            ['key' => 'ventilator_tv', 'label' => 'Vent. TV (Vol)', 'group' => 'RESPIRASI'],
+            ['key' => 'ventilator_fio2', 'label' => 'Vent. FiO2 (%)', 'group' => 'RESPIRASI'],
+            ['key' => 'ventilator_ie_ratio', 'label' => 'Vent. I:E Ratio', 'group' => 'RESPIRASI'],
+            // cvp, spo2, cuff_pressure dipindah ke OBSERVASI
+
+            // --- OBSERVASI ---
+            ['key' => 'kesadaran', 'label' => 'Kesadaran', 'group' => 'OBSERVASI'],
+            ['key' => 'irama_ekg', 'label' => 'Irama EKG', 'group' => 'OBSERVASI'], // Pindah ke sini
+            ['key' => 'nyeri', 'label' => 'Skala Nyeri', 'group' => 'OBSERVASI'], // Ganti label
+            ['key' => 'cvp', 'label' => 'CVP', 'group' => 'OBSERVASI'], // Pindah ke sini
+            ['key' => 'spo2', 'label' => 'SpO2 (%)', 'group' => 'OBSERVASI'], // Pindah ke sini
+            ['key' => 'cuff_pressure', 'label' => 'Cuff Pressure', 'group' => 'OBSERVASI'], // Pindah ke sini
+            ['key' => 'pupil', 'label' => 'Pupil (Ki/Ka)', 'group' => 'OBSERVASI'],
+            ['key' => 'gcs', 'label' => 'GCS', 'group' => 'OBSERVASI'],
+
+            // --- CAIRAN ---
+            ['key' => 'cairan_masuk', 'label' => 'Cairan Masuk', 'group' => 'CAIRAN'],
+            ['key' => 'cairan_keluar', 'label' => 'Cairan Keluar', 'group' => 'CAIRAN'],
+
+            // --- CATATAN ---
+            ['key' => 'clinical_note', 'label' => 'Catatan Klinis/Masalah', 'group' => 'CATATAN'],
+            ['key' => 'medication_administration', 'label' => 'Tindakan/Obat', 'group' => 'CATATAN'],
+        ];
     }
 
     /**

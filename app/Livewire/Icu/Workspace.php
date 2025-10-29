@@ -4,9 +4,11 @@ namespace App\Livewire\Icu;
 
 use App\Models\KamarInap;
 use App\Models\MonitoringCycleIcu;
+use App\Models\MonitoringDevice;
 use App\Models\RegPeriksa;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 
 class Workspace extends Component
 {
@@ -20,6 +22,8 @@ class Workspace extends Component
     // Properti untuk mengatur tab
     public string $activeTab = 'input';
     public array $staticState = [];
+
+    public bool $showDeviceModal = false;
     /**
      * Method 'mount' ini adalah inti dari halaman kerja.
      * Dia memuat 1 cycle spesifik berdasarkan noRawat dan sheetDate.
@@ -93,8 +97,58 @@ class Workspace extends Component
         }
 
         // 5. Load relasi yang dibutuhkan
-        $this->cycle->load('registrasi.pasien', 'dpjpDokter');
+        $this->cycle->load('registrasi.pasien', 'dpjpDokter', 'devices');
         $this->initializeStaticState();
+    }
+
+    #[On('close-modal')]
+    public function closeModalHandler()
+    {
+        $this->showDeviceModal = false;
+    }
+
+    #[On('device-added')]
+    public function refreshDevices()
+    {
+        // Muat ulang relasi devices agar daftar di Tab Statis terupdate
+        $this->cycle->load('devices');
+    }
+    // --- DAFTAR ALAT/TUBE STANDAR ---
+    public function getDeviceOptions(): array
+    {
+        return [
+            'ALAT' => ['IV Line', 'CVC', 'Arteri Line', 'Swanz Ganz', 'Lainnya (Alat)'],
+            'TUBE' => ['NGT', 'Urin Kateter', 'WSD', 'Drain', 'Lainnya (Tube)'], // ETT/TT dicatat di TTV/Obs
+        ];
+    }
+
+    /**
+     * Menerima data dari modal Alpine dan menyimpan alat/tube baru.
+     */
+    public function saveNewDevice(array $deviceData)
+    {
+        // 1. Validasi data dari Alpine
+        $validatedData = Validator::make($deviceData, [
+            'device_category' => 'required|in:ALAT,TUBE',
+            'device_name' => 'required|string|max:100',
+            'ukuran' => 'nullable|string|max:20',
+            'lokasi' => 'nullable|string|max:50',
+            'tanggal_pasang' => 'nullable|date_format:Y-m-d',
+        ])->validate(); // Otomatis throw error jika gagal
+
+        // 2. Tambahkan ID cycle dan simpan
+        $validatedData['monitoring_cycle_icu_id'] = $this->cycle->id;
+        MonitoringDevice::create($validatedData);
+
+        // 3. Muat ulang relasi devices agar daftar di view terupdate
+        $this->cycle->load('devices');
+
+        // 4. Kirim notifikasi sukses
+        $this->dispatch('notification-sent', ['message' => 'Alat/Tube berhasil ditambahkan.', 'type' => 'success']);
+
+        // 5. (Opsional) Kirim event kembali ke Alpine untuk menutup modal
+        // $this->dispatch('device-saved-close-modal');
+        // Atau biarkan Alpine menutupnya sendiri
     }
     /**
      * Mengisi form data statis dengan nilai dari database.
