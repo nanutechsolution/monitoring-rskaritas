@@ -12,27 +12,24 @@ class KhanzaUserProvider extends EloquentUserProvider
     /**
      * Fungsi helper untuk membuat instance KhanzaUser dari data DB
      */
-    private function createKhanzaUserInstance($dbRow, $plainUsername,  $isAdmin=false)
+    private function createKhanzaUserInstance($dbRow, $plainUsername, $isAdmin = false)
     {
         $user = new KhanzaUser();
-
-        // Salin SEMUA atribut (seperti 'penyakit', 'dokter', 'petugas', dll)
         $attributes = (array) $dbRow;
-
-        // Hapus password terenkripsi. Kita tidak perlu menyimpannya di session.
         unset($attributes['password']);
         unset($attributes['passworde']);
-
-        // Set 'id_user' ke username plain-text yang dipakai login
         $attributes['id_user'] = $plainUsername;
         $attributes['is_super_admin'] = $isAdmin;
-
+        if ($isAdmin) {
+            $attributes['nik'] = null;
+        } else {
+            $attributes['nik'] = $plainUsername;
+        }
         $user->setRawAttributes($attributes);
-        $user->exists = true;
 
+        $user->exists = true;
         return $user;
     }
-
     /**
      * Mengambil user berdasarkan kredensial (saat login)
      */
@@ -40,29 +37,23 @@ class KhanzaUserProvider extends EloquentUserProvider
     {
         $username = $credentials['id_user'] ?? null;
         $password = $credentials['password'] ?? null;
-
         if (!$username || !$password) {
             return null;
         }
-
         // 1. Cek admin
         $adminRow = DB::table('admin')
             ->whereRaw("usere = AES_ENCRYPT(?, 'nur') AND passworde = AES_ENCRYPT(?, 'windi')", [$username, $password])
             ->first();
-
         if ($adminRow) {
             return $this->createKhanzaUserInstance($adminRow, $username, true);
         }
-
         // 2. Cek user
         $userRow = DB::table('user')
             ->whereRaw("id_user = AES_ENCRYPT(?, 'nur') AND password = AES_ENCRYPT(?, 'windi')", [$username, $password])
             ->first();
-
         if ($userRow) {
             return $this->createKhanzaUserInstance($userRow, $username, false);
         }
-
         return null;
     }
 
@@ -79,7 +70,7 @@ class KhanzaUserProvider extends EloquentUserProvider
             ->first();
 
         if ($adminRow) {
-            return $this->createKhanzaUserInstance($adminRow, $identifier,true);
+            return $this->createKhanzaUserInstance($adminRow, $identifier, true);
         }
 
         // 2. Cek user

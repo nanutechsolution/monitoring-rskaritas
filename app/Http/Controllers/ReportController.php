@@ -6,16 +6,12 @@ use App\Models\MonitoringCycle;
 use App\Models\Medication;
 use App\Models\BloodGasResult;
 use App\Models\PippAssessment;
-use App\Models\PatientDevice; // Pastikan semua model di-import
 use App\Models\MonitoringRecord;
-use App\Models\PemeriksaanRanap;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use iio\libmergepdf\Merger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Request; // Import Request jika perlu
-use Illuminate\Http\Response; // Import Response
 
 class ReportController extends Controller // Ganti nama controller
 {

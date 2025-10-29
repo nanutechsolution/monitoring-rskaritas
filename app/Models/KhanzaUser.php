@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Cache;
 
 // PENTING:
 // Kita implementasi kontrak 'Authenticatable'
@@ -24,6 +25,34 @@ class KhanzaUser extends Model implements Authenticatable
     public function pegawai()
     {
         return $this->hasOne(Pegawai::class, 'nik', 'id_user');
+    }
+
+    /**
+     * Cek apakah user ini adalah seorang Dokter.
+     * Menggunakan pengecekan langsung ke tabel 'dokter'.
+     *
+     * @return bool
+     */
+    public function isDokter(): bool
+    {
+        // Identifier unik user (NIK/Username dari Khanza)
+        $identifier = $this->getAuthIdentifier();
+
+        // Jika identifier kosong, pasti bukan dokter
+        if (empty($identifier)) {
+            return false;
+        }
+
+        // --- Gunakan Cache agar tidak query ke DB terus-menerus ---
+        $cacheKey = 'is_dokter_' . $identifier;
+
+        // Cek di cache dulu selama 1 jam (3600 detik)
+        return Cache::remember($cacheKey, 3600, function () use ($identifier) {
+            // Jika tidak ada di cache, cek ke database
+            // Cek apakah identifier ini ada di kolom kd_dokter pada tabel dokter
+            return Dokter::where('kd_dokter', $identifier)->exists();
+        });
+        // --- Akhir penggunaan Cache ---
     }
 
     /**
@@ -72,6 +101,15 @@ class KhanzaUser extends Model implements Authenticatable
     {
         // Kita tidak menyimpan password plain-text, jadi kembalikan hash palsu
         return 'dummy-hash-khanza-tidak-pakai-ini';
+    }
+    /**
+     * Cek apakah user ini adalah Admin (berdasarkan flag dari provider).
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        // Langsung cek nilai properti 'is_super_admin' yang di-set oleh provider
+        return (bool) ($this->is_super_admin ?? false);
     }
 
     /**

@@ -1,8 +1,4 @@
 <div class="container mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
-
-    {{-- ============================= --}}
-    {{-- HEADER PASIEN (Sangat Ringkas & Responsif) --}}
-    {{-- ============================= --}}
     <div class="bg-white shadow-sm rounded-lg border-l-4 border-blue-600 px-3 py-3 sm:px-6 sm:py-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3">
             <div class="leading-tight">
@@ -20,17 +16,12 @@
             </a>
         </div>
     </div>
-
-    {{-- ============================= --}}
-    {{-- AKSI HARI INI --}}
-    {{-- ============================= --}}
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 sm:p-5 text-center">
         <h3 class="text-sm sm:text-lg font-semibold text-gray-800 mb-1 sm:mb-2">Lembar Observasi Hari Ini</h3>
         <p class="text-gray-500 text-xs sm:text-base mb-4 sm:mb-5">
             {{ \Carbon\Carbon::parse($todayDate)->isoFormat('dddd, D MMMM Y') }} —
             Jika belum ada, sistem akan membuatkan otomatis.
         </p>
-
         <a href="{{ route('monitoring.icu.workspace', [
                 'noRawat' => str_replace('/', '_', $registrasi->no_rawat),
                 'sheetDate' => $todayDate
@@ -41,10 +32,6 @@
             Buka Hari Ini
         </a>
     </div>
-
-    {{-- ============================= --}}
-    {{-- RIWAYAT MONITORING --}}
-    {{-- ============================= --}}
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div class="p-3 sm:p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <h3 class="text-sm sm:text-lg font-semibold text-gray-800">Riwayat Lampau</h3>

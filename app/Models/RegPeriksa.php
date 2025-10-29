@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RegPeriksa extends Model
@@ -49,6 +50,16 @@ class RegPeriksa extends Model
 
 
     /**
+     * Relasi many-to-one: Satu registrasi periksa milik SATU poliklinik.
+     */
+    public function poliklinik(): BelongsTo
+    {
+        // Foreign key di tabel ini ('reg_periksa') adalah 'kd_poli'
+        // Primary key di tabel 'poliklinik' adalah 'kd_poli'
+        return $this->belongsTo(Poliklinik::class, 'kd_poli', 'kd_poli');
+    }
+
+    /**
      * Relasi one-to-many: Satu registrasi bisa punya BANYAK lembar cycle ICU.
      */
     public function monitoringCyclesIcu(): HasMany
@@ -63,4 +74,15 @@ class RegPeriksa extends Model
     {
         return $this->belongsTo(Pasien::class, 'no_rkm_medis', 'no_rkm_medis');
     }
+
+    /**
+     * Relasi one-to-many: Satu registrasi bisa punya BANYAK record kamar inap (riwayat).
+     */
+    public function kamarInap(): HasMany // <-- Tambahkan relasi ini jika perlu
+    {
+        // Foreign key di 'kamar_inap' adalah 'no_rawat'
+        return $this->hasMany(KamarInap::class, 'no_rawat', 'no_rawat');
+    }
+
+
 }

@@ -2,12 +2,16 @@
 
 namespace App\Livewire\Icu;
 
+use App\Models\KamarInap;
 use App\Models\MonitoringCycleIcu;
 use App\Models\RegPeriksa;
 use Livewire\Component;
+use Livewire\Attributes\Computed;
 
 class Workspace extends Component
 {
+    public ?string $currentRoomName = null;
+    public ?string $originatingWardName = null;
     public MonitoringCycleIcu $cycle;
     public RegPeriksa $registrasi;
 
@@ -24,26 +28,49 @@ class Workspace extends Component
     {
         $this->noRawatDb = str_replace('_', '/', $noRawat);
 
-        // 1. Load data registrasi & pasien
-        $this->registrasi = RegPeriksa::with('pasien')
+        $this->registrasi = RegPeriksa::with(['pasien', 'poliklinik'])
             ->where('no_rawat', $this->noRawatDb)
             ->firstOrFail();
 
-        // 2. Tentukan tanggal yang akan dibuka
-        $targetDate = $sheetDate ? \Carbon\Carbon::parse($sheetDate)->toDateString() : $this->getTodayHospitalDate();
+        // Ambil Nama Asal Ruangan
+        $this->originatingWardName = $this->registrasi->poliklinik->nm_poli ?? 'N/A';
 
-        // 3. Logic 'firstOrCreate' yang sudah kita sempurnakan
+        // --- TAMBAHKAN LOGIKA CARI KAMAR SAAT INI ---
+        // Cari record kamar_inap terbaru
+        $currentKamarInap = KamarInap::where('no_rawat', $this->noRawatDb)
+            ->orderBy('tgl_masuk', 'desc')
+            ->orderBy('jam_masuk', 'desc')
+            ->with(['kamar.bangsal']) // Asumsi relasi KamarInap->kamar->bangsal
+            ->first();
+
+        if ($currentKamarInap && $currentKamarInap->kamar) {
+            // Gabungkan nama bangsal dan nomor kamar (sesuaikan nama kolom)
+            $this->currentRoomName = ($currentKamarInap->kamar->bangsal->nm_bangsal ?? '')
+                . ' / ' . ($currentKamarInap->kamar->kd_kamar ?? '');
+        } else {
+            $this->currentRoomName = 'N/A';
+        }
+        $currentTime = now();
+        $hospitalDayStartHour = 6;
+        if ($currentTime->hour < $hospitalDayStartHour) {
+            $hospitalDate = $currentTime->subDay()->toDateString();
+        } else {
+            $hospitalDate = $currentTime->toDateString();
+        }
+        $targetDate = $sheetDate ? \Carbon\Carbon::parse($sheetDate)->toDateString() : $hospitalDate; // Gunakan $hospitalDate jika $sheetDate null
+        $targetDateCarbon = \Carbon\Carbon::parse($targetDate);
+
         $this->cycle = MonitoringCycleIcu::firstOrCreate(
             [
                 'no_rawat' => $this->noRawatDb,
-                'sheet_date' => $targetDate,
+                'sheet_date' => $targetDate, // Tanggal RS sudah benar
             ],
             [
                 'diagnosa' => $this->registrasi->penyakit->nm_penyakit ?? 'Belum ada diagnosa',
-                'asal_ruangan' => $this->registrasi->poliklinik->nm_poli ?? 'N/A',
+                'asal_ruangan' => $this->originatingWardName,
                 'hari_rawat_ke' => now()->diffInDays($this->registrasi->tgl_registrasi) + 1,
-                'start_time' => now()->startOfDay()->addHours(7), // Ganti hari jam 7
-                'end_time' => now()->startOfDay()->addHours(7)->addDay(),
+                'start_time' => $targetDateCarbon->copy()->startOfDay()->addHours($hospitalDayStartHour),
+                'end_time' => $targetDateCarbon->copy()->startOfDay()->addHours($hospitalDayStartHour)->addDay(),
             ]
         );
 
@@ -52,7 +79,6 @@ class Workspace extends Component
             if ($this->registrasi->kd_dokter) {
                 $this->cycle->dpjpDokter()->attach($this->registrasi->kd_dokter);
             }
-
             $previousHospitalDate = \Carbon\Carbon::parse($targetDate)->subDay()->toDateString();
             $previousCycle = MonitoringCycleIcu::where('no_rawat', $this->noRawatDb)
                 ->where('sheet_date', $previousHospitalDate)
@@ -83,8 +109,6 @@ class Workspace extends Component
             'catatan_lain_lain' => $this->cycle->catatan_lain_lain,
             'alat_terpasang' => $this->cycle->alat_terpasang,
             'tube_terpasang' => $this->cycle->tube_terpasang,
-            'masalah_keperawatan' => $this->cycle->masalah_keperawatan,
-            'tindakan_obat' => $this->cycle->tindakan_obat,
         ];
     }
 
@@ -95,19 +119,11 @@ class Workspace extends Component
     {
         // Validasi
         $this->validate([
-            'staticState.daily_iwl' => 'nullable|numeric|min:0',
-            'staticState.*' => 'nullable|string', // Validasi umum untuk textarea
+            'staticState.*' => 'nullable|string',
         ]);
 
-        // Update data cycle
         $this->cycle->update($this->staticState);
-
-        // Kirim notifikasi sukses
         session()->flash('message-statis', 'Data statis berhasil diperbarui.');
-
-        // Update kalkulasi balance di Tab Input (jika IWL berubah)
-        // Kita perlu cara untuk memberitahu komponen MonitorSheet
-        // Dispatch event untuk didengarkan oleh MonitorSheet
         $this->dispatch('static-data-updated');
     }
     /**
@@ -123,6 +139,22 @@ class Workspace extends Component
         return $currentTime->toDateString();
     }
 
+
+    /**
+     * [Computed Property]
+     * Mengambil daftar log inputan real-time untuk ditampilkan di Tab Log.
+     */
+    #[Computed] // Biarkan persist: false agar selalu update
+    public function logRecords()
+    {
+        // Ambil 100 record terakhir, diurutkan dari yang terbaru
+        // Pastikan relasi 'inputter' di-load
+        return $this->cycle->records()
+            ->with('inputter:nik,nama')
+            ->orderBy('observation_time', 'desc')
+            ->take(100)
+            ->get();
+    }
     public function render()
     {
         return view('livewire.icu.workspace')->layout('layouts.app');
