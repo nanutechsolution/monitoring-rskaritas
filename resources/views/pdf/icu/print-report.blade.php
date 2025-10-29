@@ -3,96 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <title>Laporan ICU - {{ $registrasi->pasien->nm_pasien }} - {{ $cycle->sheet_date->format('d-m-Y') }}</title>
-    {{-- CSS Inline untuk PDF --}}
+    {{-- CSS Inline untuk PDF A3 Landscape --}}
     <style>
         @page {
-            margin: 15px;
+            margin: 15px 20px;
+            size: A3 landscape;
         }
 
-        /* Atur margin halaman */
+        /* Atur margin & ukuran A3 Landscape */
         body {
             font-family: 'Helvetica', sans-serif;
-            font-size: 8px;
-            line-height: 1.2;
+            font-size: 9px;
+            line-height: 1.3;
         }
 
+        /* Font sedikit lebih besar untuk A3 */
         table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        th,
-        td {
+        /* Terapkan border HANYA pada tabel observasi dan device */
+        .observation-table th,
+        .observation-table td,
+        .device-table th,
+        .device-table td {
             border: 1px solid #ccc;
-            padding: 2px 3px;
-            text-align: center;
-            vertical-align: top;
+            padding: 3px 4px;
+            /* Sedikit lebih lega */
         }
 
-        th {
+        /* Style untuk TH default dan TH di tabel spesifik */
+        th,
+        .observation-table th,
+        .device-table th {
             background-color: #f2f2f2;
             font-weight: bold;
         }
 
-
-
         .header-rs-table td {
-            padding: 1px 0;
-            font-size: 7px;
-        }
-
-        /* Style khusus header RS */
-        .header-pasien-table td {
             padding: 1px 0;
             font-size: 8px;
         }
 
-        .section-title {
+        .header-pasien-table td {
+            padding: 1px 0;
             font-size: 9px;
+        }
+
+        /* Style Header Gabungan */
+        .header-container {
+            border-bottom: 1.5px solid black;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        .header-table {
+            width: 100%;
+        }
+
+        .header-table td {
+            vertical-align: top;
+            padding: 0 5px;
+            font-size: 9px;
+        }
+
+        .logo-cell {
+            width: 60px;
+            text-align: center;
+            padding-right: 10px;
+        }
+
+        .logo-cell img {
+            height: 50px;
+        }
+
+        .instansi-cell {
+            text-align: center;
+        }
+
+        .instansi-cell h1 {
+            font-size: 14px;
             font-weight: bold;
-            margin-top: 4px;
-            margin-bottom: 1px;
+            margin: 0;
+        }
+
+        .instansi-cell p {
+            font-size: 9px;
+            margin: 1px 0;
+        }
+
+        .pasien-info-table {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .pasien-info-table td {
             text-align: left;
-            background-color: #f8f8f8;
-            padding: 1px 3px;
+            padding: 1px 0;
+            font-size: 9px;
+            vertical-align: top;
+        }
+
+        .label-col {
+            width: 85px;
+            font-weight: normal;
+        }
+
+        /* Layout Kolom Kiri & Kanan */
+        .left-col {
+            width: 30%;
+            vertical-align: top;
+            padding-right: 8px;
+        }
+
+        .right-col {
+            width: 70%;
+            vertical-align: top;
+            padding-left: 8px;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 5px;
+            margin-bottom: 2px;
+            text-align: left;
+            background-color: #f0f0f0;
+            padding: 2px 4px;
             border: 1px solid #ddd;
         }
 
-        .left-col {
-            width: 28%;
-            vertical-align: top;
-            padding-right: 5px;
-        }
-
-        /* Lebar Kolom Kiri */
-        .right-col {
-            width: 72%;
-            vertical-align: top;
-            padding-left: 5px;
-        }
-
-        /* Lebar Kolom Kanan */
+        /* Style Tabel Observasi */
         .param-label {
             text-align: left;
             font-weight: bold;
-            width: 90px;
+            width: 100px;
+            background-color: #f9f9f9;
+            font-size: 8px;
         }
 
         .group-label {
             background-color: #e2e8f0;
             font-weight: bold;
             text-align: left;
-            font-size: 9px;
+            font-size: 10px;
+            padding: 3px 4px;
         }
 
         .time-header {
-            font-size: 7px;
-            width: 35px;
-            /* Lebar kolom waktu */
+            font-size: 8px;
+            width: 40px;
         }
 
         .author-header {
-            font-size: 6px;
+            font-size: 7px;
             color: #555;
             font-weight: normal;
         }
@@ -106,39 +171,23 @@
             word-break: break-word;
         }
 
+        /* Style Lainnya */
         .balance-box table td {
-            font-size: 8px;
+            font-size: 9px;
             padding: 1px 2px;
         }
 
         .balance-box th {
-            font-size: 8px;
+            font-size: 9px;
             text-align: left;
             padding: 1px 2px;
-            width: 70px;
-        }
-
-        /* Terapkan border HANYA pada tabel observasi dan device */
-        .observation-table th,
-        .observation-table td,
-        .device-table th,
-        .device-table td {
-            border: 1px solid #ccc;
-            /* <<< Border diterapkan di sini <<< */
-        }
-
-        /* Style untuk TH default dan TH di tabel spesifik */
-        th,
-        .observation-table th,
-        .device-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
+            width: 80px;
         }
 
         hr {
             border: none;
             border-top: 1px solid #ccc;
-            margin: 2px 0;
+            margin: 3px 0;
         }
 
         .text-green-700 {
@@ -163,87 +212,51 @@
 
         .device-table th,
         .device-table td {
-            font-size: 7px;
+            font-size: 8px;
             padding: 1px 2px;
+            border: 1px solid #ccc;
         }
 
         .page-break {
             page-break-after: always;
         }
 
-        /* Style untuk Header Gabungan */
+        /* Tabel Layout Utama */
+        .layout-table>tbody>tr>td {
+            /* Target TD langsung di bawah TR tabel layout */
+            vertical-align: top;
+            /* <<< Pastikan align top >>> */
+            border: none !important;
+            /* Hapus border */
+            padding: 0;
+            /* Hapus padding default TD */
+        }
+
+        .left-col {
+            width: 20%;
+            padding-right: 8px;
+        }
+
+        .right-col {
+            width: 80%;
+            padding-left: 8px;
+        }
+
+        /* Style Header Gabungan */
         .header-container {
             border-bottom: 1.5px solid black;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
         }
 
-        .header-table {
-            width: 100%;
-            border: none !important;
-        }
 
-        .header-table td {
-            border: none !important;
-            vertical-align: top;
-            padding: 0 5px;
-            font-size: 8px;
-        }
-
-        .logo-cell {
-            width: 50px;
-            text-align: center;
-            padding-right: 10px;
-        }
-
-        .logo-cell img {
-            height: 40px;
-        }
-
-        .instansi-cell {
-            text-align: center;
-        }
-
-        .instansi-cell h1 {
-            font-size: 11px;
-            font-weight: bold;
-            margin: 0;
-        }
-
-        .instansi-cell p {
-            font-size: 7px;
-            margin: 1px 0;
-        }
-
-        .pasien-info-table {
-            width: 100%;
-            border: none !important;
-            margin-top: 8px;
-        }
-
-        .pasien-info-table td {
-            border: none !important;
-            text-align: left;
-            padding: 1px 0;
-            font-size: 8px;
-            vertical-align: top;
-        }
-
-        .label-col {
-            width: 70px;
-            font-weight: normal;
-        }
-
-        /* Lebar label (NAMA, NO RM, dll) */
-        /* Jika perlu page break manual */
 
     </style>
 </head>
 <body>
     {{-- ========== HEADER GABUNGAN (PROFESIONAL) ========== --}}
     <div class="header-container">
-        {{-- Baris 1: Logo & Info Instansi --}}
-        <table class="header-table">
+        <table class="header-table no-border">
             <tr>
                 <td class="logo-cell">
                     @if($setting && $setting->logo)
@@ -255,19 +268,13 @@
                     <p>{{ $setting->alamat_instansi ?? '' }} {{ $setting->kabupaten ?? '' }}{{ ($setting->kabupaten && $setting->propinsi) ? ', ' : '' }}{{ $setting->propinsi ?? '' }}</p>
                     <p>Telp: {{ $setting->kontak ?? '' }} | Email: {{ $setting->email ?? '' }}</p>
                 </td>
-                {{-- Kolom Kosong Kanan (jika perlu alignment) --}}
-                <td style="width: 50px;"></td>
+                <td style="width: 60px;"></td>
             </tr>
         </table>
-        <hr>
-        {{-- Baris 2: Judul Laporan --}}
-        <h2 style="text-align: center; font-size: 11px; margin-top: 5px; margin-bottom: 5px; font-weight: bold;">MONITORING 24 JAM ICU</h2>
-
-        {{-- Baris 3: Info Pasien & Lokasi (2 Kolom) --}}
-        <table class="pasien-info-table">
+        <h2 style="text-align: center; font-size: 12px; margin-top: 8px; margin-bottom: 8px; font-weight: bold;">LEMBAR OBSERVASI ICU</h2>
+        <table class="pasien-info-table no-border">
             <tr>
-                {{-- Kolom Kiri: Data Pasien --}}
-                <td style="width: 50%; padding-right: 10px;">
+                <td style="width: 50%; padding-right: 15px;">
                     <table class="no-border">
                         <tr>
                             <td class="label-col">NAMA</td>
@@ -287,8 +294,7 @@
                         </tr>
                     </table>
                 </td>
-                {{-- Kolom Kanan: Data Lokasi --}}
-                <td style="width: 50%; padding-left: 10px;">
+                <td style="width: 50%; padding-left: 15px;">
                     <table class="no-border">
                         <tr>
                             <td class="label-col">INSTALASI</td>
@@ -313,84 +319,76 @@
     </div>
     {{-- ========== AKHIR HEADER GABUNGAN ========== --}}
 
-    {{-- Tabel Utama Dua Kolom --}}
-    <table class="no-border">
+
+    {{-- Tabel Utama Dua Kolom (Layout Kiri & Kanan) --}}
+  <table class="layout-table no-border">
         <tr>
-            {{-- ==================== KOLOM KIRI ==================== --}}
+            {{-- ==================== KOLOM KIRI (Data Statis & Balance) ==================== --}}
             <td class="left-col">
-
-
+                {{-- Dokter & Diagnosa --}}
                 <div class="section-title">Dokter / DPJP</div>
-                <div style="font-size: 7px; padding-right: 5px; text-align: left;">
-                    @forelse($dpjpDokters as $dokter)
-                    {{ $loop->iteration }}. {{ $dokter->nm_dokter }}<br>
-                    @empty - @endforelse
+                <div style="font-size: 8px; padding-left: 5px;">
+                    @forelse($dpjpDokters as $dokter) {{ $loop->iteration }}. {{ $dokter->nm_dokter }}<br> @empty - @endforelse
+                </div>
+                <div class="section-title">Diagnosa</div>
+                <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap;">
+                    @forelse($diagnosaPasien as $diagnosa) {{ $loop->iteration }}. {{ $diagnosa }}<br> @empty - @endforelse
                 </div>
                 <hr>
-                <div class="section-title">Diagnosa</div>
-                <div style="font-size: 7px; padding-right: 5px; text-align: left;">
-                    {{-- Loop daftar diagnosa dari controller --}}
-                    @forelse($diagnosaPasien as $diagnosa)
-                    {{ $loop->iteration }}. {{ $diagnosa }}<br>
-                    @empty
-                    -
-                    @endforelse
-                </div>
+                {{-- Pola Ventilasi --}}
+                <div class="section-title">POLA VENTILASI</div>
+                <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap;">{!! nl2br(e($cycle->ventilator_notes ?: '-')) !!}</div>
                 <hr>
                 {{-- Obat --}}
                 <div class="section-title">OBAT</div>
-                <div style="font-size: 7px; padding-left: 5px; white-space: pre-wrap;">Parenteral:<br>{{ $cycle->terapi_obat_parenteral ?: '-' }}<br>Enteral/Lain:<br>{{ $cycle->terapi_obat_enteral_lain ?: '-'}}</div>
-                {{-- Target Nutrisi Parenteral --}}
+                <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap;">Parenteral:<br>{!! nl2br(e($cycle->terapi_obat_parenteral ?: '-')) !!}<br>Enteral/Lain:<br>{!! nl2br(e($cycle->terapi_obat_enteral_lain ?: '-')) !!}</div>
+                {{-- Target Nutrisi --}}
                 <div style="margin-top: 3px; padding-left: 5px;">
                     <div style="font-size: 8px; font-weight: bold;">Target Nutrisi Parenteral (24h):</div>
                     <table class="no-border" style="font-size: 7px; margin-top: 1px;">
                         <tr>
-                            <td style="width: 50px;">Volume:</td>
+                            <td style="width: 40px;">Vol:</td>
                             <td>{{ $cycle->parenteral_target_volume ?: '-' }} ml</td>
-                            <td style="width: 50px;">Kalori:</td>
+                            <td style="width: 40px;">Kal:</td>
                             <td>{{ $cycle->parenteral_target_kalori ?: '-' }} kkal</td>
                         </tr>
                         <tr>
-                            <td>Protein:</td>
+                            <td>Pro:</td>
                             <td>{{ $cycle->parenteral_target_protein ?: '-' }} g</td>
-                            <td>Lemak:</td>
+                            <td>Lem:</td>
                             <td>{{ $cycle->parenteral_target_lemak ?: '-' }} g</td>
                         </tr>
                     </table>
                 </div>
-                {{-- Target Nutrisi Enteral --}}
                 <div style="margin-top: 3px; padding-left: 5px;">
                     <div style="font-size: 8px; font-weight: bold;">Target Nutrisi Enteral (24h):</div>
                     <table class="no-border" style="font-size: 7px; margin-top: 1px;">
                         <tr>
-                            <td style="width: 50px;">Volume:</td>
+                            <td style="width: 40px;">Vol:</td>
                             <td>{{ $cycle->enteral_target_volume ?: '-' }} ml</td>
-                            <td style="width: 50px;">Kalori:</td>
+                            <td style="width: 40px;">Kal:</td>
                             <td>{{ $cycle->enteral_target_kalori ?: '-' }} kkal</td>
                         </tr>
                         <tr>
-                            <td>Protein:</td>
+                            <td>Pro:</td>
                             <td>{{ $cycle->enteral_target_protein ?: '-' }} g</td>
-                            <td>Lemak:</td>
+                            <td>Lem:</td>
                             <td>{{ $cycle->enteral_target_lemak ?: '-' }} g</td>
                         </tr>
                     </table>
                 </div>
                 <hr>
-
                 {{-- Penunjang --}}
                 <div class="section-title">PEMERIKSAAN PENUNJANG</div>
-                <div style="font-size: 7px; padding-left: 5px; white-space: pre-wrap;">{{ $cycle->pemeriksaan_penunjang ?: '-' }}</div>
+                <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap;">{!! nl2br(e($cycle->pemeriksaan_penunjang ?: '-')) !!}</div>
                 <hr>
-
                 {{-- Catatan Lain --}}
                 <div class="section-title">CATATAN / LAIN-LAIN</div>
-                <div style="font-size: 7px; padding-left: 5px; white-space: pre-wrap;">{{ $cycle->catatan_lain_lain ?: '-' }}</div>
+                <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap;">{!! nl2br(e($cycle->catatan_lain_lain ?: '-')) !!}</div>
                 <hr>
-
                 {{-- Alat & Tube --}}
                 <div class="section-title">ALAT TERPASANG & TUBE</div>
-                <table class="no-border device-table" style="margin-left: -2px;"> {{-- Adjust margin if needed --}}
+                <table class="device-table" style="margin-bottom: 5px;">
                     <thead>
                         <tr>
                             <th style="width: 40%;">Jenis</th>
@@ -411,7 +409,7 @@
                         @php $alatDisplayed = true; @endphp
                         @endforeach
                         @if(!$alatDisplayed) <tr>
-                            <td colspan="4">-</td>
+                            <td colspan="4" style="text-align: center;">-</td>
                         </tr> @endif
 
                         @php $tubeDisplayed = false; @endphp
@@ -425,22 +423,14 @@
                         @php $tubeDisplayed = true; @endphp
                         @endforeach
                         @if(!$tubeDisplayed) <tr>
-                            <td colspan="4">-</td>
+                            <td colspan="4" style="text-align: center;">-</td>
                         </tr> @endif
                     </tbody>
                 </table>
-                <div class="section-title">ALAT TERPASANG & TUBE</div>
-                <table class="device-table" style="margin-bottom: 5px;"> ... </table>
-
-                {{-- >>> TAMBAHKAN BAGIAN LUKA <<< --}}
+                {{-- Luka --}}
                 <div class="section-title">LUKA</div>
-                <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap; min-height: 20px;"> {{-- Beri tinggi minimal --}}
-                    {!! nl2br(e($cycle->wound_notes ?: '-')) !!}
-                </div>
-                {{-- >>> AKHIR BAGIAN LUKA <<< --}}
-
+                <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap; min-height: 20px;">{!! nl2br(e($cycle->wound_notes ?: '-')) !!}</div>
                 <hr>
-
                 {{-- Balance Cairan Summary Box --}}
                 <div class="section-title">BALANCE CAIRAN</div>
                 <div class="balance-box">
@@ -476,26 +466,24 @@
                             </td>
                         </tr>
                         <tr>
-                            <th style="font-size: 9px;">BC Kumulatif</th>
-                            <td style="text-align: right; font-weight: bold; font-size: 9px;">{{ number_format($previousBalance + $balance24Jam, 0) }} ml</td>
+                            <th style="font-size: 10px;">BC Kumulatif</th>
+                            <td style="text-align: right; font-weight: bold; font-size: 10px;">{{ number_format($previousBalance + $balance24Jam, 0) }} ml</td>
                         </tr>
                     </table>
                 </div>
-
             </td>
 
-            {{-- ==================== KOLOM KANAN =================== --}}
-            <td class="right-col no-border">
-                {{-- Tabel Observasi Dinamis --}}
-                <table class="observation-table">
+            {{-- ==================== KOLOM KANAN (Tabel Observasi) =================== --}}
+            <td class="right-col">
+                {{-- Tabel Observasi Dinamis (Per Menit) --}}
+              <table class="observation-table">
                     <thead>
                         <tr>
                             <th class="param-label">Parameter</th>
-                            {{-- Generate Kolom Waktu --}}
-                            @foreach($allRecords as $record)
+                            @foreach($uniqueTimestamps as $timestamp)
                             <th class="time-header">
-                                {{ $record->observation_time->format('H:i') }}<br>
-                                {{-- <span class="author-header">{{ $record->inputter->nama ?? 'N/A' }}</span> --}}
+                                {{ \Carbon\Carbon::parse($timestamp)->format('H:i') }}<br>
+                                <span class="author-header">{{ $mergedRecordsPerMinute[$timestamp]->inputters }}</span>
                             </th>
                             @endforeach
                         </tr>
@@ -503,94 +491,112 @@
                     <tbody>
                         @php $currentGroup = ''; @endphp
                         @foreach($allParameters as $param)
-
-                        {{-- SECTION KHUSUS UNTUK GRUP CAIRAN --}}
                         @if ($param['group'] == 'CAIRAN')
                         @if ($currentGroup != 'CAIRAN')
                         @php $currentGroup = 'CAIRAN'; @endphp
-                        <tr class="bg-gray-50 border-t border-b">
-                            <td colspan="{{  $allRecords->count()+ 1 }}" class="group-label">CAIRAN MASUK</td>
+                        <tr>
+                            <td colspan="{{ $uniqueTimestamps->count() + 1 }}" class="group-label">CAIRAN MASUK</td>
                         </tr>
-                        {{-- Parenteral --}}
                         @forelse ($uniqueParenteralFluids as $fluidName)
                         <tr>
                             <th class="param-label" style="padding-left: 15px;">{{ $fluidName }}</th>
-                            @foreach($allRecords as $record)
-                            <td>@if($record->is_parenteral && $record->cairan_masuk_jenis == $fluidName && $record->cairan_masuk_volume)<span class="font-semibold text-green-700">{{ $record->cairan_masuk_volume }}</span>@endif</td>
+                            @foreach($uniqueTimestamps as $timestamp)
+                            <td>
+                                @php $vol = collect($mergedRecordsPerMinute[$timestamp]->fluids_in)->where('is_parenteral', true)->where('jenis', $fluidName)->sum('volume'); @endphp
+                                @if($vol > 0) <span class="font-semibold text-green-700">{{ $vol }}</span> @endif
+                            </td>
                             @endforeach
-                            @if($allRecords->count() < 15) @for ($i=0; $i < (15 - $allRecords->count()); $i++) <td></td> @endfor @endif
                         </tr>
                         @empty @endforelse
-                        {{-- Enteral --}}
                         @forelse ($uniqueEnteralFluids as $fluidName)
                         <tr>
                             <th class="param-label" style="padding-left: 15px;">{{ $fluidName }}</th>
-                            @foreach($allRecords as $record)
-                            <td>@if($record->is_enteral && $record->cairan_masuk_jenis == $fluidName && $record->cairan_masuk_volume)<span class="font-semibold text-green-700">{{ $record->cairan_masuk_volume }}</span>@endif</td>
+                            @foreach($uniqueTimestamps as $timestamp)
+                            <td>
+                                @php $vol = collect($mergedRecordsPerMinute[$timestamp]->fluids_in)->where('is_enteral', true)->where('jenis', $fluidName)->sum('volume'); @endphp
+                                @if($vol > 0) <span class="font-semibold text-green-700">{{ $vol }}</span> @endif
+                            </td>
                             @endforeach
-                            @if($allRecords->count() < 15) @for ($i=0; $i < (15 - $allRecords->count()); $i++) <td></td> @endfor @endif
                         </tr>
                         @empty @endforelse
-                        <tr class="bg-gray-50 border-t border-b">
-                            <td colspan="{{$allRecords->count()+ 1 }}" class="group-label">CAIRAN KELUAR</td>
+                        <tr style="background-color: #f0f8ff;">
+                            <th class="param-label">TOTAL Cairan Masuk</th>
+                            @foreach($uniqueTimestamps as $timestamp)
+                            <td>
+                                @php $totalIn = collect($mergedRecordsPerMinute[$timestamp]->fluids_in)->sum('volume'); @endphp
+                                @if($totalIn > 0) <span class="font-bold text-green-700">{{ $totalIn }}</span> @endif
+                            </td>
+                            @endforeach
                         </tr>
-                        {{-- Cairan Keluar --}}
-                        @php $keluarTypes = ['Irigasi CM', 'Irigasi CK', 'Urine', 'NGT', 'Drain/WSD 1', 'Drain/WSD 2']; @endphp
+                        <tr>
+                            <td colspan="{{ $uniqueTimestamps->count() + 1 }}" class="group-label">CAIRAN KELUAR</td>
+                        </tr>
+                        @php $keluarTypes = ['Irigasi CM', 'Irigasi CK', 'Urine', 'NGT', 'Drain/WSD 1', 'Drain/WSD 2', 'Lainnya']; @endphp
                         @foreach($keluarTypes as $type)
                         <tr>
                             <th class="param-label">{{ $type }}</th>
-                            @foreach($allRecords as $record)
-                            <td>@if($record->cairan_keluar_jenis == $type && $record->cairan_keluar_volume)<span class="font-semibold text-red-700">{{ $record->cairan_keluar_volume }}</span>@endif</td>
+                            @foreach($uniqueTimestamps as $timestamp)
+                            <td>
+                                @php $vol = collect($mergedRecordsPerMinute[$timestamp]->fluids_out)->where('jenis', $type)->sum('volume'); @endphp
+                                @if($vol > 0) <span class="font-semibold text-red-700">{{ $vol }}</span> @endif
+                            </td>
                             @endforeach
-                            @if($allRecords->count() < 15) @for ($i=0; $i < (15 - $allRecords->count()); $i++) <td></td> @endfor @endif
                         </tr>
                         @endforeach
+                        <tr style="background-color: #fff0f5;">
+                            <th class="param-label">TOTAL Cairan Keluar</th>
+                            @foreach($uniqueTimestamps as $timestamp)
+                            <td>
+                                @php $totalOut = collect($mergedRecordsPerMinute[$timestamp]->fluids_out)->sum('volume'); @endphp
+                                @if($totalOut > 0) <span class="font-bold text-red-700">{{ $totalOut }}</span> @endif
+                            </td>
+                            @endforeach
+                        </tr>
                         @endif
-                        {{-- SECTION UNTUK GRUP LAIN --}}
                         @else
                         @if ($param['group'] != $currentGroup)
-                        <tr class="bg-gray-50 border-t border-b">
-                            <td colspan="{{ $allRecords->count() + 1 }}" class="group-label">{{ $param['group'] }}</td>
+                        <tr>
+                            <td colspan="{{ $uniqueTimestamps->count() + 1 }}" class="group-label">{{ $param['group'] }}</td>
                         </tr>
                         @php $currentGroup = $param['group']; @endphp
                         @endif
+                        @php
+                        $key = $param['key'];
+                        $hasData = $mergedRecordsPerMinute->contains(function ($mergedRecord) use ($key) {
+                        if ($key == 'tensi') { return $mergedRecord->tensi_sistol !== null || $mergedRecord->tensi_diastol !== null; }
+                        elseif ($key == 'gcs') { return $mergedRecord->gcs_e !== null || $mergedRecord->gcs_v !== null || $mergedRecord->gcs_m !== null; }
+                        elseif ($key == 'pupil') { return $mergedRecord->pupil_left_size_mm !== null || $mergedRecord->pupil_right_size_mm !== null || $mergedRecord->pupil_left_reflex !== null || $mergedRecord->pupil_right_reflex !== null;}
+                        elseif (in_array($key, ['clinical_note', 'medication_administration'])) { return !empty($mergedRecord->{$key}); }
+                        else { return isset($mergedRecord->{$key}) && $mergedRecord->{$key} !== null; } // Cek isset juga
+                        });
+                        @endphp
+                        @if($hasData)
                         <tr>
                             <th class="param-label">{{ $param['label'] }}</th>
-                            @foreach($allRecords as $record)
+                            @foreach($uniqueTimestamps as $timestamp)
                             <td>
                                 @php
-                                $value = null; $key = $param['key'];
-                                if ($key == 'tensi' && $record->tensi_sistol) { $value = $record->tensi_sistol . '/' . $record->tensi_diastol; }
-                                elseif ($key == 'gcs' && ($record->gcs_e || $record->gcs_v || $record->gcs_m)) { $gcsTotal = $record->gcs_total ?? (($record->gcs_e ?? 0) + ($record->gcs_v ?? 0) + ($record->gcs_m ?? 0)); $value = "E".($record->gcs_e ?? '-')."V".($record->gcs_v ?? '-')."M".($record->gcs_m ?? '-').($gcsTotal > 0 ? "($gcsTotal)" : ''); }
-                                elseif ($key == 'pupil' && ($record->pupil_left_size_mm || $record->pupil_right_size_mm)) { $left = ($record->pupil_left_size_mm ?? '-') . '/' . ($record->pupil_left_reflex ?? '-'); $right = ($record->pupil_right_size_mm ?? '-') . '/' . ($record->pupil_right_reflex ?? '-'); $value = "{$left}|{$right}"; }
-                                elseif ($key == 'clinical_note' && $record->clinical_note) { $value = $record->clinical_note; }
-                                elseif ($key == 'medication_administration' && $record->medication_administration) { $value = $record->medication_administration; }
-                                elseif (isset($record->$key) && !in_array($key, ['tensi', 'gcs', 'pupil', 'clinical_note', 'medication_administration', 'cairan_masuk', 'cairan_keluar', 'is_enteral', 'is_parenteral'])) { $value = $record->$key; }
-                                // --- PERBAIKI BAGIAN INI ---
-                                // Ganti isset($record->$key) menjadi $record->{$key} !== null
-                                // Tambahkan 'is_enteral' dan 'is_parenteral' ke array pengecualian
-                                elseif ($record->{$key} !== null && !in_array($key, [
-                                'tensi_sistol', 'tensi_diastol', // Pecah tensi agar tidak bentrok
-                                'gcs_e','gcs_v','gcs_m','gcs_total', // Pecah GCS
-                                'pupil_left_size_mm','pupil_left_reflex','pupil_right_size_mm','pupil_right_reflex', // Pecah pupil
-                                'clinical_note', 'medication_administration',
-                                'cairan_masuk_jenis','cairan_masuk_volume', 'cairan_keluar_jenis','cairan_keluar_volume', // Pecah cairan
-                                'is_enteral', 'is_parenteral'
-                                ]))
-                                {
-                                $value = $record->{$key};
-                                }
+                                $record = $mergedRecordsPerMinute[$timestamp];
+                                $value = null;
+                                if ($key == 'tensi' && isset($record->tensi_sistol)) { $value = $record->tensi_sistol . '/' . $record->tensi_diastol; }
+                                elseif ($key == 'gcs' && (isset($record->gcs_e) || isset($record->gcs_v) || isset($record->gcs_m))) { $gcsTotal = (($record->gcs_e ?? 0) + ($record->gcs_v ?? 0) + ($record->gcs_m ?? 0)); $value = "E".($record->gcs_e ?? '-')."V".($record->gcs_v ?? '-')."M".($record->gcs_m ?? '-').($gcsTotal > 0 ? "($gcsTotal)" : ''); }
+                                elseif ($key == 'pupil' && (isset($record->pupil_left_size_mm) || isset($record->pupil_right_size_mm))) { $left = ($record->pupil_left_size_mm ?? '-') . '/' . ($record->pupil_left_reflex ?? '-'); $right = ($record->pupil_right_size_mm ?? '-') . '/' . ($record->pupil_right_reflex ?? '-'); $value = "{$left}|{$right}"; }
+                                elseif ($key == 'clinical_note' && !empty($record->clinical_note)) { $value = $record->clinical_note; }
+                                elseif ($key == 'medication_administration' && !empty($record->medication_administration)) { $value = $record->medication_administration; }
+                                // Fallback: Cek isset SEBELUM akses properti
+                                elseif (isset($record->{$key}) && $record->{$key} !== null && !in_array($key, ['tensi_sistol','tensi_diastol','gcs_e','gcs_v','gcs_m','gcs_total','pupil_left_size_mm','pupil_left_reflex','pupil_right_size_mm','pupil_right_reflex','clinical_note','medication_administration','cairan_masuk_jenis','cairan_masuk_volume','cairan_keluar_jenis','cairan_keluar_volume','is_enteral','is_parenteral'])) { $value = $record->{$key}; }
                                 @endphp
                                 <span class="whitespace-pre-wrap">{!! $value !!}</span>
                             </td>
                             @endforeach
-                            @if($allRecords->count() < 15) @for ($i=0; $i < (15 - $allRecords->count()); $i++) <td></td> @endfor @endif
                         </tr>
+                        @endif
                         @endif
                         @endforeach
                     </tbody>
                 </table>
             </td>
+            {{-- ==================== AKHIR KOLOM KANAN =================== --}}
         </tr>
     </table>
 

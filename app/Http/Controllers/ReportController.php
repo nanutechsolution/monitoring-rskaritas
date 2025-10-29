@@ -644,6 +644,120 @@ class ReportController extends Controller
             ->where('diagnosa_pasien.status', 'Ranap') // Hanya ambil diagnosa Ranap
             ->orderBy('diagnosa_pasien.prioritas', 'asc') // Urutkan berdasarkan prioritas
             ->pluck('penyakit.nm_penyakit');
+        $allRawRecords = $cycle->records()
+            ->with('inputter:nik,nama')
+            ->orderBy('observation_time', 'asc')
+            ->get();
+        $recordsGroupedByMinute = $allRawRecords->groupBy(function ($record) {
+            return $record->observation_time->format('Y-m-d H:i');
+        });
+
+        // 3. Buat daftar unik timestamp per menit untuk header kolom
+        $uniqueTimestamps = $recordsGroupedByMinute->keys();
+        // 4. Siapkan data 'merged' per menit untuk tbody
+        $mergedRecordsPerMinute = $uniqueTimestamps->mapWithKeys(function ($timestamp) use ($recordsGroupedByMinute) {
+            $recordsInMinute = $recordsGroupedByMinute[$timestamp];
+            $mergedData = [
+                'observation_time' => $recordsInMinute->first()->observation_time,
+                'inputters' => $recordsInMinute->pluck('inputter.nama')->filter()->unique()->implode(', '),
+                'fluids_in' => [],
+                'fluids_out' => [],
+                'notes' => [],
+                'meds' => [],
+                'suhu' => null,
+                'nadi' => null,
+                'tensi_sistol' => null,
+                'tensi_diastol' => null,
+                'map' => null,
+                'rr' => null,
+                'spo2' => null,
+                'gcs_e' => null,
+                'gcs_v' => null,
+                'gcs_m' => null,
+                'gcs_total' => null,
+                'kesadaran' => null,
+                'nyeri' => null,
+                'cvp' => null,
+                'cuff_pressure' => null,
+                'fall_risk_assessment' => null,
+                'irama_ekg' => null,
+                'ventilator_mode' => null,
+                'ventilator_f' => null,
+                'ventilator_tv' => null,
+                'ventilator_fio2' => null,
+                'ventilator_peep' => null,
+                'ventilator_ie_ratio' => null,
+                'pupil_left_size_mm' => null,
+                'pupil_left_reflex' => null,
+                'pupil_right_size_mm' => null,
+                'pupil_right_reflex' => null,
+            ];
+
+            // Ambil data TTV/Obs TERAKHIR dalam menit itu
+            $mergedData['suhu'] = $recordsInMinute->last(fn($r) => $r->suhu !== null)?->suhu;
+            $mergedData['nadi'] = $recordsInMinute->last(fn($r) => $r->nadi !== null)?->nadi;
+            $mergedData['tensi_sistol'] = $recordsInMinute->last(fn($r) => $r->tensi_sistol !== null)?->tensi_sistol;
+            $mergedData['tensi_diastol'] = $recordsInMinute->last(fn($r) => $r->tensi_sistol !== null)?->tensi_diastol;
+            $mergedData['map'] = $recordsInMinute->last(fn($r) => $r->map !== null)?->map;
+            $mergedData['rr'] = $recordsInMinute->last(fn($r) => $r->rr !== null)?->rr;
+            $mergedData['spo2'] = $recordsInMinute->last(fn($r) => $r->spo2 !== null)?->spo2;
+            $mergedData['gcs_e'] = $recordsInMinute->last(fn($r) => $r->gcs_e !== null)?->gcs_e;
+            $mergedData['gcs_v'] = $recordsInMinute->last(fn($r) => $r->gcs_v !== null)?->gcs_v;
+            $mergedData['gcs_m'] = $recordsInMinute->last(fn($r) => $r->gcs_m !== null)?->gcs_m;
+            $mergedData['gcs_total'] = $recordsInMinute->last(fn($r) => $r->gcs_total !== null)?->gcs_total; // Also get total if available
+            $mergedData['kesadaran'] = $recordsInMinute->last(fn($r) => $r->kesadaran !== null)?->kesadaran;
+            $mergedData['nyeri'] = $recordsInMinute->last(fn($r) => $r->nyeri !== null)?->nyeri;
+            $mergedData['cvp'] = $recordsInMinute->last(fn($r) => $r->cvp !== null)?->cvp;
+            $mergedData['cuff_pressure'] = $recordsInMinute->last(fn($r) => $r->cuff_pressure !== null)?->cuff_pressure;
+            $mergedData['fall_risk_assessment'] = $recordsInMinute->last(fn($r) => $r->fall_risk_assessment !== null)?->fall_risk_assessment;
+            $mergedData['irama_ekg'] = $recordsInMinute->last(fn($r) => $r->irama_ekg !== null)?->irama_ekg;
+            // Add ventilator fields if needed
+            $mergedData['ventilator_mode'] = $recordsInMinute->last(fn($r) => $r->ventilator_mode !== null)?->ventilator_mode;
+            $mergedData['ventilator_f'] = $recordsInMinute->last(fn($r) => $r->ventilator_f !== null)?->ventilator_f;
+            $mergedData['ventilator_tv'] = $recordsInMinute->last(fn($r) => $r->ventilator_tv !== null)?->ventilator_tv;
+            $mergedData['ventilator_fio2'] = $recordsInMinute->last(fn($r) => $r->ventilator_fio2 !== null)?->ventilator_fio2;
+            $mergedData['ventilator_peep'] = $recordsInMinute->last(fn($r) => $r->ventilator_peep !== null)?->ventilator_peep;
+            $mergedData['ventilator_ie_ratio'] = $recordsInMinute->last(fn($r) => $r->ventilator_ie_ratio !== null)?->ventilator_ie_ratio;
+            // --- TAMBAHKAN LOGIKA PUPIL DI SINI ---
+            $lastPupilLeftSize = $recordsInMinute->last(fn($r) => $r->pupil_left_size_mm !== null);
+            $lastPupilLeftReflex = $recordsInMinute->last(fn($r) => $r->pupil_left_reflex !== null);
+            $lastPupilRightSize = $recordsInMinute->last(fn($r) => $r->pupil_right_size_mm !== null);
+            $lastPupilRightReflex = $recordsInMinute->last(fn($r) => $r->pupil_right_reflex !== null);
+
+            $mergedData['pupil_left_size_mm'] = $lastPupilLeftSize?->pupil_left_size_mm;
+            $mergedData['pupil_left_reflex'] = $lastPupilLeftReflex?->pupil_left_reflex;
+            $mergedData['pupil_right_size_mm'] = $lastPupilRightSize?->pupil_right_size_mm;
+            $mergedData['pupil_right_reflex'] = $lastPupilRightReflex?->pupil_right_reflex;
+            // --- AKHIR TAMBAHAN PUPIL ---
+
+            // Kumpulkan cairan, catatan, tindakan (kode ini sudah benar)
+            foreach ($recordsInMinute as $record) {
+                if ($record->cairan_masuk_volume !== null && $record->cairan_masuk_volume > 0) {
+                    $mergedData['fluids_in'][] = [
+                        'jenis' => $record->cairan_masuk_jenis,
+                        'volume' => $record->cairan_masuk_volume,
+                        'is_parenteral' => $record->is_parenteral,
+                        'is_enteral' => $record->is_enteral,
+                    ];
+                }
+                if ($record->cairan_keluar_volume !== null && $record->cairan_keluar_volume > 0) {
+                    $mergedData['fluids_out'][] = [
+                        'jenis' => $record->cairan_keluar_jenis,
+                        'volume' => $record->cairan_keluar_volume,
+                    ];
+                }
+                if (!empty($record->clinical_note)) { // Cek string tidak kosong
+                    $mergedData['notes'][] = $record->clinical_note;
+                }
+                if (!empty($record->medication_administration)) { // Cek string tidak kosong
+                    $mergedData['meds'][] = $record->medication_administration;
+                }
+            }
+            $mergedData['clinical_note'] = implode("\n", $mergedData['notes']);
+            $mergedData['medication_administration'] = implode("\n", $mergedData['meds']);
+
+            return [$timestamp => (object) $mergedData];
+        });
         $registrasi = RegPeriksa::with(['pasien', 'poliklinik', 'penjab', 'dpjpRanap.dokter'])
             ->where('no_rawat', $noRawatDb)->firstOrFail();
         $dpjpDokters = $registrasi->dpjpRanap->map(fn($dpjp) => $dpjp->dokter)->filter();
@@ -658,27 +772,21 @@ class ReportController extends Controller
                 . ' / ' . ($currentKamarInap->kamar->kd_kamar ?? '');
             $currentInstallasiName = $currentKamarInap->kamar->bangsal->nm_bangsal ?? 'N/A';
         }
-        $uniqueParenteralFluids = $cycle->records
+        $uniqueParenteralFluids = $allRawRecords
             ->where('is_parenteral', true)
             ->whereNotNull('cairan_masuk_volume')
             ->pluck('cairan_masuk_jenis')
             ->unique()
             ->sort();
 
-        $uniqueEnteralFluids = $cycle->records
+        $uniqueEnteralFluids = $allRawRecords
             ->where('is_enteral', true)
             ->whereNotNull('cairan_masuk_volume')
             ->pluck('cairan_masuk_jenis')
             ->unique()
             ->sort();
-        // 3. Siapkan daftar Parameter (Ambil dari Komponen atau definisikan ulang)
-        // Cara 1: Instansiasi komponen (agak kurang ideal)
-        // $observationTableComponent = new \App\Livewire\Icu\ObservationTable($cycle);
-        // $allParameters = $observationTableComponent->parameters();
-        // Cara 2: Definisikan ulang di sini (lebih aman)
-
-        $totalMasuk = $cycle->records->sum('cairan_masuk_volume');
-        $totalKeluar = $cycle->records->sum('cairan_keluar_volume');
+        $totalMasuk = $allRawRecords->sum('cairan_masuk_volume');
+        $totalKeluar = $allRawRecords->sum('cairan_keluar_volume');
         $iwl = $cycle->daily_iwl ?? 0;
         $balance24Jam = $totalMasuk - ($totalKeluar + $iwl);
         $previousBalance = $cycle->previous_balance ?? 0;
@@ -696,7 +804,8 @@ class ReportController extends Controller
             'setting' => $setting,
             'uniqueParenteralFluids' => $uniqueParenteralFluids,
             'uniqueEnteralFluids' => $uniqueEnteralFluids,
-
+            'uniqueTimestamps' => $uniqueTimestamps,
+            'mergedRecordsPerMinute' => $mergedRecordsPerMinute,
             'totalMasuk' => $totalMasuk,
             'totalKeluar' => $totalKeluar,
             'iwl' => $iwl,
