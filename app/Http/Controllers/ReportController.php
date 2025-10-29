@@ -666,6 +666,12 @@ class ReportController extends Controller
         // $observationTableComponent = new \App\Livewire\Icu\ObservationTable($cycle);
         // $allParameters = $observationTableComponent->parameters();
         // Cara 2: Definisikan ulang di sini (lebih aman)
+
+        $totalMasuk = $cycle->records->sum('cairan_masuk_volume');
+        $totalKeluar = $cycle->records->sum('cairan_keluar_volume');
+        $iwl = $cycle->daily_iwl ?? 0;
+        $balance24Jam = $totalMasuk - ($totalKeluar + $iwl);
+        $previousBalance = $cycle->previous_balance ?? 0;
         $allParameters = $this->getReportParameters();
         $setting = DB::table('setting')->first();
         // 4. Load View Cetak dengan Data
@@ -680,6 +686,12 @@ class ReportController extends Controller
             'setting' => $setting,
             'uniqueParenteralFluids' => $uniqueParenteralFluids,
             'uniqueEnteralFluids' => $uniqueEnteralFluids,
+
+            'totalMasuk' => $totalMasuk,
+            'totalKeluar' => $totalKeluar,
+            'iwl' => $iwl,
+            'balance24Jam' => $balance24Jam,
+            'previousBalance' => $previousBalance,
         ]);
         // 5. Atur Opsi PDF (Landscape, A4)
         $pdf->setPaper('a4', 'landscape');
