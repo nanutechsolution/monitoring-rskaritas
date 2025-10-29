@@ -1,4 +1,15 @@
-<div class="container mx-auto  space-y-6">
+<div class="container mx-auto space-y-6" x-data="{
+         focusFirstError(errors) {
+             if (errors && Object.keys(errors).length > 0) {
+                 const firstErrorKey = Object.keys(errors)[0];
+
+                 const errorInput = document.querySelector(`[wire\\:model\\.defer='${firstErrorKey}'], [wire\\:model='${firstErrorKey}'], [wire\\:model\\.live='${firstErrorKey}']`);
+                 if (errorInput) {
+                     errorInput.focus();
+                 }
+             }
+         }
+     }" @window:livewire:updated="$nextTick(() => focusFirstError($wire.errors))">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
             <form wire:submit.prevent="saveTtv">

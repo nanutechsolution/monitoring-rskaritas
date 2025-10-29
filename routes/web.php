@@ -1,11 +1,11 @@
 <?php
 
 use App\Http\Controllers\ReportController;
-use App\Livewire\Icu\MonitorSheet;
-use App\Livewire\Icu\ObservationGrid;
 use App\Livewire\Icu\PatientHistory;
 use App\Livewire\PatientList;
 use App\Livewire\PatientMonitor;
+use App\Livewire\Picu\PatientHistory as PicuPatientHistory;
+use App\Livewire\Picu\Workspace;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -32,6 +32,17 @@ Route::get('monitoring/{no_rawat}/report/{cycle_id}/report/pdf', [ReportControll
 Route::get('/icu/workspace/{noRawat}/{sheetDate}/print', [ReportController::class, 'printPdf'])
     ->middleware('auth')
     ->name('monitoring.icu.print');
+
+
+// 1. Halaman Riwayat Pasien PICU (Pintu Gerbang)
+Route::get('/picu/history/{noRawat}', PicuPatientHistory::class)
+    ->middleware('auth')
+    ->name('monitoring.picu.history');
+
+// 2. Halaman Lembar Kerja PICU (Input & Laporan)
+Route::get('/picu/workspace/{noRawat}/{sheetDate?}', Workspace::class)
+    ->middleware('auth')
+    ->name('monitoring.picu.workspace');
 
 
 require __DIR__ . '/auth.php';

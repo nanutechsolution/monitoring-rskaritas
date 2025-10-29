@@ -1,48 +1,82 @@
 <div class="max-w-7xl  mx-auto p-4 sm:p-6 space-y-6">
+    {{-- ======================================================== --}}
+    {{-- === HEADER WORKSPACE (Layout Profesional Baru) === --}}
+    {{-- ======================================================== --}}
     <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 border-l-4 border-blue-600">
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-            <div>
-                <h2 class="text-xl sm:text-3xl font-bold text-gray-800 leading-snug">
-                    {{ $registrasi->pasien->nm_pasien }}
-                </h2>
-                <p class="text-sm sm:text-lg text-gray-600">
-                    <span class="font-semibold">No. RM:</span> {{ $registrasi->pasien->no_rkm_medis }} |
-                    <span class="font-semibold">No. Rawat:</span> {{ $registrasi->no_rawat }}
-                </p>
-                <div class="mt-1 sm:mt-2">
-                    <span class="font-semibold text-sm sm:text-lg text-gray-700">Lembar Observasi:</span>
-                    <span class="text-sm sm:text-lg text-blue-700 font-bold">{{ $cycle->sheet_date->isoFormat('dddd, D MMMM Y') }}</span>
-                    {{-- Hari Rawat Ke dipindah ke kanan agar lebih pas --}}
+        {{-- Wrapper Utama: Data di kiri, Aksi di kanan --}}
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+
+            {{-- KOLOM KIRI: SEMUA INFORMASI --}}
+            <div class="flex-grow">
+
+                {{-- Baris 1: Info Pasien Utama --}}
+                <div>
+                    <h2 class="text-xl sm:text-3xl font-bold text-gray-800 leading-snug">
+                        {{ $registrasi->pasien->nm_pasien }}
+                    </h2>
+                    <p class="text-sm sm:text-lg text-gray-600">
+                        <span class="font-semibold">No. RM:</span> {{ $registrasi->pasien->no_rkm_medis }} |
+                        <span class="font-semibold">No. Rawat:</span> {{ $registrasi->no_rawat }}
+                    </p>
+                </div>
+
+                {{-- Baris 2: Grid Info Sekunder (Rapi di desktop, stack di mobile) --}}
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-sm text-gray-700">
+
+                    {{-- Grup Lokasi/Status --}}
+                    <div>
+                        <p><span class="font-semibold inline-block w-28">Instalasi</span>:
+                            {{-- Ambil dari relasi yang sudah di-load di mount() --}}
+                            {{ $currentInstallasiName ?? 'N/A' }}
+                        </p>
+                        <p><span class="font-semibold inline-block w-28">Ruang</span>:
+                            {{ $currentRoomName ?? 'N/A' }}
+                        </p>
+                        <p><span class="font-semibold inline-block w-28">Asal Ruangan</span>:
+                            {{ $originatingWardName ?? 'N/A' }}
+                        </p>
+                    </div>
+
+                    {{-- Grup Status Rawat --}}
+                    <div>
+                        <p><span class="font-semibold inline-block w-28">Lembar Observasi</span>:
+                            <span class="font-bold text-blue-700">{{ $cycle->sheet_date->isoFormat('D MMM Y') }}</span>
+                        </p>
+                        <p><span class="font-semibold inline-block w-28">Hari Rawat Ke</span>:
+                            {{ $cycle->hari_rawat_ke ?? 'N/A' }}
+                        </p>
+                        <p><span class="font-semibold inline-block w-28">Cara Bayar</span>:
+                            {{ $registrasi->penjab->png_jawab ?? 'N/A' }}
+                        </p>
+                    </div>
+
+                    {{-- Grup Klinis Penting --}}
+                    <div>
+                        <p><span class="font-semibold inline-block w-28">Berat Badan</span>:
+                            {{ $patientWeight ? $patientWeight . ' kg' : 'N/A' }}
+                        </p>
+                        <p class="@if($patientAllergy && $patientAllergy !== 'Tidak ada' && $patientAllergy !== '-') text-red-600 font-bold @endif">
+                            <span class="font-semibold inline-block w-28">Alergi</span>:
+                            {{ $patientAllergy ?: 'N/A' }}
+                        </p>
+                    </div>
+
                 </div>
             </div>
 
-            {{-- Kolom Kanan: Lokasi & Tombol Kembali --}}
-            <div class="text-left sm:text-right">
-                <a href="{{ route('monitoring.icu.history', ['noRawat' => str_replace('/', '_', $registrasi->no_rawat)]) }}" wire:navigate class="text-xs sm:text-sm text-gray-600 hover:text-blue-600 mb-2 block"> {{-- Tambah mb-2 block --}}
-                    &larr; Kembali ke Riwayat Pasien
+            {{-- KOLOM KANAN: HANYA AKSI (Tombol) --}}
+            <div class="flex-shrink-0 flex flex-row sm:flex-col sm:items-end gap-2 mt-2 sm:mt-0">
+                <a href="{{ route('monitoring.icu.history', ['noRawat' => str_replace('/', '_', $registrasi->no_rawat)]) }}" wire:navigate class="text-xs sm:text-sm text-gray-600 hover:text-blue-600 p-1">
+                    &larr; Kembali ke Riwayat
                 </a>
                 <a href="{{ route('monitoring.icu.print', [
                         'noRawat' => str_replace('/', '_', $registrasi->no_rawat),
                         'sheetDate' => $cycle->sheet_date->toDateString()
-                    ]) }}" target="_blank" {{-- Buka di tab baru --}} class="inline-block mt-2 ml-2 bg-gray-600 text-white px-3 py-1 rounded-md shadow text-xs font-medium hover:bg-gray-700">
+                    ]) }}" target="_blank" class="inline-block bg-gray-600 text-white px-3 py-1 rounded-md shadow text-xs font-medium hover:bg-gray-700">
                     Cetak PDF
                 </a>
-                <div class="mt-1 text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1"> {{-- Atur spacing --}}
-                    <p><span class="font-semibold inline-block w-24">Instalasi</span>:
-                        {{ $cycle->registrasi->kamarInap->sortByDesc('tgl_masuk')->first()?->kamar?->bangsal?->nm_bangsal ?? 'N/A' }}
-                    </p>
-                    <p><span class="font-semibold inline-block w-24">Ruang</span>:
-                        {{ $currentRoomName ?? 'N/A' }} {{-- Dari properti yg disiapkan di mount() --}}
-                    </p>
-                    <p><span class="font-semibold inline-block w-24">Asal Ruangan</span>:
-                        {{ $originatingWardName ?? 'N/A' }} {{-- Dari properti yg disiapkan di mount() --}}
-                    </p>
-                    <p><span class="font-semibold inline-block w-24">Hari Rawat Ke</span>:
-                        {{ $cycle->hari_rawat_ke ?? 'N/A' }} {{-- Pindahkan ke sini --}}
-                    </p>
-                </div>
-                {{-- --- AKHIR INFO LOKASI --- --}}
             </div>
+
         </div>
     </div>
     <div class="bg-white shadow rounded-lg p-2 flex flex-wrap gap-2 sm:space-x-2">

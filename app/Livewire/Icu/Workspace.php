@@ -7,6 +7,7 @@ use App\Models\MonitoringCycleIcu;
 use App\Models\MonitoringDevice;
 use App\Models\RegPeriksa;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
@@ -18,7 +19,8 @@ class Workspace extends Component
     public ?string $originatingWardName = null;
     public MonitoringCycleIcu $cycle;
     public RegPeriksa $registrasi;
-
+    public ?string $patientAllergy = null;
+    public ?string $patientWeight = null;
     public string $noRawatDb;
 
     // Properti untuk mengatur tab
@@ -32,7 +34,14 @@ class Workspace extends Component
     public function mount(string $noRawat, ?string $sheetDate = null)
     {
         $this->noRawatDb = str_replace('_', '/', $noRawat);
-
+        $latestPemeriksaan = DB::table('pemeriksaan_ranap')
+            ->where('no_rawat', $this->noRawatDb)
+            ->orderByDesc('tgl_perawatan') // Urutkan tanggal terbaru dulu
+            ->orderByDesc('jam_rawat')     // Lalu jam terbaru
+            ->first(); // Ambil satu baris teratas
+        // Simpan data ke properti (Logic ini tetap sama)
+        $this->patientAllergy = $latestPemeriksaan->alergi ?? ($this->registrasi->pasien->alergi ?? 'Tidak ada');
+        $this->patientWeight = $latestPemeriksaan->berat ?? null;
         $this->registrasi = RegPeriksa::with([
             'pasien',
             'poliklinik',

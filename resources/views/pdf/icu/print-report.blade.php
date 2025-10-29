@@ -531,7 +531,7 @@
                         <tr>
                             <td colspan="{{ $uniqueTimestamps->count() + 1 }}" class="group-label">CAIRAN KELUAR</td>
                         </tr>
-                        @php $keluarTypes = ['Irigasi CM', 'Irigasi CK', 'Urine', 'NGT', 'Drain/WSD 1', 'Drain/WSD 2', 'Lainnya']; @endphp
+                        @php $keluarTypes = ['Irigasi CM', 'Irigasi CK', 'Urine', 'NGT', 'Drain/WSD 1', 'Drain/WSD 2']; @endphp
                         @foreach($keluarTypes as $type)
                         <tr>
                             <th class="param-label">{{ $type }}</th>

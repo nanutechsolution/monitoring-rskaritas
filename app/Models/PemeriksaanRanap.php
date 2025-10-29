@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PemeriksaanRanap extends Model
 {
@@ -24,7 +25,8 @@ class PemeriksaanRanap extends Model
      * Beri tahu Eloquent bahwa tabel ini tidak punya
      * primary key 'id' auto-increment.
      */
-    protected $primaryKey = null;
+
+    protected $primaryKey = ['no_rawat', 'tgl_perawatan', 'jam_rawat'];
     public $incrementing = false;
 
     /**
@@ -75,5 +77,13 @@ class PemeriksaanRanap extends Model
     public function getWaktuPemeriksaanAttribute()
     {
         return \Carbon\Carbon::parse($this->tgl_perawatan->format('Y-m-d') . ' ' . $this->jam_rawat);
+    }
+
+    /**
+     * Relasi ke reg_periksa (jika diperlukan)
+     */
+    public function regPeriksa(): BelongsTo
+    {
+        return $this->belongsTo(RegPeriksa::class, 'no_rawat', 'no_rawat');
     }
 }
