@@ -44,5 +44,8 @@ Route::get('/picu/workspace/{noRawat}/{sheetDate?}', Workspace::class)
     ->middleware('auth')
     ->name('monitoring.picu.workspace');
 
+Route::get('/picu/print/{monitoringSheet}', [ReportController::class, 'printPICU'])
+    ->middleware('auth')
+    ->name('monitoring.picu.print');
 
 require __DIR__ . '/auth.php';

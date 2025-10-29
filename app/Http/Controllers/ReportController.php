@@ -7,9 +7,12 @@ use App\Models\Medication;
 use App\Models\BloodGasResult;
 use App\Models\KamarInap;
 use App\Models\MonitoringCycleIcu;
+use App\Models\PicuMonitoring;
 use App\Models\PippAssessment;
 use App\Models\MonitoringRecord;
+use App\Models\PemeriksaanRanap;
 use App\Models\RegPeriksa;
+use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use iio\libmergepdf\Merger;
@@ -18,6 +21,44 @@ use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
+
+
+    public function printPICU(PicuMonitoring $monitoringSheet)
+    {
+        $monitoringSheet->load(
+            'regPeriksa.pasien',
+            'dokter',
+            'cycles',
+            'bloodGasLogs',
+            'fluidInputs',
+            'fluidOutputs',
+            'medicationLogs',
+            'devices'
+        );
+
+        $cpptRecords = PemeriksaanRanap::where('no_rawat', $monitoringSheet->no_rawat)
+            ->with('pegawai')
+            ->orderBy('tgl_perawatan', 'desc')
+            ->orderBy('jam_rawat', 'desc')
+            ->get();
+        // 3. Siapkan array jam untuk grid (sama seperti di PicuReviewGrid)
+        $hours = array_merge(range(6, 23), range(0, 5));
+
+        // 4. Index cycles by jam_grid untuk render grid di Blade
+        $cycles = $monitoringSheet->cycles->keyBy('jam_grid');
+        $setting = Setting::first();
+        // 5. Render view cetak dan kirim semua data
+        $pdf = PDF::loadView('pdf.picu.picu', [
+            'monitoringSheet' => $monitoringSheet,
+            'regPeriksa' => $monitoringSheet->regPeriksa,
+            'cpptRecords' => $cpptRecords,
+            'hours' => $hours,
+            'cycles' => $cycles,
+            'setting' => $setting,
+        ]);
+        // 6. Tampilkan PDF di browser
+        return $pdf->stream('monitoring-picu-' . now() . '-' . $monitoringSheet->start_datetime->format('Ymd') . '.pdf');
+    }
     /**
      * Method untuk generate PDF report.
      * Menerima parameter dari route.

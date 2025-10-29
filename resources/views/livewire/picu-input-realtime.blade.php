@@ -46,35 +46,35 @@ showFlaccModal: false,
 
             {{-- KOLOM KIRI: TANDA VITAL --}}
             <div class="space-y-4">
-                <x-form-input label="Temp. Inkubator (°C)" wire:model="temp_inkubator" type="number" step="0.1" />
-                <x-form-input label="Temp. Skin (°C)" wire:model="temp_skin" type="number" step="0.1" />
-                <x-form-input label="Heart Rate (x/mnt)" wire:model="heart_rate" type="number" />
-                <x-form-input label="Resp. Rate (x/mnt)" wire:model="respiratory_rate" type="number" />
-                <x-form-input label="Tekanan Darah (mmHg)" wire:model="tekanan_darah" type="text" placeholder="cth: 80/50" />
-                <x-form-input label="Sat. O2 (%)" wire:model="sat_o2" type="number" />
-                <x-form-input label="Irama EKG" wire:model="irama_ekg" type="text" />
+                <x-form-input label="Temp. Inkubator (°C)" wire:model.defer="temp_inkubator" type="number" step="0.1" />
+                <x-form-input label="Temp. Skin (°C)" wire:model.defer="temp_skin" type="number" step="0.1" />
+                <x-form-input label="Heart Rate (x/mnt)" wire:model.defer="heart_rate" type="number" />
+                <x-form-input label="Resp. Rate (x/mnt)" wire:model.defer="respiratory_rate" type="number" />
+                <x-form-input label="Tekanan Darah (mmHg)" wire:model.defer="tekanan_darah" type="text" placeholder="cth: 80/50" />
+                <x-form-input label="Sat. O2 (%)" wire:model.defer="sat_o2" type="number" />
+                <x-form-input label="Irama EKG" wire:model.defer="irama_ekg" type="text" />
                 <div class="flex items-end space-x-2">
                     <div class="flex-grow">
                         {{-- Input ini sekarang diisi oleh modal --}}
-                        <x-form-input label="Skala Nyeri" wire:model="skala_nyeri" type="number" min="0" max="10" />
+                        <x-form-input label="Skala Nyeri" wire:model.defer="skala_nyeri" type="number" min="0" max="10" />
                     </div>
                     {{-- Tombol untuk memicu modal --}}
                     <button type_button" @click.prevent="showFlaccModal = true" class="px-3 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 h-fit">
                         Hitung Skor
                     </button>
                 </div>
-                <x-form-input label="Huidifier Inkubator" wire:model="huidifier_inkubator" type="text" />
+                <x-form-input label="Huidifier Inkubator" wire:model.defer="huidifier_inkubator" type="text" />
             </div>
 
             {{-- KOLOM KANAN: OBSERVASI APNEA WARNA --}}
             <div class="p-4 space-y-4 border rounded-md bg-gray-50">
                 <h3 class="font-medium">Observasi Apnea Warna</h3>
-                <x-form-checkbox label="Cyanosis (+/-)" wire:model="cyanosis" />
-                <x-form-checkbox label="Pucat (+/-)" wire:model="pucat" />
-                <x-form-checkbox label="Icterus (+/-)" wire:model="icterus" />
-                <x-form-checkbox label="CRT < 2 detik (+/-)" wire:model="crt_lt_2" />
-                <x-form-checkbox label="Bradikardia (+/-)" wire:model="bradikardia" />
-                <x-form-checkbox label="Stimulasi (+/-)" wire:model="stimulasi" />
+                <x-form-checkbox label="Cyanosis (+/-)" wire:model.defer="cyanosis" />
+                <x-form-checkbox label="Pucat (+/-)" wire:model.defer="pucat" />
+                <x-form-checkbox label="Icterus (+/-)" wire:model.defer="icterus" />
+                <x-form-checkbox label="CRT < 2 detik (+/-)" wire:model.defer="crt_lt_2" />
+                <x-form-checkbox label="Bradikardia (+/-)" wire:model.defer="bradikardia" />
+                <x-form-checkbox label="Stimulasi (+/-)" wire:model.defer="stimulasi" />
             </div>
             <div class="p-4 border rounded-md">
                 <h3 class="text-lg font-medium mb-4">Terapi Oksigen / Ventilator</h3>
@@ -82,23 +82,23 @@ showFlaccModal: false,
                 {{-- Pilihan Mode (Radio Button) --}}
                 <div class="flex flex-wrap gap-4 mb-4">
                     <label class="flex items-center">
-                        <input type="radio" wire:model.live="vent_mode" value="SPONTAN" x-model="vent_mode" class="text-blue-600">
+                        <input type="radio" wire:model.defer.live="vent_mode" value="SPONTAN" x-model="vent_mode" class="text-blue-600">
                         <span class="ml-2">Spontan / Nasal</span>
                     </label>
                     <label class="flex items-center">
-                        <input type="radio" wire:model.live="vent_mode" value="CPAP" x-model="vent_mode" class="text-blue-600">
+                        <input type="radio" wire:model.defer.live="vent_mode" value="CPAP" x-model="vent_mode" class="text-blue-600">
                         <span class="ml-2">CPAP</span>
                     </label>
                     <label class="flex items-center">
-                        <input type="radio" wire:model.live="vent_mode" value="HFO" x-model="vent_mode" class="text-blue-600">
+                        <input type="radio" wire:model.defer.live="vent_mode" value="HFO" x-model="vent_mode" class="text-blue-600">
                         <span class="ml-2">HFO</span>
                     </label>
                     <label class="flex items-center">
-                        <input type="radio" wire:model.live="vent_mode" value="MEKANIK" x-model="vent_mode" class="text-blue-600">
+                        <input type="radio" wire:model.defer.live="vent_mode" value="MEKANIK" x-model="vent_mode" class="text-blue-600">
                         <span class="ml-2">Ventilator Mekanik</span>
                     </label>
                     <label class="flex items-center">
-                        <input type="radio" wire:model.live="vent_mode" value="" x-model="vent_mode" class="text-gray-400">
+                        <input type="radio" wire:model.defer.live="vent_mode" value="" x-model="vent_mode" class="text-gray-400">
                         <span class="ml-2 text-gray-500">(Tidak Ada)</span>
                     </label>
                 </div>
@@ -107,8 +107,8 @@ showFlaccModal: false,
                 <div x-show="vent_mode === 'SPONTAN'" class="p-3 space-y-3 bg-gray-50 border rounded-md">
                     <h4 class="font-semibold">Setting Nasal High/Low Flow</h4>
                     <div class="grid grid-cols-2 gap-4">
-                        <x-form-input label="FiO2 (%)" wire:model="vent_fio2_nasal" type="number" step="0.1" />
-                        <x-form-input label="Flow (lpm)" wire:model="vent_flow_nasal" type="number" step="0.1" />
+                        <x-form-input label="FiO2 (%)" wire:model.defer="vent_fio2_nasal" type="number" step="0.1" />
+                        <x-form-input label="Flow (lpm)" wire:model.defer="vent_flow_nasal" type="number" step="0.1" />
                     </div>
                 </div>
 
@@ -116,9 +116,9 @@ showFlaccModal: false,
                 <div x-show="vent_mode === 'CPAP'" class="p-3 space-y-3 bg-gray-50 border rounded-md">
                     <h4 class="font-semibold">Setting CPAP</h4>
                     <div class="grid grid-cols-3 gap-4">
-                        <x-form-input label="FiO2 (%)" wire:model="vent_fio2_cpap" type="number" step="0.1" />
-                        <x-form-input label="Flow (lpm)" wire:model="vent_flow_cpap" type="number" step="0.1" />
-                        <x-form-input label="PEEP" wire:model="vent_peep_cpap" type="number" step="0.1" />
+                        <x-form-input label="FiO2 (%)" wire:model.defer="vent_fio2_cpap" type="number" step="0.1" />
+                        <x-form-input label="Flow (lpm)" wire:model.defer="vent_flow_cpap" type="number" step="0.1" />
+                        <x-form-input label="PEEP" wire:model.defer="vent_peep_cpap" type="number" step="0.1" />
                     </div>
                 </div>
 
@@ -126,11 +126,11 @@ showFlaccModal: false,
                 <div x-show="vent_mode === 'HFO'" class="p-3 space-y-3 bg-gray-50 border rounded-md">
                     <h4 class="font-semibold">Setting HFO</h4>
                     <div class="grid grid-cols-3 gap-4">
-                        <x-form-input label="FiO2 (%)" wire:model="vent_fio2_hfo" type="number" step="0.1" />
-                        <x-form-input label="Frekuensi" wire:model="vent_frekuensi_hfo" type="number" />
-                        <x-form-input label="MAP" wire:model="vent_map_hfo" type="number" step="0.1" />
-                        <x-form-input label="Amplitudo" wire:model="vent_amplitudo_hfo" type="number" />
-                        <x-form-input label="I:T" wire:model="vent_it_hfo" type="text" />
+                        <x-form-input label="FiO2 (%)" wire:model.defer="vent_fio2_hfo" type="number" step="0.1" />
+                        <x-form-input label="Frekuensi" wire:model.defer="vent_frekuensi_hfo" type="number" />
+                        <x-form-input label="MAP" wire:model.defer="vent_map_hfo" type="number" step="0.1" />
+                        <x-form-input label="Amplitudo" wire:model.defer="vent_amplitudo_hfo" type="number" />
+                        <x-form-input label="I:T" wire:model.defer="vent_it_hfo" type="text" />
                     </div>
                 </div>
 
@@ -138,14 +138,14 @@ showFlaccModal: false,
                 <div x-show="vent_mode === 'MEKANIK'" class="p-3 space-y-3 bg-gray-50 border rounded-md">
                     <h4 class="font-semibold">Setting Ventilator Mekanik</h4>
                     <div class="grid grid-cols-4 gap-4">
-                        <x-form-input label="Mode" wire:model="vent_mode_mekanik" type="text" />
-                        <x-form-input label="FiO2 (%)" wire:model="vent_fio2_mekanik" type="number" step="0.1" />
-                        <x-form-input label="PEEP" wire:model="vent_peep_mekanik" type="number" step="0.1" />
-                        <x-form-input label="PIP" wire:model="vent_pip_mekanik" type="number" step="0.1" />
-                        <x-form-input label="TV/Vte" wire:model="vent_tv_vte_mekanik" type="text" />
-                        <x-form-input label="RR / RR Spontan" wire:model="vent_rr_spontan_mekanik" type="text" />
-                        <x-form-input label="P. Max" wire:model="vent_p_max_mekanik" type="number" step="0.1" />
-                        <x-form-input label="I : E" wire:model="vent_ie_mekanik" type="text" />
+                        <x-form-input label="Mode" wire:model.defer="vent_mode_mekanik" type="text" />
+                        <x-form-input label="FiO2 (%)" wire:model.defer="vent_fio2_mekanik" type="number" step="0.1" />
+                        <x-form-input label="PEEP" wire:model.defer="vent_peep_mekanik" type="number" step="0.1" />
+                        <x-form-input label="PIP" wire:model.defer="vent_pip_mekanik" type="number" step="0.1" />
+                        <x-form-input label="TV/Vte" wire:model.defer="vent_tv_vte_mekanik" type="text" />
+                        <x-form-input label="RR / RR Spontan" wire:model.defer="vent_rr_spontan_mekanik" type="text" />
+                        <x-form-input label="P. Max" wire:model.defer="vent_p_max_mekanik" type="number" step="0.1" />
+                        <x-form-input label="I : E" wire:model.defer="vent_ie_mekanik" type="text" />
                     </div>
                 </div>
             </div>
@@ -222,7 +222,6 @@ showFlaccModal: false,
                 {{-- KOLOM 2: WONG BAKER & SKOR --}}
                 <div class="md:col-span-1">
                     <h4 class="font-bold mb-2">WONG BAKER FACE</h4>
-                    {{-- Ini memanggil gambar dari public/img/image.png --}}
                     <img src="{{ asset('img/image.png') }}" alt="Wong Baker Face Scale" class="w-full rounded-md border">
 
                     <div class="mt-4 p-4 bg-gray-100 rounded-md text-center">

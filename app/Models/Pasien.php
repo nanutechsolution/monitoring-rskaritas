@@ -46,7 +46,9 @@ class Pasien extends Model
      * @var bool
      */
     public $timestamps = false;
-
+    protected $casts = [
+        'tgl_lahir' => 'date', // Ini akan mengubah tgl_lahir mjd objek Carbon
+    ];
     // --- DEFINISI RELASI ---
 
     /**

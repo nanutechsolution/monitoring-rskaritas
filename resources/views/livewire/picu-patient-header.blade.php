@@ -1,5 +1,9 @@
 <div class{{"p-4 border rounded-md shadow-sm bg-white mb-6"}}>
-
+    <div class="float-right">
+        <a href="{{ route('monitoring.picu.print', ['monitoringSheet' => $monitoringSheet->id]) }}" target="_blank" class="inline-block px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
+            Cetak PDF
+        </a>
+    </div>
     {{-- Notifikasi Sukses --}}
     @if (session()->has('success-header'))
     <div class="p-2 mb-3 text-xs text-green-800 bg-green-100 border border-green-300 rounded-md">

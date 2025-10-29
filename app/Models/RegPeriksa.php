@@ -104,4 +104,6 @@ class RegPeriksa extends Model
         return $this->hasMany(DpjpRanap::class, 'no_rawat', 'no_rawat');
     }
 
+
+
 }

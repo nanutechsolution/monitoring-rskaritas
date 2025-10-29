@@ -10,9 +10,10 @@ use Carbon\Carbon;
 class PicuForm extends Component
 {
     public $noRawat;
-    public $sheetDate; // <-- PROPERTI BARU
+    public $sheetDate;
     public $regPeriksa;
     public $monitoringSheet;
+    public $activeTab = 'observasi';
 
     /**
      * Mount lifecycle hook.
