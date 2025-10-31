@@ -5,88 +5,98 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\PicuCycle;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Computed;
 
 class PicuVitalChart extends Component
 {
     public $monitoringSheetId;
-
-    // Kita buat array hours untuk label X-axis
-    public $hours = [];
+    public $chartData; 
 
     public function mount($monitoringSheetId)
     {
         $this->monitoringSheetId = $monitoringSheetId;
-        // Jam 6 pagi s/d 5 pagi besok
-        $this->hours = array_merge(range(6, 23), range(0, 5));
+        $this->buildChartData(); 
     }
 
     /**
-     * Ambil data cycle, dan key-nya dengan jam_grid
+     * Membangun data untuk Tipe Kategori
      */
-    #[Computed]
-    #[On('cycle-updated')] // Agar refresh saat perawat simpan data baru
-    public function vitalSigns()
+    public function buildChartData()
     {
-        return PicuCycle::where('picu_monitoring_id', $this->monitoringSheetId)
-            ->get()
-            ->keyBy('jam_grid');
-    }
+        // 1. Ambil SEMUA data, urutkan
+        $allCycles = PicuCycle::where('picu_monitoring_id', $this->monitoringSheetId)
+            // Hanya ambil baris yg punya setidaknya 1 data TTV
+            ->where(function ($query) {
+                $query->whereNotNull('heart_rate')
+                      ->orWhereNotNull('temp_skin')
+                      ->orWhereNotNull('respiratory_rate')
+                      ->orWhereNotNull('sat_o2');
+            })
+            ->orderBy('waktu_observasi', 'asc') 
+            ->get();
 
-    /**
-     * Fungsi untuk menyiapkan data dalam format Chart.js
-     */
-    #[Computed]
-    public function chartData()
-    {
-        $hrData = [];
+        // 2. Siapkan array untuk data 'Categorical'
+        $labels = [];         // Untuk Sumbu X (cth: "14:16:38")
+        $hrData = [];         // Untuk Sumbu Y (cth: 120)
         $rrData = [];
         $tempData = [];
         $satO2Data = [];
+        $tensiSistolik = [];
+        $tensiDiastolik = [];
+        $fio2Data = [];
+        $peepMapData = [];
 
-        foreach ($this->hours as $hour) {
-            $cycle = $this->vitalSigns()->get($hour);
+        foreach ($allCycles as $cycle) {
+            // === INI KUNCINYA ===
+            // Buat label Sumbu X dari waktu observasi
+            $labels[] = $cycle->waktu_observasi->format('H:i'); // cth: "14:16:38"
 
-            // Mengambil data untuk setiap jam. Jika kosong, isi null agar garis putus.
-            $hrData[]     = $cycle->heart_rate ?? null;
-            $rrData[]     = $cycle->respiratory_rate ?? null;
-            $tempData[]   = $cycle->temp_skin ?? null;
-            $satO2Data[]  = $cycle->sat_o2 ?? null;
+            // Buat array data sederhana
+            $hrData[]    = $cycle->heart_rate;
+            $rrData[]    = $cycle->respiratory_rate;
+            $tempData[]  = $cycle->temp_skin;
+            $satO2Data[] = $cycle->sat_o2;
+
+            // Pecah Tekanan Darah
+            if ($cycle->tekanan_darah && str_contains($cycle->tekanan_darah, '/')) {
+                [$sistol, $diastol] = explode('/', $cycle->tekanan_darah, 2);
+                $tensiSistolik[] = ctype_digit($sistol) ? (int)$sistol : null;
+                $tensiDiastolik[] = ctype_digit($diastol) ? (int)$diastol : null;
+            } else {
+                $tensiSistolik[] = null;
+                $tensiDiastolik[] = null;
+            }
+            
+            // Gabungkan Data Ventilator
+            $fio2 = $cycle->vent_fio2_nasal ?? $cycle->vent_fio2_cpap ?? $cycle->vent_fio2_hfo ?? $cycle->vent_fio2_mekanik;
+            $fio2Data[] = $fio2;
+            $peepMap = $cycle->vent_peep_cpap ?? $cycle->vent_map_hfo ?? $cycle->vent_peep_mekanik;
+            $peepMapData[] = $peepMap;
         }
-
-        return [
-            'labels' => array_map(fn($h) => $h . ':00', $this->hours), // cth: [6:00, 7:00, ...]
+        
+        // 3. Set public property $this->chartData
+        $this->chartData = [
+            'labels' => $labels, 
             'datasets' => [
-                [
-                    'label' => 'Heart Rate (x/mnt)',
-                    'data' => $hrData,
-                    'borderColor' => 'rgb(255, 99, 132)', // Merah
-                    'yAxisID' => 'y1',
-                    'tension' => 0.4
-                ],
-                [
-                    'label' => 'Resp. Rate (x/mnt)',
-                    'data' => $rrData,
-                    'borderColor' => 'rgb(54, 162, 235)', // Biru
-                    'yAxisID' => 'y1',
-                    'tension' => 0.4
-                ],
-                [
-                    'label' => 'Temp. Skin (°C)',
-                    'data' => $tempData,
-                    'borderColor' => 'rgb(75, 192, 192)', // Hijau Muda
-                    'yAxisID' => 'y2',
-                    'tension' => 0.4
-                ],
-                [
-                    'label' => 'Sat. O2 (%)',
-                    'data' => $satO2Data,
-                    'borderColor' => 'rgb(255, 159, 64)', // Orange
-                    'yAxisID' => 'y3',
-                    'tension' => 0.4
-                ],
+                // Data TTV
+                ['label' => 'Suhu (°C)', 'data' => $tempData, 'borderColor' => '#10B981', 'yAxisID' => 'yTemp', 'tension' => 0.1, 'fill' => true, 'backgroundColor' => 'rgba(16, 185, 129, 0.1)'],
+                ['label' => 'HR (x/mnt)', 'data' => $hrData, 'borderColor' => '#EF4444', 'yAxisID' => 'yRate', 'tension' => 0.1],
+                ['label' => 'RR (x/mnt)', 'data' => $rrData, 'borderColor' => '#3B82F6', 'yAxisID' => 'yRate', 'tension' => 0.1],
+                ['label' => 'Sistol (mmHg)', 'data' => $tensiSistolik, 'borderColor' => '#F59E0B', 'yAxisID' => 'yRate', 'tension' => 0.1, 'pointStyle' => 'triangle'],
+                ['label' => 'Diastol (mmHg)', 'data' => $tensiDiastolik, 'borderColor' => '#F59E0B', 'yAxisID' => 'yRate', 'tension' => 0.1, 'pointStyle' => 'cross'],
+                ['label' => 'SpO2 (%)', 'data' => $satO2Data, 'borderColor' => '#6366F1', 'yAxisID' => 'ySupport', 'tension' => 0.1],
+                
+                // Data Intervensi
+                ['label' => 'FiO2 (%)', 'data' => $fio2Data, 'borderColor' => '#8B5CF6', 'yAxisID' => 'ySupport', 'tension' => 0.1, 'pointStyle' => 'rectRot', 'borderDash' => [5, 5]],
+                ['label' => 'PEEP/MAP', 'data' => $peepMapData, 'borderColor' => '#EC4899', 'yAxisID' => 'ySupport', 'tension' => 0.1, 'pointStyle' => 'star', 'borderDash' => [5, 5]],
             ]
         ];
+    }
+    
+    #[On('cycle-updated')]
+    public function refreshChart()
+    {
+        $this->buildChartData(); 
+        $this->dispatch('refresh-chart', data: $this->chartData);
     }
 
     public function render()

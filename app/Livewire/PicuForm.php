@@ -13,11 +13,10 @@ class PicuForm extends Component
     public $sheetDate;
     public $regPeriksa;
     public $monitoringSheet;
-    public $activeTab = 'observasi';
+    public string $activeTab = 'observasi';
 
     /**
      * Mount lifecycle hook.
-     * LOGIKA BARU: Menerima noRawat dan sheetDate (opsional)
      */
     public function mount($noRawat, $sheetDate = null)
     {
@@ -28,18 +27,15 @@ class PicuForm extends Component
         $this->regPeriksa = RegPeriksa::where('no_rawat', $this->noRawat)->firstOrFail();
 
         // 2. Tentukan tanggal target
-        // Jika sheetDate dikirim (dari history), gunakan itu.
-        // Jika tidak (dari link hari ini), gunakan now().
         $targetDate = $this->sheetDate ? Carbon::parse($this->sheetDate) : now();
 
         // 3. Tentukan rentang waktu sheet (mulai jam 06:00)
         $startTime = $this->calculateSheetStartTime($targetDate);
-        $endTime = $startTime->copy()->addDay()->subSecond(); // 24 jam dikurangi 1 detik
+        $endTime = $startTime->copy()->addDay()->subSecond();
 
-        // 4. LOGIKA UTAMA: Cari ATAU BUAT BARU (firstOrCreate)
-        // Ini memastikan lembar observasi ada, baik dibuka dari history
-        // atau dibuat baru untuk hari ini.
-        $this->monitoringSheet = PicuMonitoring::with('dokter')->firstOrCreate(
+        // 4. LOGIKA UTAMA: Cari ATAU BUAT BARU
+        // === PERBAIKAN: Hapus .with('dokter') ===
+        $this->monitoringSheet = PicuMonitoring::firstOrCreate(
             [
                 // Kunci untuk mencari
                 'no_rawat' => $this->noRawat,
@@ -48,15 +44,13 @@ class PicuForm extends Component
             [
                 // Data untuk diisi JIKA membuat baru
                 'end_datetime' => $endTime,
-                'dokter_dpjp' => $this->regPeriksa->kd_dokter,
-                'diagnosis' => $this->regPeriksa->penyakit_awal, // Ambil dari diagnosa awal (contoh)
+                'diagnosis' => $this->regPeriksa->penyakit_awal, 
             ]
         );
     }
 
     /**
      * Helper untuk menentukan jam mulai sheet.
-     * (Tidak ada perubahan di fungsi ini)
      */
     private function calculateSheetStartTime(Carbon $now): Carbon
     {

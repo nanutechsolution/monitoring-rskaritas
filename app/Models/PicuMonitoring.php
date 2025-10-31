@@ -77,15 +77,12 @@ class PicuMonitoring extends Model
      */
     public function dokter(): BelongsTo
     {
-        // Ganti 'App\Models\Dokter' jika model dokter Anda berbeda
-        // Ganti 'kd_dokter' jika primary key tabel dokter berbeda
         return $this->belongsTo(Dokter::class, 'dokter_dpjp', 'kd_dokter');
     }
 
 
     public function regPeriksa(): BelongsTo
     {
-        // Ganti 'App\Models\RegPeriksa' jika model Anda berbeda
         return $this->belongsTo(RegPeriksa::class, 'no_rawat', 'no_rawat');
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Livewire\Picu;
 
 use App\Models\MonitoringCyclePicu;
+use App\Models\PicuMonitoring;
 use App\Models\RegPeriksa;
 use Illuminate\Support\Collection;
 use Livewire\Component;
@@ -20,10 +21,9 @@ class PatientHistory extends Component
         $this->registrasi = RegPeriksa::with('pasien')
             ->where('no_rawat', $this->noRawatDb)
             ->firstOrFail();
-
         // Load SEMUA riwayat lembar observasi PICU
-        $this->allCycles = MonitoringCyclePicu::where('no_rawat', $this->noRawatDb)
-            ->orderBy('sheet_date', 'desc')
+        $this->allCycles = PicuMonitoring::where('no_rawat', $this->noRawatDb)
+            ->orderBy('start_datetime', 'desc')
             ->get();
     }
 

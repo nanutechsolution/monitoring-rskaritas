@@ -37,13 +37,20 @@
                 <span class="w-32 font-medium text-gray-600">Umur</span>
                 <span class="text-gray-900">: {{ $regPeriksa->umur ?? '-' }}</span>
             </div>
-            <div class{{"flex"}}>
+            <div class="flex">
                 <span class="w-32 font-medium text-gray-600">Hari Rawat Ke</span>
                 <span class="text-gray-900">: {{ $hariRawat }}</span>
             </div>
             <div class="flex">
-                <span class="w-32 font-medium text-gray-600">Dokter DPJP</span>
-                <span class="text-gray-900">: {{ $monitoringSheet->dokter->nm_dokter ?? $monitoringSheet->dokter_dpjp }}</span>
+                <span class="w-32 font-medium text-gray-600 shrink-0">Tim DPJP</span>
+                <div class="text-gray-900">
+                    {{-- Loop data $dpjpList dari komponen PHP --}}
+                    @forelse ($dpjpList as $dpjp)
+                    <div>: {{ $dpjp->dokter->nm_dokter ?? $dpjp->kd_dokter }}</div>
+                    @empty
+                    <div>: (Belum ada DPJP ditunjuk)</div>
+                    @endforelse
+                </div>
             </div>
         </div>
 
@@ -51,7 +58,23 @@
         {{-- === KOLOM 2: DATA MEDIS (Bisa Diedit) === --}}
         {{-- =============================================== --}}
         <div class="space-y-3">
-            <x-form-input label="Diagnosis" wire:model.blur="diagnosis" wire:change="saveHeader" type="text" />
+            {{-- === INI BLOK BARU UNTUK DIAGNOSIS === --}}
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Diagnosis (dari `diagnosa_pasien`)</label>
+                <div class="mt-1 p-2 w-full border border-gray-300 rounded-md bg-gray-50 min-h-[60px]">
+                    <ul class="list-disc list-inside">
+                        @forelse ($diagnosaList as $diag)
+                        <li>
+                            <span class="font-semibold">[{{ $diag->kd_penyakit }}]</span>
+                            {{ $diag->penyakit->nm_penyakit ?? 'Tidak ditemukan' }}
+                            <span class="text-xs text-gray-500">(Prioritas {{ $diag->prioritas }})</span>
+                        </li>
+                        @empty
+                        <li class="text-gray-500 italic">Belum ada diagnosis ranap.</li>
+                        @endforelse
+                    </ul>
+                </div>
+            </div>
 
             <x-form-input label="Umur Kehamilan (Minggu)" wire:model.blur="umur_kehamilan" wire:change="saveHeader" type="text" />
 
@@ -59,17 +82,10 @@
 
             <x-form-input label="Berat Badan Lahir (Kilogram)" wire:model.blur="berat_badan_lahir" wire:change="saveHeader" type="text" />
         </div>
-
-        {{-- =============================================== --}}
-        {{-- === KOLOM 3: DATA ADMISI (Bisa Diedit) === --}}
-        {{-- =============================================== --}}
         <div class="space-y-3">
             <x-form-input label="Cara Persalinan" wire:model.blur="cara_persalinan" wire:change="saveHeader" type="text" />
-
             <x-form-input label="Rujukan" wire:model.blur="rujukan" wire:change="saveHeader" type="text" />
-
             <x-form-input label="Asal Ruangan" wire:model.blur="asal_ruangan" wire:change="saveHeader" type="text" />
-
             <x-form-input label="Jaminan" wire:model.blur="jaminan" wire:change="saveHeader" type="text" />
         </div>
     </div>

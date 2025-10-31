@@ -38,11 +38,18 @@ class PicuReviewGrid extends Component
      * untuk refresh grid ini.
      */
     #[On('cycle-updated')]
+    #[On('cycle-updated')]
     public function loadCycles()
     {
         $this->cycles = PicuCycle::where('picu_monitoring_id', $this->monitoringSheetId)
             ->get()
-            ->keyBy('jam_grid');
+            // 1. Kelompokkan berdasarkan slot jam (6, 7, 8, dst)
+            ->groupBy('jam_grid')
+            // 2. Untuk setiap grup jam, urutkan (desc) berdasarkan waktu input
+            //    dan ambil HANYA 1 (yang pertama/terbaru)
+            ->map(function ($cyclesInHour) {
+                return $cyclesInHour->sortByDesc('waktu_observasi')->first();
+            });
     }
 
     public function render()

@@ -1,15 +1,8 @@
 <div>
-    {{-- =============================================== --}}
-    {{-- === 1. HEADER (Selalu Terlihat) === --}}
-    {{-- =============================================== --}}
     <livewire:picu-patient-header :regPeriksa="$regPeriksa" :monitoringSheet="$monitoringSheet" :key="'header-'.$monitoringSheet->id" />
 
     <livewire:picu-sheet-notes :monitoringSheet="$monitoringSheet" :key="'notes-'.$monitoringSheet->id" />
 
-
-    {{-- =============================================== --}}
-    {{-- === 2. NAVIGASI TAB (BARU) === --}}
-    {{-- =============================================== --}}
     <div class="mt-6 border-b border-gray-200">
         <nav class="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
             {{-- Tab 1 --}}
@@ -79,7 +72,7 @@
         {{-- Hanya di-load jika tab 'cairan' aktif --}}
         <div>
             <h3 class="mb-3 text-lg font-semibold">Nutrisi & Keseimbangan Cairan</h3>
-            <livewire:picu-fluid-balance :monitoringSheetId="$monitoringSheet->id" :key="'fluid-'.$monitoringSheet->id" />
+            <livewire:picu-fluid-balance :monitoringSheetId="$monitoringSheet->id" :key="'fluid-'.$monitoringSheet->id" lazy />
         </div>
         @endif
 
@@ -87,40 +80,32 @@
         {{-- Hanya di-load jika tab 'medikasi' aktif --}}
         <div>
             <h3 class="mb-3 text-lg font-semibold">Obat-obatan</h3>
-            <livewire:picu-medications :monitoringSheetId="$monitoringSheet->id" :key="'meds-'.$monitoringSheet->id" />
+            <livewire:picu-medications :monitoringSheetId="$monitoringSheet->id" :key="'meds-'.$monitoringSheet->id" lazy />
         </div>
         <hr class="my-6 border-t-2 border-gray-200">
         <div>
             <h3 class="mb-3 text-lg font-semibold">Blood Gas Monitor (AGD)</h3>
-            <livewire:picu-blood-gas :monitoringSheetId="$monitoringSheet->id" :key="'agd-'.$monitoringSheet->id" />
+            <livewire:picu-blood-gas :monitoringSheetId="$monitoringSheet->id" :key="'agd-'.$monitoringSheet->id" lazy />
         </div>
         @endif
 
         @if ($activeTab == 'alat')
-        {{-- Hanya di-load jika tab 'alat' aktif --}}
         <div>
             <h3 class="mb-3 text-lg font-semibold">Alat Terpasang</h3>
-            <livewire:picu-devices :monitoringSheetId="$monitoringSheet->id" :key="'devices-'.$monitoringSheet->id" />
+            <livewire:picu-devices :monitoringSheetId="$monitoringSheet->id" :key="'devices-'.$monitoringSheet->id" lazy />
         </div>
         @endif
 
         @if ($activeTab == 'cppt')
-        {{-- Hanya di-load jika tab 'cppt' aktif --}}
-        <div>
-            <h3 class="mb-3 text-lg font-semibold">Input CPPT (SOAP)</h3>
-            <livewire:picu-cppt-input :noRawat="$noRawat" :key="'cppt-input-'.$monitoringSheet->id" />
-        </div>
-        <hr class="my-6 border-t-2 border-gray-200">
         <div>
             <h3 class="mt-8 mb-3 text-lg font-semibold">Riwayat CPPT (Data dari Khanza)</h3>
-            <livewire:picu-cppt-viewer :noRawat="$noRawat" :key="'cppt-viewer-'.$monitoringSheet->id" />
+            <livewire:picu-cppt-viewer :noRawat="$noRawat" :key="'cppt-viewer-'.$monitoringSheet->id" lazy />
         </div>
         @endif
 
-    </div>
+        </di>
 
-    {{-- Debug info (selalu terlihat) --}}
-    <div class="p-2 mt-6 text-sm text-gray-500 bg-gray-100 rounded-md">
-        Debug: Aktif Sheet ID: {{ $monitoringSheet->id }} | Status: {{ $isToday ? 'Lembar Hari Ini' : 'Lembar Riwayat' }}
+        <div class="p-2 mt-6 text-sm text-gray-500 bg-gray-100 rounded-md">
+            Debug: Aktif Sheet ID: {{ $monitoringSheet->id }} | Status: {{ $isToday ? 'Lembar Hari Ini' : 'Lembar Riwayat' }}
+        </div>
     </div>
-</div>

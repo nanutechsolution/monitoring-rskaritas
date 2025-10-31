@@ -2,20 +2,23 @@
 
 namespace App\Livewire;
 
+use App\Models\DiagnosaPasien;
+use App\Models\DpjpRanap;
 use Livewire\Component;
 use App\Models\PicuMonitoring; // Import model
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class PicuPatientHeader extends Component
 {
     public $regPeriksa;
-    public PicuMonitoring $monitoringSheet; // Gunakan type-hint untuk model
+    public PicuMonitoring $monitoringSheet;
+    // Properti baru untuk menampung LIST dokter
+    public Collection $dpjpList;
+    public Collection $diagnosaList;
     public $hariRawat;
 
-    // --- Properti Baru untuk Form Input ---
-    // Field-field ini akan di-bind ke form
     public $diagnosis;
-    public $dokter_dpjp; // Kita biarkan ini read-only untuk saat ini
     public $umur_kehamilan;
     public $umur_koreksi;
     public $berat_badan_lahir;
@@ -28,11 +31,18 @@ class PicuPatientHeader extends Component
     {
         $this->regPeriksa = $regPeriksa;
         $this->monitoringSheet = $monitoringSheet;
-
         // Hitung Hari Rawat Ke
         $this->hariRawat = Carbon::parse($this->regPeriksa->tgl_registrasi)
-                                 ->diffInDays(now()) + 1;
+            ->diffInDays(now()) + 1;
+        $this->dpjpList = DpjpRanap::where('no_rawat', $this->regPeriksa->no_rawat)
+            ->with(relations: 'dokter')
+            ->get();
 
+        $this->diagnosaList = DiagnosaPasien::where('no_rawat', $this->regPeriksa->no_rawat)
+            ->where('status', 'Ranap') // Hanya ambil yg Ranap
+            ->with('penyakit') // Eager load nama penyakit
+            ->orderBy('prioritas', 'asc') // Urutkan
+            ->get();
         // Isi public properties dari data monitoringSheet yang ada
         $this->fill($this->monitoringSheet->toArray());
     }
@@ -45,7 +55,6 @@ class PicuPatientHeader extends Component
     {
         // Ambil hanya data yang relevan untuk di-update
         $dataToSave = $this->only([
-            'diagnosis',
             'umur_kehamilan',
             'umur_koreksi',
             'berat_badan_lahir',
@@ -57,14 +66,11 @@ class PicuPatientHeader extends Component
 
         // Validasi (opsional tapi disarankan)
         $this->validate([
-            'diagnosis' => 'nullable|string|max:100',
             'umur_kehamilan' => 'nullable|string|max:20',
-            // ... validasi lain jika perlu
         ]);
 
         // Update data di database
         $this->monitoringSheet->update($dataToSave);
-
         // Beri notifikasi (opsional)
         session()->flash('success-header', 'Data header berhasil diupdate.');
     }

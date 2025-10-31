@@ -2,9 +2,9 @@
 
     {{-- Notifikasi Sukses --}}
     @if (session()->has('success-fluid'))
-        <div class="p-3 mb-4 text-green-800 bg-green-100 border border-green-300 rounded-md">
-            {{ session('success-fluid') }}
-        </div>
+    <div class="p-3 mb-4 text-green-800 bg-green-100 border border-green-300 rounded-md">
+        {{ session('success-fluid') }}
+    </div>
     @endif
 
     {{-- =============================================== --}}
@@ -15,15 +15,9 @@
 
         {{-- Input Manual Summary --}}
         <div class="grid grid-cols-2 gap-4 mb-4">
-            <x-form-input label="Balance 24 Jam SEBELUMNYA (ml)"
-                          wire:model.live.debounce.500ms="balance_cairan_24h_sebelumnya"
-                          wire:change="updateSummary"
-                          type="number" step="0.1" />
+            <x-form-input label="Balance 24 Jam SEBELUMNYA (ml)" wire:model.live.debounce.500ms="balance_cairan_24h_sebelumnya" wire:change="updateSummary" type="number" step="0.1" />
 
-            <x-form-input label="EWL / IWL (ml)"
-                          wire:model.live.debounce.500ms="ewl_24h"
-                          wire:change="updateSummary"
-                          type="number" step="0.1" />
+            <x-form-input label="EWL / IWL (ml)" wire:model.live.debounce.500ms="ewl_24h" wire:change="updateSummary" type="number" step="0.1" />
         </div>
 
         {{-- Tampilan Kalkulasi Otomatis (Read-Only) --}}
@@ -86,7 +80,7 @@
                         <template x-if="type === 'input'">
                             <optgroup label="Cairan Masuk">
                                 @foreach($kategoriInput as $key => $value)
-                                    <option value="{{ $key }}">{{ $value }}</option>
+                                <option value="{{ $key }}">{{ $value }}</option>
                                 @endforeach
                             </optgroup>
                         </template>
@@ -94,7 +88,7 @@
                         <template x-if="type === 'output'">
                             <optgroup label="Cairan Keluar">
                                 @foreach($kategoriOutput as $key => $value)
-                                    <option value="{{ $key }}">{{ $value }}</option>
+                                <option value="{{ $key }}">{{ $value }}</option>
                                 @endforeach
                             </optgroup>
                         </template>
@@ -102,15 +96,13 @@
                     @error('kategori') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                 </div>
 
-                <x-form-input label="Keterangan (Nama Infus, Susu, Warna Urine, dll)"
-                              wire:model="keterangan" type="text" class="col-span-1" />
+                <x-form-input label="Keterangan (Nama Infus, Susu, Warna Urine, dll)" wire:model="keterangan" type="text" class="col-span-1" />
 
                 <x-form-input label="Jumlah (ml)" wire:model="jumlah" type="number" step="0.1" class="col-span-1" />
             </div>
 
             <div class="flex justify-end">
-                <button type="submit" class="px-4 py-2 text-sm font-medium text-white rounded-md"
-                        :class="type === 'input' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'">
+                <button type="submit" class="px-4 py-2 text-sm font-medium text-white rounded-md" :class="type === 'input' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'">
                     Simpan Log
                 </button>
             </div>
@@ -136,16 +128,18 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse ($this->fluidInputs as $log)
-                            <tr>
-                                <td class="px-3 py-2">{{ $log->waktu_log->format('H:i') }}</td>
-                                <td class="px-3 py-2">
-                                    <span class="font-medium">{{ $log->keterangan }}</span>
-                                    <span class="block text-xs text-gray-500">{{ $kategoriInput[$log->kategori] ?? $log->kategori }}</span>
-                                </td>
-                                <td class="px-3 py-2">{{ $log->jumlah }}</td>
-                            </tr>
+                        <tr>
+                            <td class="px-3 py-2">{{ $log->waktu_log->format('H:i') }}</td>
+                            <td class="px-3 py-2">
+                                <span class="font-medium">{{ $log->keterangan }}</span>
+                                <span class="block text-xs text-gray-500">{{ data_get($kategoriInput, $log->kategori, $log->kategori) }}</span>
+                            </td>
+                            <td class="px-3 py-2">{{ $log->jumlah }}</td>
+                        </tr>
                         @empty
-                            <tr><td colspan="3" class="p-3 text-center text-gray-500">Belum ada data</td></tr>
+                        <tr>
+                            <td colspan="3" class="p-3 text-center text-gray-500">Belum ada data</td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -166,16 +160,19 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse ($this->fluidOutputs as $log)
-                            <tr>
-                                <td class="px-3 py-2">{{ $log->waktu_log->format('H:i') }}</td>
-                                <td class="px-3 py-2">
-                                    <span class="font-medium">{{ $log->keterangan }}</span>
-                                    <span class="block text-xs text-gray-500">{{ $kategoriOutput[$log->kategori] ?? $log->kategori }}</span>
-                                </td>
-                                <td class="px-3 py-2">{{ $log->jumlah }}</td>
-                            </tr>
+                        <tr>
+                            <td class="px-3 py-2">{{ $log->waktu_log->format('H:i') }}</td>
+                            <td class="px-3 py-2">
+                                <span class="font-medium">{{ $log->keterangan }}</span>
+                                <span class="block text-xs text-gray-500">{{ data_get($kategoriOutput, $log->kategori, $log->kategori) }}</span>
+
+                            </td>
+                            <td class="px-3 py-2">{{ $log->jumlah }}</td>
+                        </tr>
                         @empty
-                            <tr><td colspan="3" class="p-3 text-center text-gray-500">Belum ada data</td></tr>
+                        <tr>
+                            <td colspan="3" class="p-3 text-center text-gray-500">Belum ada data</td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>

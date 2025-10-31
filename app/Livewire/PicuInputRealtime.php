@@ -74,9 +74,15 @@ class PicuInputRealtime extends Component
 
         // Cari data cycle HANYA untuk diisi ke form
         // Kita gunakan variabel $currentCycle lokal, bukan public property
-        $currentCycle = PicuCycle::firstOrNew([
+        $currentCycle = PicuCycle::firstOrNew(attributes: [
             'picu_monitoring_id' => $this->monitoringSheetId,
             'jam_grid' => $this->jamGridSaatIni,
+        ]);
+
+        $this->resetExcept([
+            'monitoringSheetId',
+            'jamGridSaatIni',
+            'vent_mode'
         ]);
 
         // Isi public properties dari data yang ada
@@ -91,11 +97,6 @@ class PicuInputRealtime extends Component
         $this->stimulasi = (bool) $currentCycle->stimulasi;
     }
 
-    /**
-     * =============================================
-     * INI ADALAH FUNGSI save() YANG SUDAH DIPERBAIKI
-     * =============================================
-     */
     public function save()
     {
         // 1. Validasi semua data dari public property
@@ -136,10 +137,15 @@ class PicuInputRealtime extends Component
             'vent_ie_mekanik' => 'nullable|string|max:10',
         ]);
 
+        $slotJam = now()->hour;
+
+
         // 2. Gabungkan data sistem (petugas, waktu)
         $dataToSave = array_merge($validatedData, [
-            'waktu_observasi' => now(),
-            'petugas_id' => auth()->user()->id_user, // Pastikan ini benar
+            'picu_monitoring_id' => $this->monitoringSheetId,
+            'jam_grid' => $slotJam, // Tetap simpan slot jamnya
+            'waktu_observasi' => now(), // Ini adalah timestamp unik
+            'petugas_id' => auth()->user()->id_user,
         ]);
 
         // 3. Gunakan updateOrCreate()
@@ -147,17 +153,27 @@ class PicuInputRealtime extends Component
         // Dia akan mencari baris berdasarkan 'picu_monitoring_id' dan 'jam_grid',
         // lalu meng-update-nya dengan $dataToSave (jika ada),
         // atau membuat baris baru (jika belum ada).
-        PicuCycle::updateOrCreate(
-            [
-                // Kunci untuk mencari (ini yang hilang dari SQL Anda)
-                'picu_monitoring_id' => $this->monitoringSheetId,
-                'jam_grid' => $this->jamGridSaatIni,
-            ],
-            $dataToSave // Data untuk di-insert atau di-update
-        );
-
+        PicuCycle::create($dataToSave);
         // 4. Kirim notifikasi
-        session()->flash('success', 'Data observasi jam ' . $this->jamGridSaatIni . ' berhasil disimpan.');
+        $this->reset([
+            'temp_inkubator',
+            'temp_skin',
+            'heart_rate',
+            'respiratory_rate',
+            'tekanan_darah',
+            'sat_o2',
+            'irama_ekg',
+            'skala_nyeri',
+            'huidifier_inkubator',
+            'cyanosis',
+            'pucat',
+            'icterus',
+            'crt_lt_2',
+            'bradikardia',
+            'stimulasi'
+        ]);
+        // 4. Kirim notifikasi
+        session()->flash('success', 'Data observasi (jam ' . $slotJam . ') berhasil disimpan.');
         $this->dispatch('cycle-updated'); // Emit event agar grid review update
     }
 

@@ -6,10 +6,10 @@ use Livewire\Component;
 
 class Workspace extends Component
 {
-    public $noRawat; // Ini akan berisi '2025_10_30_000001'
-    public $sheetDate; // Ini opsional, bisa null
+    public $noRawat; 
+    public $sheetDate; 
 
-    public $noRawatAsli; // Ini untuk '2025/10/30/000001'
+    public $noRawatAsli;
 
     /**
      * Mount component, menerima parameter dari Rute.
@@ -18,7 +18,6 @@ class Workspace extends Component
     {
         $this->noRawat = $noRawat;
         $this->sheetDate = $sheetDate;
-
         // Kembalikan underscore ke slash untuk query database
         $this->noRawatAsli = str_replace('_', '/', $this->noRawat);
     }
