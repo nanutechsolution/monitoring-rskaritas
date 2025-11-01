@@ -1,4 +1,4 @@
-<div class="container mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
+<div class="max-w-7xl  mx-auto p-4 sm:p-6 space-y-6">
     <div class="bg-white shadow-sm rounded-lg border-l-4 border-blue-600 px-3 py-3 sm:px-6 sm:py-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3">
             <div class="leading-tight">

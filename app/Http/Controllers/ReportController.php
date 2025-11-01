@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MonitoringCycle;
 use App\Models\Medication;
 use App\Models\BloodGasResult;
+use App\Models\IntraAnesthesiaMonitoring;
 use App\Models\KamarInap;
 use App\Models\MonitoringCycleIcu;
 use App\Models\PicuMonitoring;
@@ -22,6 +23,71 @@ use Illuminate\Support\Facades\Log;
 class ReportController extends Controller
 {
 
+
+    /**
+     * Menampilkan halaman cetak untuk Monitoring Anestesi
+     */
+    public function printAnesthesia($monitoringId)
+    {
+        // 1. Ambil data (Sama seperti sebelumnya)
+        $monitoring = IntraAnesthesiaMonitoring::with(
+            'vitals',
+            'medications',
+            'dokterAnestesi',
+            'penataAnestesi',
+            'registrasi.pasien' // Pastikan kita mengambil data pasien
+        )->findOrFail($monitoringId);
+
+        // 2. Ambil data setting rumah sakit (Sama seperti sebelumnya)
+        $setting = Setting::instance();
+        $logoBase64 = null;
+        if ($setting->logo && strlen($setting->logo) > 0) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_buffer($finfo, $setting->logo); // misal image/jpeg
+            finfo_close($finfo);
+            $logoBase64 = 'data:' . $mime . ';base64,' . base64_encode($setting->logo);
+        }
+
+
+        // 3. 💡 BARU: Siapkan Data Grafik sebagai Gambar
+        // dompdf tidak bisa menjalankan JavaScript (Chart.js).
+        // Kita akan menggunakan API quickchart.io untuk membuat gambar grafik.
+        $chartData = null;
+        if ($monitoring->vitals->isNotEmpty()) {
+            $vitalsCollection = $monitoring->vitals->sortBy('waktu');
+            $chartConfig = [
+                'type' => 'line',
+                'data' => [
+                    'labels' => $vitalsCollection->pluck('waktu')->all(),
+                    'datasets' => [
+                        ['label' => 'Nadi', 'data' => $vitalsCollection->pluck('rrn')->map(fn($v) => $v ?? 0), 'borderColor' => '#EF4444', 'fill' => false],
+                        ['label' => 'Sis', 'data' => $vitalsCollection->pluck('td_sis')->map(fn($v) => $v ?? 0), 'borderColor' => '#3B82F6', 'fill' => false],
+                        ['label' => 'Dis', 'data' => $vitalsCollection->pluck('td_dis')->map(fn($v) => $v ?? 0), 'borderColor' => '#10B981', 'fill' => false],
+                        ['label' => 'RR', 'data' => $vitalsCollection->pluck('rr')->map(fn($v) => $v ?? 0), 'borderColor' => '#F59E0B', 'fill' => false],
+                    ]
+                ]
+            ];
+
+            $chartUrl = 'https://quickchart.io/chart?c=' . urlencode(json_encode($chartConfig));
+            $chartImage = file_get_contents($chartUrl);
+            $chartData = 'data:image/png;base64,' . base64_encode($chartImage);
+        }
+
+        // 4. 💡 BARU: Render View ke PDF
+        $pdf = Pdf::loadView('pdf.ok.anesthesia-print', [
+            'monitoring' => $monitoring,
+            'pasien' => $monitoring->registrasi->pasien,
+            'setting' => $setting,
+            'chartImageUrl' => $chartData ,
+             'logoBase64' => $logoBase64,
+        ]);
+
+        // Atur ukuran kertas dan orientasi
+        $pdf->setPaper('A4', 'portrait');
+
+        // 5. Alirkan (stream) PDF ke browser
+        return $pdf->stream('monitoring-intra-anestesi-' . $monitoring->no_rekam_medis . '.pdf');
+    }
 
     public function printPICU(PicuMonitoring $monitoringSheet)
     {

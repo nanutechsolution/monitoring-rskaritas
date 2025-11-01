@@ -1,4 +1,4 @@
-<div class="container mx-auto p-6 space-y-6">
+<div class="max-w-7xl  mx-auto p-4 sm:p-6 space-y-6">
 
     {{-- 1. HEADER PASIEN --}}
     <div class="bg-white shadow-lg rounded-lg p-6 border-l-4 border-pink-600">
@@ -67,7 +67,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-right">
                         <a href="{{ route('monitoring.picu.workspace', [
                                     'noRawat' => str_replace('/', '_', $registrasi->no_rawat),
-                                    'sheetDate' => $cycle->start_datetime->toDateString() 
+                                    'sheetDate' => $cycle->start_datetime->toDateString()
                                 ]) }}" wire:navigate class="text-indigo-600 hover:text-indigo-900 font-medium">
                             Buka
                         </a>

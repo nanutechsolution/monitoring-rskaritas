@@ -90,7 +90,7 @@
                                     </a>
                                     <a href="{{ route('monitoring.nicu', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate title="Monitor NICU" class="text-purple-600 hover:text-purple-900 p-1 hover:bg-purple-100 rounded">NICU</a>
                                     <a href="{{ route('monitoring.picu.history', ['noRawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate title="Monitor PICU" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-100 rounded">PICU</a>
-                                    <a href="#" wire:navigate title="Monitor Anestesi" class="text-orange-600 hover:text-orange-900 p-1 hover:bg-orange-100 rounded">Anes</a>
+                                    <a href="{{ route('monitoring.anestesi.history', ['noRawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate title="Monitor Intra Anestesi" class="text-orange-600 hover:text-orange-900 p-1 hover:bg-orange-100 rounded">Intra Anestesi</a>
                                 </div>
                             </td>
                         </tr>

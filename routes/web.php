@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\ReportController;
 use App\Livewire\Icu\PatientHistory;
+use App\Livewire\Monitoring\AnesthesiaCreate;
+use App\Livewire\Monitoring\AnesthesiaHistory;
+use App\Livewire\Monitoring\AnesthesiaShow;
 use App\Livewire\PatientList;
 use App\Livewire\PatientMonitor;
 use App\Livewire\Picu\PatientHistory as PicuPatientHistory;
@@ -28,24 +31,27 @@ Route::get('monitoring/{no_rawat}', PatientMonitor::class)
 Route::get('monitoring/{no_rawat}/report/{cycle_id}/report/pdf', [ReportController::class, 'generateReportPdf'])
     ->middleware(['auth'])
     ->name('monitoring.report.pdf');
-
 Route::get('/icu/workspace/{noRawat}/{sheetDate}/print', [ReportController::class, 'printPdf'])
     ->middleware('auth')
     ->name('monitoring.icu.print');
-
-
-// 1. Halaman Riwayat Pasien PICU (Pintu Gerbang)
 Route::get('/picu/history/{noRawat}', PicuPatientHistory::class)
     ->middleware('auth')
     ->name('monitoring.picu.history');
-
-// 2. Halaman Lembar Kerja PICU (Input & Laporan)
 Route::get('/picu/workspace/{noRawat}/{sheetDate?}', Workspace::class)
     ->middleware('auth')
     ->name('monitoring.picu.workspace');
-
 Route::get('/picu/print/{monitoringSheet}', [ReportController::class, 'printPICU'])
     ->middleware('auth')
     ->name('monitoring.picu.print');
+Route::get('monitoring/anestesi/history/{noRawat}', AnesthesiaHistory::class)
+    ->name('monitoring.anestesi.history');
+Route::get('monitoring/anestesi/create/{noRawat}', AnesthesiaCreate::class)
+    ->name('monitoring.anestesi.create');
+Route::get('monitoring/anestesi/edit/{monitoringId}', AnesthesiaCreate::class)
+    ->name('monitoring.anestesi.edit');
+Route::get('monitoring/anestesi/show/{monitoringId}', action: AnesthesiaShow::class)
+    ->name('monitoring.anestesi.show');
+Route::get('monitoring/anestesi/print/{monitoringId}', [ReportController::class, 'printAnesthesia'])
+    ->name('monitoring.anestesi.print');
 
 require __DIR__ . '/auth.php';
