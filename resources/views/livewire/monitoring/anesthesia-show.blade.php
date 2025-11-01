@@ -40,10 +40,10 @@
                     data: {
                         labels: labels,
                         datasets: [
-                            { label: 'Nadi (RRN)', data: nadi, borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.2)', tension: 0.2, fill: true },
-                            { label: 'Sistolik', data: sistolik, borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.2)', tension: 0.2, fill: true },
-                            { label: 'Diastolik', data: diastolik, borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.2)', tension: 0.2, fill: true },
-                            { label: 'RR', data: rr, borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.2)', tension: 0.2, fill: true }
+                            { label: 'Nadi (RRN)', data: nadi, borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.2)', pointStyle: 'circle',radius: 5,tension: 0.1, fill: true },
+                            { label: 'Sistolik', data: sistolik, borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.2)',pointStyle: 'triangle',radius: 7, tension: 0.2, fill: true },
+                            { label: 'Diastolik', data: diastolik, borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.2)', pointStyle: 'triangle',rotation: 180,radius: 7,tension: 0.1, fill: true },
+                            { label: 'RR', data: rr, borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.2)',pointStyle: 'crossRot',radius: 7, tension: 0.2, fill: true }
                         ]
                     },
                     options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Grafik Vital Pasien' } }, scales: { y: { beginAtZero: false }, x: {} } }
