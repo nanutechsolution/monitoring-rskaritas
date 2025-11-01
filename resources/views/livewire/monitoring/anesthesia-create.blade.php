@@ -264,7 +264,7 @@
             @endif
 
             @if ($currentStep == 4)
-            @if (!empty($vitals) && count($vitals) > 0)
+            {{-- @if (!empty($vitals) && count($vitals) > 0)
             <fieldset class="border rounded-lg p-6 bg-white shadow-md">
                 <legend class="px-2 text-xl font-semibold text-gray-700">Pemantauan Vital Pasien</legend>
 
@@ -310,8 +310,7 @@
                     </div>
                 </div>
             </fieldset>
-            @endif
-
+            @endif --}}
             {{-- 7. Bagian Vitals (DINAMIS) - DENGAN VALIDASI --}}
             <fieldset class="border rounded-md p-4 mb-6">
                 <legend class="px-2 font-semibold text-lg">Pemantauan Tanda Vital</legend>
