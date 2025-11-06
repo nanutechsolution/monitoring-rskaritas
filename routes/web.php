@@ -23,9 +23,9 @@ Route::get('/icu/history/{noRawat}', PatientHistory::class)
     ->middleware('auth')
     ->name('monitoring.icu.history');
 Route::get('/icu/workspace/{noRawat}/{sheetDate?}', App\Livewire\Icu\Workspace::class)
-    ->middleware('auth')
+    ->middleware(middleware: 'auth')
     ->name('monitoring.icu.workspace');
-Route::get('monitoring/{no_rawat}', PatientMonitor::class)
+Route::get('monitoring/{no_rawat}', action: PatientMonitor::class)
     ->middleware(['auth'])
     ->name('monitoring.nicu');
 Route::get('monitoring/{no_rawat}/report/{cycle_id}/report/pdf', [ReportController::class, 'generateReportPdf'])
