@@ -28,24 +28,17 @@ $logout = function (Logout $logout) {
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                <button type="button" @click="window.theme.toggle()" class="p-2 rounded-full text-primary-200 dark:text-gray-500 hover:text-white dark:hover:text-gray-400 hover:bg-primary-600 dark:hover:bg-gray-700 focus:outline-none" title="Toggle dark mode">
 
-                <button type="button"
-                        @click="darkMode = !darkMode"
-                        class="p-2 rounded-full
-                               text-primary-200 dark:text-gray-500
-                               hover:text-white dark:hover:text-gray-400
-                               hover:bg-primary-600 dark:hover:bg-gray-700
-                               focus:outline-none"
-                        title="Toggle dark mode">
-
-                    <svg x-show="!darkMode" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg x-show="!window.theme.darkMode" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                     </svg>
 
-                    <svg x-show="darkMode" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                    <svg x-show="window.theme.darkMode" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-15.66l-.707.707M4.04 19.96l-.707.707M21 12h-1M4 12H3m15.66 8.66l-.707-.707M4.04 4.04l-.707-.707M12 18a6 6 0 100-12 6 6 0 000 12z"></path>
                     </svg>
                 </button>
+
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md
@@ -53,9 +46,9 @@ $logout = function (Logout $logout) {
                                        hover:text-white dark:hover:text-gray-200
                                        focus:outline-none transition ease-in-out duration-150">
                             @php
-                                $displayName = auth()->user()->is_super_admin
-                                ? 'Admin Utama'
-                                : (auth()->user()->pegawai?->nama ?? auth()->user()->id_user);
+                            $displayName = auth()->user()->is_super_admin
+                            ? 'Admin Utama'
+                            : (auth()->user()->pegawai?->nama ?? auth()->user()->id_user);
                             @endphp
 
                             <div x-data="{{ json_encode(['name' => $displayName]) }}" x-text="name" x-on:profile-updated.window="name = $event.detail.name"></div>

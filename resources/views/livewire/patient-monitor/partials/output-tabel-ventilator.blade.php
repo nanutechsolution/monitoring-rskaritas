@@ -3,7 +3,6 @@
 @php
 use Carbon\Carbon;
 
-// --- Logika PHP Anda (Sudah Benar) ---
 $sections = [
     'Spontan' => [
         'spontan_fio2' => 'FiO2',
@@ -135,6 +134,6 @@ $border = 'border dark:border-gray-600';
     @endforeach
 
     @if($records->isEmpty())
-        <div class="text-gray-500 dark:text-gray-400 text-center">{{ $emptyText }}</div>
+        <div class="text-gray-500 dark:text-gray-400 text-center">Belum ada data ventilator</div>
     @endif
 </div>
