@@ -472,15 +472,18 @@ class ReportController extends Controller
             'options' => [
                 'plugins' => [
                     'legend' => ['position' => 'bottom'],
-                    // 'annotation' => [...]  <-- hilangkan dulu
                 ],
                 'scales' => [
                     'y' => [
                         'title' => ['display' => true, 'text' => 'Nilai'],
                         'min' => 0,
-                        'max' => max(max($hrData ?? [0]), max($rrData ?? [0])) + 20,
+                        'max' => max(
+                            !empty($hrData) ? max($hrData) : 0,
+                            !empty($rrData) ? max($rrData) : 0
+                        ) + 20,
                     ],
                 ],
+
             ],
         ];
 
@@ -739,7 +742,7 @@ class ReportController extends Controller
         // 3. Ambil Data Event
         $medications = MedicationPicu::where('monitoring_cycle_id', $cycle->id)->orderBy('given_at', 'asc')->get();
         $bloodGasResults = BloodGasResultPicu::where('monitoring_cycle_id', $cycle->id)->orderBy('taken_at', 'asc')->get();
-        $pippAssessments = PippAssessmentPicu::where('monitoring_cycle_id', $cycle->id)->orderBy('assessment_time', 'asc')->get();
+        $pippAssessments =[];
 
         $cycleStart = $cycle->start_time;
         $cycleEnd = $cycle->end_time;
@@ -1073,9 +1076,13 @@ class ReportController extends Controller
                     'y' => [
                         'title' => ['display' => true, 'text' => 'Nilai'],
                         'min' => 0,
-                        'max' => max(max($hrData ?? [0]), max($rrData ?? [0])) + 20,
+                        'max' => max(
+                            !empty($hrData) ? max($hrData) : 0,
+                            !empty($rrData) ? max($rrData) : 0
+                        ) + 20,
                     ],
                 ],
+
             ],
         ];
 

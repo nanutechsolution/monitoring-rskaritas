@@ -36,7 +36,7 @@ Route::get('monitoring/picu/{no_rawat}', PicuPatientMonitor::class)
 Route::get('monitoring/nicu/{no_rawat}/report/{cycle_id}/report/pdf', [ReportController::class, 'generateReportPdf'])
     ->middleware(['auth'])
     ->name('monitoring.report.pdf');
-Route::get('monitoring/picu/{no_rawat}/report/{cycle_id}/report/pdf', [ReportController::class, 'generateReportPdf'])
+Route::get('monitoring/picu/{no_rawat}/report/{cycle_id}/report/pdf', [ReportController::class, 'generateReportPicuPdf'])
     ->middleware(['auth'])
     ->name('monitoring.picu.report.pdf');
 Route::get('/icu/workspace/{noRawat}/{sheetDate}/print', [ReportController::class, 'printPdf'])
