@@ -70,9 +70,15 @@
                 setTimeout(() => notif.remove(), 300);
             }, 4000);
         }
-    }" x-init="init()" x-on:update-chart.window="updateChart($event)" x-on:record-saved.window="showNotification($event)" x-on:error-notification.window="showErrorNotification($event)" class="bg-white overflow-hidden shadow-sm ">
-     <div class="p-6 text-gray-900">
-         <h3 class="text-lg font-medium">Tren Hemodinamik</h3>
-         <div class="relative mt-4 h-72"><canvas x-ref="canvas"></canvas></div>
-     </div>
- </div>
+    }" x-init="init()" x-on:update-chart.window="updateChart($event)"
+    x-on:record-saved.window="showNotification($event)" x-on:error-notification.window="showErrorNotification($event)"
+
+      class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 rounded-lg">
+
+    <div class="p-6 text-gray-900 dark:text-gray-100">
+        <h3 class="text-lg font-medium">Tren Hemodinamik</h3>
+        <div class="relative mt-4 h-72">
+            <canvas x-ref="canvas"></canvas>
+        </div>
+    </div>
+</div>

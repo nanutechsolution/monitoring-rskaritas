@@ -376,45 +376,13 @@ class PatientMonitor extends Component
                 [
                     'monitoring_cycle_id' => $cycle->id,
                     'id_user' => auth()->id(),
-                    'record_time' => $this->record_time,
+                    'record_time' => $now,
                 ],
                 collect($fieldsToCheck)->mapWithKeys(fn($f) => [
                     $f => $this->$f !== null ? $this->$f : null
                 ])->toArray()
             )
         );
-
-        // foreach ($this->parenteral_intakes as $intake) {
-        //     if (!isset($intake['volume']) || $intake['volume'] === '' || $intake['volume'] === null) {
-        //         continue; // Lewati baris kosong
-        //     }
-        //     $record->parenteralIntakes()->create([
-        //         'name' => $intake['name'],
-        //         'volume' => $intake['volume'],
-        //     ]);
-        // }
-
-        // // =========================
-        // // Simpan enteral (Perbaikan untuk volume '0' dan 'Puasa')
-        // // =========================
-        // foreach ($this->enteral_intakes as $enteral) {
-        //     // Cek 'puasa' (sudah di-lowercase)
-        //     $isPuasa = isset($enteral['name']) && $enteral['name'] === 'puasa';
-
-        //     // Cek volume kosong (agar '0' tidak dianggap kosong)
-        //     $volumeIsEmpty = !isset($enteral['volume']) || $enteral['volume'] === '' || $enteral['volume'] === null;
-
-        //     // Lewati jika volume kosong DAN namanya BUKAN 'puasa'
-        //     if ($volumeIsEmpty && !$isPuasa) {
-        //         continue; // Lewati baris kosong
-        //     }
-
-        //     $record->enteralIntakes()->create([
-        //         'name' => $enteral['name'],
-        //         // Pastikan volume null jika 'puasa'
-        //         'volume' => $isPuasa ? null : $enteral['volume'],
-        //     ]);
-        // }
         $nowTimestamp = now();
 
         // 1. Siapkan data Parenteral
@@ -459,9 +427,10 @@ class PatientMonitor extends Component
 
     /**
      * Mencatat event observasi tunggal (seperti Cyanosis, Pucat, dll.)
-     */
+     */// Di PatientMonitor.php
     public function resetForm(): void
     {
+        // 1. Reset semua field biasa
         $this->reset([
             'temp_incubator',
             'temp_skin',
@@ -506,6 +475,16 @@ class PatientMonitor extends Component
             'output_ngt',
             'output_drain'
         ]);
+
+        // 2. KOSONGKAN HANYA VOLUME (JANGAN RESET ARRAY-NYA)
+        foreach ($this->parenteral_intakes as $index => $intake) {
+            $this->parenteral_intakes[$index]['volume'] = null;
+        }
+        foreach ($this->enteral_intakes as $index => $intake) {
+            $this->enteral_intakes[$index]['volume'] = null;
+        }
+
+        // 3. Reset waktu
         $this->record_time = now()->format('Y-m-d\TH:i');
     }
 

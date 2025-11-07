@@ -18,15 +18,12 @@ Route::get('/', function () {
 Route::get('dashboard', PatientList::class)
     ->middleware(['auth'])
     ->name('dashboard');
-
 Route::get('/icu/history/{noRawat}', PatientHistory::class)
     ->middleware('auth')
     ->name('monitoring.icu.history');
-
 Route::get('/icu/workspace/{noRawat}/{sheetDate?}', App\Livewire\Icu\Workspace::class)
     ->middleware('auth')
     ->name('monitoring.icu.workspace');
-
 Route::get('monitoring/nicu/{no_rawat}', PatientMonitor::class)
     ->middleware(['auth'])
     ->name('monitoring.nicu');
