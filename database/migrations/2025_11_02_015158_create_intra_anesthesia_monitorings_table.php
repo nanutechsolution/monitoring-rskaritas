@@ -12,9 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('intra_anesthesia_monitorings', function (Blueprint $table) {
-            $table->id(); // Primary key untuk tabel INI
+            $table->id();
 
-            // == RELASI & IDENTITAS PASIEN (DISESUAIKAN DENGAN SKEMA KHANZA) ==
             $table->string('no_rawat', 17)->index();
             $table->string('no_rekam_medis', 15)->nullable()->index();
             $table->string('nama_lengkap', 100)->nullable();

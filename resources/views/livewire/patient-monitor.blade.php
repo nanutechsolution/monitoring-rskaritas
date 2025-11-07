@@ -3,7 +3,7 @@
             <livewire:patient-header :no-rawat="$no_rawat" />
         </x-slot>
         <div class="py-8">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mb-6">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mb-6 px-4">
                 <!-- Navigasi Tanggal + Cetak -->
                 <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <!-- Judul Section -->
@@ -194,14 +194,13 @@
                 <div class="lg:col-span-1">
                     <form wire:submit="saveRecord" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-6 text-gray-900">
-                            <h3 class="text-lg font-medium border-b pb-3">Form Input Observasi</h3>
                             <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700">Jam Observasi</label>
-                                <div class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm px-3 py-2 sm:text-sm">
-                                    {{ \Carbon\Carbon::parse($record_time)->format('d M Y, H:i') }}
-                                </div>
-                                <div x-data="{ currentTime: new Date() }" x-init="setInterval(() => currentTime = new Date(), 1000)" class="mt-1 text-xs text-gray-500 text-right">
-                                    Waktu Sekarang: <span x-text="currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })"></span>
+                                <h3 class="text-lg font-medium border-b pb-3">Form Input Observasi</h3>
+                                <div class="mt-4" x-data="{ currentTime: new Date() }" x-init="setInterval(() => currentTime = new Date(), 1000)">
+                                    <label class="block text-sm font-medium text-gray-700">Jam Observasi</label>
+                                    <div class="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 shadow-sm px-3 py-2 sm:text-sm text-gray-700">
+                                        <span x-text="currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })"></span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="border-b border-gray-200 mt-4">
@@ -277,18 +276,18 @@
                             @include('livewire.patient-monitor.partials.output-ringkasan-balance')
                         </div>
                         <div x-show="$wire.activeOutputTab === 'observasi'" class="space-y-6">
-                            @include('livewire.patient-monitor.partials.output-tabel-observasi')
+                            <livewire:observasi-table :cycleId="$currentCycleId" wire:key="'static-observasi-table'" lazy />
                         </div>
                         <div x-show="$wire.activeOutputTab === 'obat_cairan'" class="space-y-6">
-                            @include('livewire.patient-monitor.partials.output-tabel-cairan')
-                            @include('livewire.patient-monitor.partials.output-tabel-obat')
+                            <livewire:cairan-table :cycleId="$currentCycleId" wire:key="'static-cairan-table'" lazy />
+                            <livewire:obat-table :cycleId="$currentCycleId" wire:key="'static-obat-table'" lazy />
                         </div>
                         <div x-show="$wire.activeOutputTab === 'penilaian_lab'" class="space-y-6">
-                            @include('livewire.patient-monitor.partials.output-tabel-gasdarah')
-                            @include('livewire.patient-monitor.partials.output-tabel-pipp')
+                            <livewire:gas-darah-table :cycleId="$currentCycleId" wire:key="'static-gas-table'" lazy />
+                            <livewire:pipp-table :cycleId="$currentCycleId" wire:key="'static-pipp-table'" lazy />
                         </div>
                         <div x-show="$wire.activeOutputTab === 'vantilator'" class="space-y-6">
-                            @include('livewire.patient-monitor.partials.output-tabel-ventilator')
+                            <livewire:ventilator-table :cycleId="$currentCycleId" wire:key="'vent-table-'.$currentCycleId" lazy />
                         </div>
                     </div>
                 </div>

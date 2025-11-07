@@ -1,6 +1,4 @@
-{{-- ============================================== --}}
- {{-- MODAL GAS DARAH (Animasi Mulus) --}}
- {{-- ============================================== --}}
+
  <div x-data="{
      showBloodGasModal: false,
      taken_at: '{{ now()->format('Y-m-d\TH:i') }}',

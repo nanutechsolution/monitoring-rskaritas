@@ -6,30 +6,28 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Illuminate\View\View;
 use Carbon\Carbon;
-use Livewire\WithPagination; // <-- Import trait pagination
+use Livewire\WithPagination;
 
 class PatientList extends Component
 {
-    use WithPagination; // <-- Gunakan trait pagination
+    use WithPagination;
 
-    protected $paginationTheme = 'tailwind'; // Opsional: Gunakan tema Tailwind untuk pagination
+    protected $paginationTheme = 'tailwind';
 
     public string $search = '';
     public $filterDate = null;
     public $filterWard = '';
-    public $wards = []; // Daftar bangsal untuk filter
+    public $wards = [];
 
     public function mount()
     {
-        // Isi daftar bangsal untuk dropdown filter
         $this->wards = DB::table('bangsal')
-                        ->where('status', '1')
-                        ->orderBy('nm_bangsal')
-                        ->pluck('nm_bangsal')
-                        ->all();
+            ->where('status', '1')
+            ->orderBy('nm_bangsal')
+            ->pluck('nm_bangsal')
+            ->all();
     }
 
-    // Method ini dipanggil oleh render() untuk mengambil data
     private function queryPatients()
     {
         $query = DB::table('kamar_inap as ki')
@@ -46,21 +44,21 @@ class PatientList extends Component
                 'p.jk',
                 'ki.tgl_masuk'
             )
-            ->where('ki.stts_pulang', '-'); // Hanya pasien aktif
+            ->where('ki.stts_pulang', '-');
 
         // Terapkan filter pencarian
         if (trim($this->search) !== '') {
             $query->where(function ($q) {
                 $q->where('p.nm_pasien', 'like', '%' . $this->search . '%')
-                  ->orWhere('p.no_rkm_medis', 'like', '%' . $this->search . '%')
-                  ->orWhere('ki.no_rawat', 'like', '%' . $this->search . '%');
+                    ->orWhere('p.no_rkm_medis', 'like', '%' . $this->search . '%')
+                    ->orWhere('ki.no_rawat', 'like', '%' . $this->search . '%');
             });
         }
 
         // Terapkan filter tanggal masuk
         if ($this->filterDate) {
-             $dateCarbon = Carbon::parse($this->filterDate);
-             $query->whereBetween('ki.tgl_masuk', [$dateCarbon->startOfDay(), $dateCarbon->endOfDay()]);
+            $dateCarbon = Carbon::parse($this->filterDate);
+            $query->whereBetween('ki.tgl_masuk', [$dateCarbon->startOfDay(), $dateCarbon->endOfDay()]);
         }
 
         // Terapkan filter bangsal
@@ -70,7 +68,7 @@ class PatientList extends Component
 
         // Urutkan (misal tgl masuk terbaru) dan paginasi
         return $query->orderBy('ki.tgl_masuk', 'desc')
-                     ->paginate(10); // 10 pasien per halaman
+            ->paginate(10); // 10 pasien per halaman
     }
 
     // Reset halaman jika filter berubah
@@ -93,14 +91,14 @@ class PatientList extends Component
         $patients = $this->queryPatients();
 
         // Hitung umur & format JK setelah data dipaginasi
-         $patients->getCollection()->transform(function ($patient) {
-             $patient->umur = Carbon::parse($patient->tgl_lahir)->age;
-             $patient->jk_desc = ($patient->jk == 'L' ? 'Laki-laki' : 'Perempuan');
-             return $patient;
-         });
+        $patients->getCollection()->transform(function ($patient) {
+            $patient->umur = Carbon::parse($patient->tgl_lahir)->age;
+            $patient->jk_desc = ($patient->jk == 'L' ? 'Laki-laki' : 'Perempuan');
+            return $patient;
+        });
 
         return view('livewire.patient-list', [
             'patients' => $patients
-        ])->layout('layouts.app'); // Pastikan layout Anda benar
+        ])->layout('layouts.app');
     }
 }

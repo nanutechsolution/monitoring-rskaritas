@@ -1,7 +1,4 @@
 <div class="max-w-7xl  mx-auto p-4 sm:p-6 space-y-6">
-    {{-- ======================================================== --}}
-    {{-- === HEADER WORKSPACE (Layout Profesional Baru) === --}}
-    {{-- ======================================================== --}}
     <div class="bg-white shadow-lg rounded-lg p-4 sm:p-6 border-l-4 border-blue-600">
         {{-- Wrapper Utama: Data di kiri, Aksi di kanan --}}
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">

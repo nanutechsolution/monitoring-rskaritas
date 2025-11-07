@@ -7,7 +7,7 @@ use App\Livewire\Monitoring\AnesthesiaHistory;
 use App\Livewire\Monitoring\AnesthesiaShow;
 use App\Livewire\PatientList;
 use App\Livewire\PatientMonitor;
-use App\Livewire\Picu\PatientHistory as PicuPatientHistory;
+use App\Livewire\Picu\PicuPatientMonitor;
 use App\Livewire\Picu\Workspace;
 use Illuminate\Support\Facades\Route;
 
@@ -22,27 +22,26 @@ Route::get('dashboard', PatientList::class)
 Route::get('/icu/history/{noRawat}', PatientHistory::class)
     ->middleware('auth')
     ->name('monitoring.icu.history');
+
 Route::get('/icu/workspace/{noRawat}/{sheetDate?}', App\Livewire\Icu\Workspace::class)
-    ->middleware(middleware: 'auth')
+    ->middleware('auth')
     ->name('monitoring.icu.workspace');
-Route::get('monitoring/{no_rawat}', action: PatientMonitor::class)
+
+Route::get('monitoring/nicu/{no_rawat}', PatientMonitor::class)
     ->middleware(['auth'])
     ->name('monitoring.nicu');
-Route::get('monitoring/{no_rawat}/report/{cycle_id}/report/pdf', [ReportController::class, 'generateReportPdf'])
+Route::get('monitoring/picu/{no_rawat}', PicuPatientMonitor::class)
+    ->middleware(['auth'])
+    ->name('monitoring.picu');
+Route::get('monitoring/nicu/{no_rawat}/report/{cycle_id}/report/pdf', [ReportController::class, 'generateReportPdf'])
     ->middleware(['auth'])
     ->name('monitoring.report.pdf');
+Route::get('monitoring/picu/{no_rawat}/report/{cycle_id}/report/pdf', [ReportController::class, 'generateReportPdf'])
+    ->middleware(['auth'])
+    ->name('monitoring.picu.report.pdf');
 Route::get('/icu/workspace/{noRawat}/{sheetDate}/print', [ReportController::class, 'printPdf'])
     ->middleware('auth')
     ->name('monitoring.icu.print');
-Route::get('/picu/history/{noRawat}', PicuPatientHistory::class)
-    ->middleware('auth')
-    ->name('monitoring.picu.history');
-Route::get('/picu/workspace/{noRawat}/{sheetDate?}', Workspace::class)
-    ->middleware('auth')
-    ->name('monitoring.picu.workspace');
-Route::get('/picu/print/{monitoringSheet}', [ReportController::class, 'printPICU'])
-    ->middleware('auth')
-    ->name('monitoring.picu.print');
 Route::get('monitoring/anestesi/history/{noRawat}', AnesthesiaHistory::class)
     ->name('monitoring.anestesi.history');
 Route::get('monitoring/anestesi/create/{noRawat}', AnesthesiaCreate::class)

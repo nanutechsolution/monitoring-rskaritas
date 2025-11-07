@@ -9,7 +9,6 @@ use App\Models\MonitoringRecord;
 use App\Models\PatientDevice;
 use App\Models\PippAssessment;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -29,17 +28,7 @@ class PatientMonitor extends Component
     public $blood_pressure_systolic, $blood_pressure_diastolic;
     public $sat_o2, $irama_ekg, $skala_nyeri, $humidifier_inkubator;
     #[Locked]
-    public Collection $records;
-    #[Locked]
-    public Collection $fluidRecords;
-    #[Locked]
-    public Collection $medications;
-    #[Locked]
-    public Collection $bloodGasResults;
-    #[Locked]
     public Collection $patientDevices;
-    #[Locked]
-    public Collection $pippAssessments;
     #[Locked]
     public Collection $recentMedicationNames;
     // Properties for PIPP Modal
@@ -148,13 +137,8 @@ class PatientMonitor extends Component
             $this->currentCycleId = null; // Pastikan null jika belum ada
         }
         $this->record_time = now()->format('Y-m-d\TH:i');
-        $this->records = new \Illuminate\Database\Eloquent\Collection();
-        $this->medications = new \Illuminate\Database\Eloquent\Collection();
-        $this->bloodGasResults = new \Illuminate\Database\Eloquent\Collection();
         $this->patientDevices = new \Illuminate\Database\Eloquent\Collection();
-        $this->pippAssessments = new \Illuminate\Database\Eloquent\Collection();
         $this->recentMedicationNames = new \Illuminate\Support\Collection();
-        $this->fluidRecords = new Collection();
         $this->taken_at = now()->format('Y-m-d\TH:i');
         $this->selectedDate = now()->format('Y-m-d');
     }
@@ -372,7 +356,7 @@ class PatientMonitor extends Component
             $this->addError('record', 'Minimal satu field harus diisi.');
             return;
         }
-        $now = Carbon::parse($this->record_time);
+        $now = now();
         $cycleStartTime = $now->copy()->startOfDay()->addHours(6);
         if ($now->hour < 6) {
             $cycleStartTime->subDay();
@@ -400,44 +384,76 @@ class PatientMonitor extends Component
             )
         );
 
-        foreach ($this->parenteral_intakes as $intake) {
-            if (!isset($intake['volume']) || $intake['volume'] === '' || $intake['volume'] === null) {
-                continue; // Lewati baris kosong
-            }
-            $record->parenteralIntakes()->create([
+        // foreach ($this->parenteral_intakes as $intake) {
+        //     if (!isset($intake['volume']) || $intake['volume'] === '' || $intake['volume'] === null) {
+        //         continue; // Lewati baris kosong
+        //     }
+        //     $record->parenteralIntakes()->create([
+        //         'name' => $intake['name'],
+        //         'volume' => $intake['volume'],
+        //     ]);
+        // }
+
+        // // =========================
+        // // Simpan enteral (Perbaikan untuk volume '0' dan 'Puasa')
+        // // =========================
+        // foreach ($this->enteral_intakes as $enteral) {
+        //     // Cek 'puasa' (sudah di-lowercase)
+        //     $isPuasa = isset($enteral['name']) && $enteral['name'] === 'puasa';
+
+        //     // Cek volume kosong (agar '0' tidak dianggap kosong)
+        //     $volumeIsEmpty = !isset($enteral['volume']) || $enteral['volume'] === '' || $enteral['volume'] === null;
+
+        //     // Lewati jika volume kosong DAN namanya BUKAN 'puasa'
+        //     if ($volumeIsEmpty && !$isPuasa) {
+        //         continue; // Lewati baris kosong
+        //     }
+
+        //     $record->enteralIntakes()->create([
+        //         'name' => $enteral['name'],
+        //         // Pastikan volume null jika 'puasa'
+        //         'volume' => $isPuasa ? null : $enteral['volume'],
+        //     ]);
+        // }
+        $nowTimestamp = now();
+
+        // 1. Siapkan data Parenteral
+        $parenteralData = collect($this->parenteral_intakes)
+            ->filter(fn($i) => isset($i['volume']) && $i['volume'] !== '' && $i['volume'] !== null)
+            ->map(fn($intake) => [
+                'monitoring_record_id' => $record->id,
                 'name' => $intake['name'],
                 'volume' => $intake['volume'],
-            ]);
-        }
+                'created_at' => $nowTimestamp,
+                'updated_at' => $nowTimestamp,
+            ])->all();
 
-        // =========================
-        // Simpan enteral (Perbaikan untuk volume '0' dan 'Puasa')
-        // =========================
-        foreach ($this->enteral_intakes as $enteral) {
-            // Cek 'puasa' (sudah di-lowercase)
-            $isPuasa = isset($enteral['name']) && $enteral['name'] === 'puasa';
-
-            // Cek volume kosong (agar '0' tidak dianggap kosong)
-            $volumeIsEmpty = !isset($enteral['volume']) || $enteral['volume'] === '' || $enteral['volume'] === null;
-
-            // Lewati jika volume kosong DAN namanya BUKAN 'puasa'
-            if ($volumeIsEmpty && !$isPuasa) {
-                continue; // Lewati baris kosong
-            }
-
-            $record->enteralIntakes()->create([
+        // 2. Siapkan data Enteral
+        $enteralData = collect($this->enteral_intakes)
+            ->filter(function ($enteral) {
+                $isPuasa = isset($enteral['name']) && $enteral['name'] === 'puasa';
+                $volumeIsEmpty = !isset($enteral['volume']) || $enteral['volume'] === '' || $enteral['volume'] === null;
+                return !$volumeIsEmpty || $isPuasa; // Simpan jika ada volume ATAU jika puasa
+            })
+            ->map(fn($enteral) => [
+                'monitoring_record_id' => $record->id,
                 'name' => $enteral['name'],
-                // Pastikan volume null jika 'puasa'
-                'volume' => $isPuasa ? null : $enteral['volume'],
-            ]);
-        }
+                'volume' => (isset($enteral['name']) && $enteral['name'] === 'puasa') ? null : $enteral['volume'],
+                'created_at' => $nowTimestamp,
+                'updated_at' => $nowTimestamp,
+            ])->all();
 
+        // 3. Simpan sekaligus! (Hanya 2 query, bukan N+M query)
+        if (!empty($parenteralData)) {
+            \App\Models\ParenteralIntake::insert($parenteralData);
+        }
+        if (!empty($enteralData)) {
+            \App\Models\EnteralIntake::insert($enteralData);
+        }
         // =========================
         // Selesai (Sudah Benar)
         // =========================
         $this->resetForm();
-        $this->reloadRepeaterNames();
-        $this->dispatch('refresh-observasi');
         $this->dispatch('record-saved');
     }
 
@@ -506,105 +522,65 @@ class PatientMonitor extends Component
     public $latestBPDiastolic = null;
     public $latestMAP = null;
 
-    #[On('refresh-observasi')]
+    // Di PatientMonitor.php
+    #[On('refresh-observasi')] // Anda masih bisa biarkan ini jika 'saveEvent' menggunakannya
+    #[On('record-saved')] // Tambahkan ini agar ringkasan juga ikut refresh
     public function loadRecords(): void
     {
         if (!$this->readyToLoad) {
-            $this->records = new \Illuminate\Database\Eloquent\Collection();
-            $this->medications = new \Illuminate\Database\Eloquent\Collection();
-            $this->bloodGasResults = new \Illuminate\Database\Eloquent\Collection();
-            $this->pippAssessments = new \Illuminate\Database\Eloquent\Collection();
             $this->recentMedicationNames = new \Illuminate\Support\Collection();
-            $this->fluidRecords = new Collection();
             return;
         }
-        // Pastikan kita mulai dari awal hari tanggal yang dipilih
+
+        // 1. Logika Siklus (Ini sudah benar)
         $targetDate = Carbon::parse(time: $this->selectedDate)->startOfDay();
-        // Asumsi default: siklus dimulai jam 6 pagi pada tanggal yang dipilih
         $cycleStartTime = $targetDate->copy()->addHours(6);
         if ($targetDate->isToday() && now()->hour < 6) {
             $cycleStartTime->subDay();
         }
+
         $currentCycle = MonitoringCycle::where('no_rawat', $this->no_rawat)
             ->where('start_time', $cycleStartTime)
             ->first();
+
         $previousCycleStartTime = $cycleStartTime->copy()->subDay();
         $previousCycle = MonitoringCycle::where('no_rawat', $this->no_rawat)
             ->where('start_time', $previousCycleStartTime)
             ->first();
+
+        // 2. Logika Balance Siklus Sebelumnya (Ini sudah benar)
         if ($previousCycle && is_null($previousCycle->calculated_balance_24h)) {
             $this->calculateAndSaveBalance($previousCycle);
-            // Muat ulang data previousCycle setelah disimpan
             $previousCycle->refresh();
         }
-
-        // 2. Muat Balance Siklus Sebelumnya untuk Ditampilkan
         $this->previousBalance24h = $previousCycle ? $previousCycle->calculated_balance_24h : null;
 
-        // 3. Muat Data Siklus Saat Ini
+        // 3. Muat Data Siklus Saat Ini (VERSI RINGKAS)
         if ($currentCycle) {
             $this->currentCycleId = $currentCycle->id;
             $this->daily_iwl = $currentCycle->daily_iwl;
 
-            $this->medications = Medication::with('pegawai')->where('monitoring_cycle_id', $currentCycle->id)->orderBy('given_at', 'desc')->get();
-            $this->bloodGasResults = BloodGasResult::with('pegawai')->where('monitoring_cycle_id', $currentCycle->id)->orderBy('taken_at', 'desc')->get();
-            $this->pippAssessments = PippAssessment::with('pegawai')->where('monitoring_cycle_id', $currentCycle->id)
-                ->orderBy('assessment_time', 'desc')
-                ->get();
-            // Ambil SEMUA record siklus ini untuk kalkulasi total
-            $allCycleRecords = MonitoringRecord::with('parenteralIntakes', 'enteralIntakes', 'pegawai')
+            // Ambil SEMUA record HANYA untuk kalkulasi
+            $allCycleRecords = MonitoringRecord::with('parenteralIntakes', 'enteralIntakes')
                 ->where('monitoring_cycle_id', $currentCycle->id)
                 ->get();
+
+            // Ambil nama obat (jika masih diperlukan di modal)
             $this->recentMedicationNames = Medication::where('monitoring_cycle_id', $currentCycle->id)
                 ->distinct()
                 ->orderBy('medication_name', 'asc')
                 ->pluck('medication_name');
+
             // Kalkulasi total untuk TAMPILAN siklus saat ini
             $this->totalIntake24h = $allCycleRecords->sum(fn($r) => ($r->intake_ogt ?? 0) + ($r->intake_oral ?? 0) + $r->parenteralIntakes->sum('volume') + $r->enteralIntakes->sum('volume'));
             $this->totalOutput24h = $allCycleRecords->sum(fn($r) => ($r->output_urine ?? 0) + ($r->output_bab ?? 0) + ($r->output_residu ?? 0) + ($r->output_ngt ?? 0) + ($r->output_drain ?? 0));
             $this->totalUrine24h = $allCycleRecords->sum('output_urine');
             $this->balance24h = $this->totalIntake24h - $this->totalOutput24h - ($this->daily_iwl ?? 0);
-            $filteredFluidRecords = $allCycleRecords->filter(function ($record) {
-                // 1. Cek relasi (ini cepat karena sudah di-eager load)
-                if ($record->parenteralIntakes->sum('volume') > 0) {
-                    return true;
-                }
-                if ($record->enteralIntakes->sum('volume') > 0) {
-                    return true;
-                }
 
-                // 2. Cek kolom langsung di tabel monitoring_records
-                // (Menggunakan '?? 0' agar aman jika nilainya NULL)
-                $hasIntake = ($record->intake_ogt ?? 0) > 0 ||
-                    ($record->intake_oral ?? 0) > 0;
-
-                $hasOutput = ($record->output_urine ?? 0) > 0 ||
-                    ($record->output_bab ?? 0) > 0 ||
-                        // ($record->output_residu ?? 0) > 0 || // <-- Termasuk kolom ini
-                    ($record->output_ngt ?? 0) > 0 ||
-                    ($record->output_drain ?? 0) > 0;
-
-                // Kembalikan true (tampilkan record) HANYA JIKA ada intake ATAU output
-                return $hasIntake || $hasOutput;
-            });
-            $this->fluidRecords = $filteredFluidRecords->sortByDesc('record_time');
-            $this->records = $allCycleRecords->sortByDesc('record_time');
             // Data untuk Grafik (ASC)
             $chartRecords = $allCycleRecords->sortBy('record_time');
 
-            $dataset = fn($field) => $chartRecords->map(fn($r) => [
-                'x' => $r->record_time,
-                'y' => is_numeric($r->$field) ? (float) $r->$field : null,
-            ]);
-
-            $chartData = [
-                'temp_incubator' => $dataset('temp_incubator'),
-                'temp_skin' => $dataset('temp_skin'),
-                'hr' => $dataset('hr'),
-                'rr' => $dataset('rr'),
-                'bp_systolic' => $dataset('blood_pressure_systolic'),
-                'bp_diastolic' => $dataset('blood_pressure_diastolic'),
-            ];
+            // ... (Logika $chartData Anda sudah benar) ...
             $chartData = collect([
                 'temp_incubator' => 'temp_incubator',
                 'temp_skin' => 'temp_skin',
@@ -632,11 +608,9 @@ class PatientMonitor extends Component
                 $this->latestRR = $latestRecord->rr;
                 $this->latestBPSystolic = $latestRecord->blood_pressure_systolic;
                 $this->latestBPDiastolic = $latestRecord->blood_pressure_diastolic;
-                // Hitung MAP (jika Sistolik dan Diastolik ada)
                 if (!is_null($this->latestBPSystolic) && !is_null($this->latestBPDiastolic)) {
                     $systolic = (float) $this->latestBPSystolic;
                     $diastolic = (float) $this->latestBPDiastolic;
-                    // Rumus MAP: Diastolik + 1/3 (Sistolik - Diastolik)
                     $this->latestMAP = round($diastolic + (1 / 3) * ($systolic - $diastolic));
                 } else {
                     $this->latestMAP = null;
@@ -646,43 +620,39 @@ class PatientMonitor extends Component
                 $this->latestTempIncubator = $this->latestTempSkin = $this->latestHR = $this->latestRR = null;
                 $this->latestBPSystolic = $this->latestBPDiastolic = $this->latestMAP = null;
             }
+
             $this->dispatch('update-chart', ['chartData' => $chartData]);
-            // 1. Ambil semua ID record dari siklus ini
+
+            // ... (Logika repeater Anda sudah benar) ...
             $recordIds = $allCycleRecords->pluck('id');
-            // 2. Cari semua nama infus unik yang pernah tercatat di siklus ini
             $uniqueInfusionNames = \App\Models\ParenteralIntake::whereIn('monitoring_record_id', $recordIds)
                 ->distinct()
                 ->pluck('name');
             $uniqueEnteralNames = \App\Models\EnteralIntake::whereIn('monitoring_record_id', $recordIds)
                 ->distinct()
                 ->pluck('name');
-            // 3. Isi ulang array $parenteral_intakes hanya dengan NAMA, volume dikosongkan
             $this->parenteral_intakes = $uniqueInfusionNames->map(fn($name) => [
                 'name' => $name,
                 'volume' => ''
             ])->toArray();
-            // 3. Isi ulang array $enternal hanya dengan NAMA, volume dikosongkan
             $this->enteral_intakes = $uniqueEnteralNames->map(fn($name) => [
                 'name' => $name,
                 'volume' => ''
             ])->toArray();
+
         } else {
             $this->currentCycleId = null;
-            $this->medications = new Collection();
             $this->daily_iwl = null;
             $this->balance24h = 0;
             $this->totalIntake24h = 0;
             $this->totalOutput24h = 0;
             $this->totalUrine24h = 0;
-            $this->records = new Collection();
-            $this->medications = new Collection();
-            $this->bloodGasResults = new Collection();
-            $this->pippAssessments = new Collection();
             $this->recentMedicationNames = new Collection();
             $this->parenteral_intakes = [];
             $this->enteral_intakes = [];
             $this->dispatch('update-chart', ['chartData' => []]);
         }
+
         $this->reloadRepeaterNames();
         $this->dispatch('repeaters-ready');
     }
@@ -751,16 +721,7 @@ class PatientMonitor extends Component
         }
     }
 
-    #[On('refresh-pip')]
-    public function loadPippOnly()
-    {
-        if ($this->currentCycleId) {
-            $this->pippAssessments = PippAssessment::with('pegawai')
-                ->where('monitoring_cycle_id', $this->currentCycleId)
-                ->orderBy('assessment_time', 'desc')
-                ->get();
-        }
-    }
+
     /**
      * Fungsi helper untuk menghitung dan menyimpan balance siklus yang sudah selesai.
      */
@@ -823,91 +784,9 @@ class PatientMonitor extends Component
             'bradikardia' => $this->event_bradikardia,
             'stimulasi' => $this->event_stimulasi,
         ]);
-        $this->dispatch('refresh-observasi');
         $this->dispatch('record-saved', message: 'Kejadian berhasil dicatat!');
     }
-    #[On('refresh-records')]
-    public function loadRecordsOnly()
-    {
-        if (!$this->currentCycleId) {
-            $this->records = new \Illuminate\Database\Eloquent\Collection();
-            $this->fluidRecords = new \Illuminate\Database\Eloquent\Collection();
-            $this->totalIntake24h = 0;
-            $this->totalOutput24h = 0;
-            $this->totalUrine24h = 0;
-            $this->balance24h = 0;
-            return;
-        }
 
-        $allCycleRecords = MonitoringRecord::with('parenteralIntakes', 'enteralIntakes', 'pegawai')
-            ->where('monitoring_cycle_id', $this->currentCycleId)
-            ->get();
-
-        // 2. Kalkulasi ulang total untuk tampilan
-        $this->totalIntake24h = $allCycleRecords->sum(fn($r) => ($r->intake_ogt ?? 0) + ($r->intake_oral ?? 0) + $r->parenteralIntakes->sum('volume') + $r->enteralIntakes->sum('volume'));
-        $this->totalOutput24h = $allCycleRecords->sum(fn($r) => ($r->output_urine ?? 0) + ($r->output_bab ?? 0) + ($r->output_residu ?? 0) + ($r->output_ngt ?? 0) + ($r->output_drain ?? 0));
-        $this->totalUrine24h = $allCycleRecords->sum('output_urine');
-        $this->balance24h = $this->totalIntake24h - $this->totalOutput24h - ($this->daily_iwl ?? 0);
-
-        // 3. Filter ulang data cairan
-        $filteredFluidRecords = $allCycleRecords->filter(function ($record) {
-            if ($record->parenteralIntakes->sum('volume') > 0)
-                return true;
-            if ($record->enteralIntakes->sum('volume') > 0)
-                return true;
-            $hasIntake = ($record->intake_ogt ?? 0) > 0 || ($record->intake_oral ?? 0) > 0;
-            $hasOutput = ($record->output_urine ?? 0) > 0 || ($record->output_bab ?? 0) > 0 || ($record->output_ngt ?? 0) > 0 || ($record->output_drain ?? 0) > 0;
-            return $hasIntake || $hasOutput;
-        });
-
-        // 4. Update koleksi [Locked] Anda
-        $this->fluidRecords = $filteredFluidRecords->sortByDesc('record_time');
-        $this->records = $allCycleRecords->sortByDesc('record_time');
-
-        // 5. Update data Grafik (urutan ASC)
-        $chartRecords = $allCycleRecords->sortBy('record_time');
-        $chartData = collect([
-            'temp_incubator' => 'temp_incubator',
-            'temp_skin' => 'temp_skin',
-            'hr' => 'hr',
-            'rr' => 'rr',
-            'bp_systolic' => 'blood_pressure_systolic',
-            'bp_diastolic' => 'blood_pressure_diastolic',
-        ])
-            ->mapWithKeys(fn($dbField, $chartKey) => [
-                $chartKey => $chartRecords
-                    ->filter(fn($r) => is_numeric($r->$dbField) && $r->$dbField !== null)
-                    ->map(fn($r) => ['x' => $r->record_time, 'y' => (float) $r->$dbField])
-                    ->values()
-            ])->toArray();
-
-        $this->dispatch('update-chart', ['chartData' => $chartData]);
-
-        // 6. Update Vitals Terbaru di Header
-        $latestRecord = $allCycleRecords->sortByDesc('record_time')->first();
-        if ($latestRecord) {
-            $this->latestTempIncubator = $latestRecord->temp_incubator;
-            $this->latestTempSkin = $latestRecord->temp_skin;
-            $this->latestHR = $latestRecord->hr;
-            $this->latestRR = $latestRecord->rr;
-            $this->latestBPSystolic = $latestRecord->blood_pressure_systolic;
-            $this->latestBPDiastolic = $latestRecord->blood_pressure_diastolic;
-            // Hitung MAP
-            if (!is_null($this->latestBPSystolic) && !is_null($this->latestBPDiastolic)) {
-                $systolic = (float) $this->latestBPSystolic;
-                $diastolic = (float) $this->latestBPDiastolic;
-                $this->latestMAP = round($diastolic + (1 / 3) * ($systolic - $diastolic));
-            } else {
-                $this->latestMAP = null;
-            }
-        } else {
-            // Reset jika tidak ada record
-            $this->latestTempIncubator = $this->latestTempSkin = $this->latestHR = $this->latestRR = null;
-            $this->latestBPSystolic = $this->latestBPDiastolic = $this->latestMAP = null;
-        }
-
-        $this->reloadRepeaterNames();
-    }
     public function saveMedication($data)
     {
         $validated = Validator::make($data, [
@@ -941,17 +820,7 @@ class PatientMonitor extends Component
             return false;
         }
     }
-    #[On('refresh-medications')]
-    public function loadMedicationsOnly()
-    {
-        if ($this->currentCycleId) {
-            // Muat ulang HANYA data obat
-            $this->medications = Medication::with('pegawai')
-                ->where('monitoring_cycle_id', $this->currentCycleId)
-                ->orderBy('given_at', 'desc')
-                ->get();
-        }
-    }
+
 
     public function saveBloodGasResult($data)
     {
@@ -991,14 +860,5 @@ class PatientMonitor extends Component
     }
 
 
-    #[On('refresh-blood-gas')]
-    public function loadBloodGasOnly()
-    {
-        if ($this->currentCycleId) {
-            $this->bloodGasResults = BloodGasResult::with('pegawai')
-                ->where('monitoring_cycle_id', $this->currentCycleId)
-                ->orderBy('taken_at', 'desc')
-                ->get();
-        }
-    }
+
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Laporan Monitoring NICU</title>
+    <title>Laporan Monitoring {{ $title }}</title>
     <style>
         body {
             font-family: 'Helvetica', sans-serif;
@@ -225,7 +225,7 @@
         </tr>
     </table>
 
-    <h2>MONITORING 24 JAM NEONATUS INTENSIF CARE UNIT (NICU)</h2>
+    <h2>{{ $title }}</h2>
     <hr>
     {{-- HEADER COMPACT A3 LANDSCAPE 3-COLUMN --}}
 

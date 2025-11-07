@@ -11,7 +11,7 @@
                 </p>
             </div>
 
-            <a href="{{-- isi URL kembali --}}" wire:navigate class="text-[11px] sm:text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
+            <a href="#" wire:navigate class="text-[11px] sm:text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
                 ← Kembali
             </a>
         </div>

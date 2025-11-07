@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+
+class MedicationPicu extends Model
+{
+    use HasFactory;
+
+    protected $table = 'picu_medications';
+
+    protected $fillable = [
+        'monitoring_cycle_id',
+        'id_user',
+        'medication_name',
+        'dose',
+        'route',
+        'given_at',
+    ];
+    public function pegawai()
+    {
+        return $this->belongsTo(Pegawai::class, 'id_user', 'nik');
+    }
+
+    /**
+     * Helper (Accessor) untuk mendapatkan nama penulis.
+     * * Ini adalah best practice. Di Blade, kita bisa panggil:
+     * $program->author_name
+     */
+    public function getAuthorNameAttribute()
+    {
+        // 1. Cek relasi 'pegawai' dulu.
+        //    Ini adalah operasi yang cepat, terutama jika di-eager-load.
+        $pegawaiName = $this->pegawai?->nama;
+
+        if ($pegawaiName) {
+            return $pegawaiName; // Ditemukan! Langsung kembalikan.
+        }
+
+        // 2. Jika TIDAK ditemukan di pegawai (null),
+        //    baru kita cek ke tabel 'admin' (karena ini query ke DB).
+        $isAdmin = DB::table('admin')
+            ->whereRaw("usere = AES_ENCRYPT(?, 'nur')", [$this->id_user])
+            ->exists();
+
+        if ($isAdmin) {
+            return 'Admin Utama';
+        }
+
+        // 3. Jika bukan pegawai DAN bukan admin,
+        //    kembalikan id_user-nya sebagai fallback.
+        return $this->id_user;
+    }
+}

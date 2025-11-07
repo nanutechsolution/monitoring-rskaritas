@@ -1,7 +1,3 @@
-{{-- ============================================== --}}
- {{-- MODAL PEMBERIAN OBAT (REFAKTOR ALPINE PENUH) --}}
- {{-- ============================================== --}}
- {{-- Pindahkan state form ke x-data dan inisialisasi waktu --}}
  <div x-data="{
      openMedicationModal: false,
      medicationName: '',

@@ -25,13 +25,10 @@ class ObservationTable extends Component
     #[Computed(persist: true)]
     public function allRecords(): Collection
     {
-        // Jika Anda tambahkan filterShift, logic filter masuk ke sini
-        // $shifts = [...];
 
         return $this->cycle->records()
             ->with('inputter:nik,nama')
             ->orderBy('observation_time', 'asc')
-            // ->when($this->filterShift != 'all', function ($query) use ($shifts) { ... })
             ->get();
     }
 
