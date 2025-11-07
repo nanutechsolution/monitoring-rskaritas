@@ -9,7 +9,7 @@ use Livewire\Component;
 
 class PippTable extends Component
 {
-    public ?int $cycleId;
+    public ?int $cycleId = null;
     public Collection $pippAssessments;
 
     public function mount(?int $cycleId)
@@ -20,7 +20,7 @@ class PippTable extends Component
     }
 
     #[On('record-saved')]
-    #[On('refresh-pip')] // Juga dengarkan event dari modal PIPP
+    #[On('refresh-pip')]
     public function loadPippAssessments()
     {
         if (!$this->cycleId) {
@@ -33,7 +33,11 @@ class PippTable extends Component
             ->orderBy('assessment_time', 'desc')
             ->get();
     }
-
+    public function updatedCycleId($newCycleId)
+    {
+        $this->cycleId = $newCycleId;
+        $this->loadPippAssessments();
+    }
     public function render()
     {
         // Arahkan ke file partial Blade Anda yang sudah ada
