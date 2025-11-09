@@ -6,7 +6,6 @@ use App\Models\BloodGasResult;
 use App\Models\Medication;
 use App\Models\MonitoringCycle;
 use App\Models\MonitoringRecord;
-use App\Models\PatientDevice;
 use App\Models\PippAssessment;
 use Carbon\Carbon;
 use Illuminate\View\View;
@@ -18,7 +17,6 @@ use Livewire\Attributes\Locked;
 class PatientMonitor extends Component
 {
 
-    public array $balancePer3Hours = [];
     public bool $readyToLoad = false;
     public string $activeTab = 'observasi';
 
@@ -30,8 +28,6 @@ class PatientMonitor extends Component
     public $blood_pressure_systolic, $blood_pressure_diastolic;
     public $sat_o2, $irama_ekg, $skala_nyeri, $humidifier_inkubator;
     #[Locked]
-    public Collection $patientDevices;
-    #[Locked]
     public Collection $recentMedicationNames;
     // Properties for PIPP Modal
     public $pipp_assessment_time;
@@ -41,7 +37,7 @@ class PatientMonitor extends Component
     public $assessment_time;
     public $facial_expression = 0, $cry = 0, $breathing_pattern = 0;
     public $arms_movement = 0, $legs_movement = 0, $state_of_arousal = 0;
-    public $total_score = 0; // Calculated score
+    public $total_score = 0;
 
     // Properti untuk Modal Alat
     public $currentCycleId;
@@ -62,36 +58,31 @@ class PatientMonitor extends Component
     public bool $event_stimulasi = false;
     public $selectedDate;
     public string $activeOutputTab = 'ringkasan';
+    public bool $isReadOnly = false;
     public $respiratory_mode;
     public $spontan_fio2, $spontan_flow;
     public $cpap_fio2, $cpap_flow, $cpap_peep;
     public $hfo_fio2, $hfo_frekuensi, $hfo_map, $hfo_amplitudo, $hfo_it;
     public $monitor_mode, $monitor_fio2, $monitor_peep, $monitor_pip;
     public $monitor_tv_vte, $monitor_rr_spontan, $monitor_p_max, $monitor_ie;
-    // Properti untuk Keseimbangan Cairan
     public $intake_ogt, $intake_oral;
     public $output_urine, $output_bab, $output_residu;
     public $output_ngt, $output_drain;
-
-    // Properti untuk Infus (Parenteral) Dinamis
     public array $parenteral_intakes = [];
     public array $enteral_intakes = [];
-
-    // Properti untuk Modal Obat
-    public $medication_name, $dose, $route, $given_at;
-
-
     // Properti untuk Modal Blood Gas
     public $taken_at;
     public $gula_darah, $ph, $pco2, $po2, $hco3, $be, $sao2;
+    public $latestTempIncubator = null;
+    public $latestTempSkin = null;
+    public $latestHR = null;
+    public $latestRR = null;
+    public $latestBPSystolic = null;
+    public $latestBPDiastolic = null;
+    public $latestMAP = null;
 
-    public $daily_iwl; // Input untuk IWL harian
-    public $totalIntake24h = 0;
-    public $totalOutput24h = 0;
-    public $totalUrine24h = 0;
-    public $balance24h = 0;
-    public $previousBalance24h = null;
 
+    public $selectedTab = 'ventilator';
 
     /**
      *
@@ -108,219 +99,63 @@ class PatientMonitor extends Component
     {
         $this->readyToLoad = true;
         $this->loadRecords();
-        $this->loadPatientDevices();
     }
 
-    public function confirmRemoveDevice($deviceId)
-    {
-
-        if (!$deviceId) {
-            return; // Jika tidak ada ID, hentikan
-        }
-        $device = PatientDevice::find($deviceId);
-
-        // Validasi keamanan
-        if ($device && $device->no_rawat === $this->no_rawat) {
-
-            // Logika "Cabut" yang benar (mengisi removal_date)
-            $device->removal_date = now();
-            $device->removed_by_user_id = auth()->id();
-            $device->save();
-            $this->dispatch('refresh-devices');
-            $this->dispatch('record-saved', ['message' => 'Alat berhasil dilepas!']);
-        }
-
-    }
-    /**
-     * Mount komponen dengan no_rawat dan tanggal (opsional).
-     *
-     * @param string $no_rawat
-     * @param string|null $date (e.g., "2025-11-08")
-     */
     public function mount(string $no_rawat, $date = null): void
     {
+        $date = $date ? Carbon::parse($date) : now();
+        $maxDate = now()->endOfDay();
+        if ($date->gt($maxDate)) {
+            abort(403, 'Tanggal tidak valid');
+        }
         $this->no_rawat = str_replace('_', '/', $no_rawat);
-
-        // 1. Tentukan Waktu Dasar
-        // Jika $date ada dari URL (diklik dari riwayat), gunakan itu.
-        // Jika tidak (dari tombol "Tambah Baru"), gunakan waktu sekarang.
         $baseTime = $date ? \Carbon\Carbon::parse($date) : now();
-
-        // 2. Set properti $selectedDate (untuk kalender, dll)
         $this->selectedDate = $baseTime->format('Y-m-d');
 
-        // 3. Tentukan Tanggal Sheet (sheet_date)
-        // Ini adalah logika "jam 4 subuh" Anda
+        // Tentukan tanggal sheet "hari ini" (dihitung mulai jam 6 pagi)
+        $todaySheetDate = now()->startOfDay();
+        if (now()->hour < 6) {
+            $todaySheetDate->subDay();
+        }
+        $todaySheetDate = $todaySheetDate->format('Y-m-d');
+
+        // Cari siklus
         $sheetDate = $baseTime->copy()->startOfDay();
         if ($baseTime->hour < 6) {
-            $sheetDate->subDay(); // Jika jam 4 pagi, ikut sheet hari kemarin
+            $sheetDate->subDay();
         }
 
-        // 4. Cari Siklus menggunakan 'sheet_date' (Jauh lebih bersih!)
         $this->currentCycle = MonitoringCycle::where('no_rawat', $this->no_rawat)
             ->where('sheet_date', $sheetDate->format('Y-m-d'))
             ->first();
 
-        if ($this->currentCycle) {
-            $this->currentCycleId = $this->currentCycle->id;
-        } else {
-            $this->currentCycleId = null;
-        }
+        $this->currentCycleId = $this->currentCycle?->id;
 
-        // 5. Atur Waktu Default untuk Input
-        if ($baseTime->isToday()) {
-            // Jika buka hari ini, default-nya jam sekarang
-            $this->record_time = now()->format('Y-m-d\TH:i');
-            $this->taken_at = now()->format('Y-m-d\TH:i');
-        } else {
-            // Jika buka riwayat, default-nya jam 06:00 di tanggal itu
+        // Ambil nomor rawat aktif yang sedang digunakan hari ini
+        $activeCycle = MonitoringCycle::where('sheet_date', $todaySheetDate)
+            ->latest()
+            ->first();
+
+        // 🔒 Readonly hanya kalau:
+        // - bukan sheet hari ini, DAN
+        // - nomor rawat saat ini sama dengan yang aktif
+        $this->isReadOnly = (
+            $this->selectedDate != $todaySheetDate &&
+            $activeCycle &&
+            $activeCycle->no_rawat === $this->no_rawat
+        );
+
+        // Tentukan waktu record default
+        if ($this->isReadOnly) {
             $defaultRecordTime = $baseTime->copy()->startOfDay()->addHours(6);
-            $this->record_time = $defaultRecordTime->format('Y-m-d\TH:i');
-            $this->taken_at = $defaultRecordTime->format('Y-m-d\TH:i');
+        } else {
+            $defaultRecordTime = now();
         }
-
-        // 6. Inisialisasi properti lain
-        $this->patientDevices = new \Illuminate\Database\Eloquent\Collection();
-        $this->recentMedicationNames = new \Illuminate\Support\Collection();
-    }
-    public function loadPatientDevices(): void
-    {
-        if (!$this->readyToLoad || !$this->currentCycle) {
-            $this->patientDevices = new \Illuminate\Database\Eloquent\Collection();
-            return;
-        }
-
-        $cycleStart = $this->currentCycle->start_time;
-        $cycleEnd = $this->currentCycle->end_time;
-
-        $this->patientDevices = PatientDevice::with(['installer', 'remover'])
-            ->where('no_rawat', $this->no_rawat)
-            ->where('installation_date', '<=', $cycleEnd)
-            ->where(function ($query) use ($cycleStart) {
-                $query->whereNull('removal_date')
-                    ->orWhere('removal_date', '>=', $cycleStart);
-            })
-            ->orderBy('installation_date')
-            ->get();
+        $this->record_time = $defaultRecordTime->format('Y-m-d\TH:i');
+        $this->taken_at = $defaultRecordTime->format('Y-m-d\TH:i');
     }
 
-    public function saveDevice($data)
-    {
-        $validated = Validator::make($data, [
-            'device_name' => 'required|string|max:255',
-            'size' => 'nullable|string|max:100',
-            'location' => 'nullable|string|max:255',
-            'installation_date' => 'required|date_format:Y-m-d\TH:i',
-        ])->validate();
 
-        try {
-            PatientDevice::create([
-                'no_rawat' => $this->no_rawat,
-                'device_name' => $validated['device_name'],
-                'size' => $validated['size'],
-                'location' => $validated['location'],
-                'installation_date' => $validated['installation_date'],
-                'installed_by_user_id' => auth()->id(),
-            ]);
-
-            $this->dispatch('refresh-devices');
-            $this->dispatch('record-saved', ['message' => 'Alat baru berhasil ditambahkan!']);
-
-            return true;
-
-        } catch (\Exception $e) {
-            $this->dispatch('error-notification', ['message' => 'Gagal menyimpan: ' . $e->getMessage()]);
-            return false;
-        }
-    }
-    #[On('refresh-devices')]
-    public function loadPatientDevicesOnly()
-    {
-        ($this->readyToLoad);
-        if (!$this->readyToLoad || !$this->currentCycle) {
-            $this->patientDevices = new \Illuminate\Database\Eloquent\Collection();
-            return;
-        }
-
-        $cycleStart = $this->currentCycle->start_time;
-        $cycleEnd = $this->currentCycle->end_time;
-
-        $this->patientDevices = PatientDevice::with(['installer', 'remover'])
-            ->where('no_rawat', $this->no_rawat)
-            ->where('installation_date', '<=', $cycleEnd)
-            ->where(function ($query) use ($cycleStart) {
-                $query->whereNull('removal_date')
-                    ->orWhere('removal_date', '>=', $cycleStart);
-            })
-            ->orderBy('installation_date')
-            ->get();
-    }
-    private function reloadRepeaterNames()
-    {
-        // Koleksi default jika tidak ada data
-        $uniqueInfusionNames = collect();
-        $uniqueEnteralNames = collect();
-
-        // 1. Coba cari nama di SIKLUS SAAT INI dulu
-        if ($this->currentCycleId) {
-            $currentRecordIds = MonitoringRecord::where('monitoring_cycle_id', $this->currentCycleId)->pluck('id');
-
-            if ($currentRecordIds->isNotEmpty()) {
-                $uniqueInfusionNames = \App\Models\ParenteralIntake::whereIn('monitoring_record_id', $currentRecordIds)
-                    ->distinct()
-                    ->pluck('name');
-                $uniqueEnteralNames = \App\Models\EnteralIntake::whereIn('monitoring_record_id', $currentRecordIds)
-                    ->distinct()
-                    ->pluck('name');
-            }
-        }
-
-        // 2. Jika SIKLUS SAAT INI KOSONG, coba cari di SIKLUS SEBELUMNYA
-        if ($uniqueInfusionNames->isEmpty() && $uniqueEnteralNames->isEmpty()) {
-            // Tentukan waktu mulai siklus saat ini (logika dari loadRecords)
-            $targetDate = Carbon::parse(time: $this->selectedDate)->startOfDay();
-            $cycleStartTime = $targetDate->copy()->addHours(6);
-            if ($targetDate->isToday() && now()->hour < 6) {
-                $cycleStartTime->subDay();
-            }
-
-            // Cari siklus sebelumnya
-            $previousCycleStartTime = $cycleStartTime->copy()->subDay();
-            $previousCycle = MonitoringCycle::where('no_rawat', $this->no_rawat)
-                ->where('start_time', $previousCycleStartTime)
-                ->first();
-
-            // Jika siklus sebelumnya ADA, ambil nama dari sana
-            if ($previousCycle) {
-                $previousRecordIds = MonitoringRecord::where('monitoring_cycle_id', $previousCycle->id)->pluck('id');
-
-                if ($previousRecordIds->isNotEmpty()) {
-                    // Hanya ambil jika nama saat ini benar-benar kosong
-                    if ($uniqueInfusionNames->isEmpty()) {
-                        $uniqueInfusionNames = \App\Models\ParenteralIntake::whereIn('monitoring_record_id', $previousRecordIds)
-                            ->distinct()
-                            ->pluck('name');
-                    }
-                    if ($uniqueEnteralNames->isEmpty()) {
-                        $uniqueEnteralNames = \App\Models\EnteralIntake::whereIn('monitoring_record_id', $previousRecordIds)
-                            ->distinct()
-                            ->pluck('name');
-                    }
-                }
-            }
-        }
-
-        // 3. Isi ulang array properti (seperti sebelumnya)
-        $this->parenteral_intakes = $uniqueInfusionNames->map(fn($name) => [
-            'name' => $name,
-            'volume' => null
-        ])->toArray();
-
-        $this->enteral_intakes = $uniqueEnteralNames->map(fn($name) => [
-            'name' => $name,
-            'volume' => null
-        ])->toArray();
-    }
     public function saveRecord(): void
     {
         $enteralData = $this->enteral_intakes;
@@ -336,8 +171,30 @@ class PatientMonitor extends Component
             'parenteral_intakes.*.volume' => 'nullable|numeric|min:0',
             'enteral_intakes.*.name' => 'required_with:enteral_intakes.*.volume|nullable|string',
             'enteral_intakes.*.volume' => 'nullable|numeric|min:0|exclude_if:enteral_intakes.*.name,puasa',
-        ]);
 
+            // Numeric NICU fields with min/max
+            'temp_incubator' => 'nullable|numeric|between:33,38',       // °C
+            'temp_skin' => 'nullable|numeric|between:32,37',            // °C
+            'hr' => 'nullable|numeric|between:80,200',                  // bpm
+            'rr' => 'nullable|numeric|between:20,80',                   // breaths/min
+            'blood_pressure_systolic' => 'nullable|numeric|between:50,120',
+            'blood_pressure_diastolic' => 'nullable|numeric|between:30,80',
+            'sat_o2' => 'nullable|numeric|between:70,100',
+            'hfo_fio2' => 'nullable|numeric|between:21,100',
+            'cpap_fio2' => 'nullable|numeric|between:21,100',
+            'cpap_peep' => 'nullable|numeric|between:2,15',
+            'hfo_map' => 'nullable|numeric|between:5,20',
+            'hfo_amplitudo' => 'nullable|numeric|between:5,30',
+            'hfo_it' => 'nullable|numeric|between:0.3,1.5',
+        ], [
+            'temp_incubator.between' => 'Suhu inkubator harus antara 33°C sampai 38°C.',
+            'temp_skin.between' => 'Suhu kulit harus antara 30°C sampai 37°C.',
+            'hr.between' => 'Heart rate harus antara 80 sampai 200 bpm.',
+            'rr.between' => 'Respiratory rate harus antara 20 sampai 80 per menit.',
+            'blood_pressure_systolic.between' => 'Tensi sistolik harus antara 50 sampai 120 mmHg.',
+            'blood_pressure_diastolic.between' => 'Tensi diastolik harus antara 30 sampai 80 mmHg.',
+            'sat_o2.between' => 'Saturasi O₂ harus antara 50% sampai 100%.',
+        ]);
         $fieldsToCheck = [
             'temp_incubator',
             'temp_skin',
@@ -383,57 +240,58 @@ class PatientMonitor extends Component
             'output_drain',
         ];
 
-        // ===============================================
-        // 3. LOGIKA PENGECEKAN (Perbaikan untuk menghitung volume '0')
-        // ===============================================
         $hasMainData = collect($fieldsToCheck)->some(fn($f) => !empty($this->$f) && $this->$f !== null);
 
-        // Perbaikan: Cek 'isset' dan '!=' '' alih-alih '!empty()' agar '0' terhitung
         $hasParenteral = collect($this->parenteral_intakes)->some(fn($i) => isset($i['volume']) && $i['volume'] !== '' && $i['volume'] !== null);
 
         $hasEnteral = collect($this->enteral_intakes)->some(fn($i) => (isset($i['volume']) && $i['volume'] !== '' && $i['volume'] !== null) || strtolower($i['name']) === 'puasa');
 
         if (!$hasMainData && !$hasParenteral && !$hasEnteral) {
-            $this->addError('record', 'Minimal satu field harus diisi.');
+            $this->addError('record', 'Minimal satu data observasi atau intake harus diisi.');
             return;
         }
-        $now = now();
-        $cycleStartTime = $now->copy()->startOfDay()->addHours(6);
-        if ($now->hour < 6) {
+        $recordTime = now();
+        $sheetDate = $recordTime->copy()->startOfDay();
+        $cycleStartTime = $recordTime->copy()->startOfDay()->addHours(6);
+        if ($recordTime->hour < 6) {
+            $sheetDate->subDay();
             $cycleStartTime->subDay();
         }
         $cycleEndTime = $cycleStartTime->copy()->addDay()->subSecond();
         $cycle = MonitoringCycle::firstOrCreate(
-            ['no_rawat' => $this->no_rawat, 'start_time' => $cycleStartTime],
-            ['end_time' => $cycleEndTime]
-        );
-        $record = MonitoringRecord::updateOrCreate(
+            ['no_rawat' => $this->no_rawat, 'sheet_date' => $sheetDate->format('Y-m-d')],
             [
-                'monitoring_cycle_id' => $cycle->id,
-                'record_time' => $now,
-            ],
-            array_merge(
-                [
-                    'monitoring_cycle_id' => $cycle->id,
-                    'id_user' => auth()->id(),
-                    'record_time' => $now,
-                ],
-                collect($fieldsToCheck)->mapWithKeys(fn($f) => [
-                    $f => $this->$f !== null ? $this->$f : null
-                ])->toArray()
-            )
+                'sheet_date' => $sheetDate->format('Y-m-d'),
+                'start_time' => $cycleStartTime,
+                'end_time' => $cycleEndTime,
+            ]
         );
-        $nowTimestamp = now();
-
-        // 1. Siapkan data Parenteral
+        $record = MonitoringRecord::where('monitoring_cycle_id', $cycle->id)
+            ->whereBetween('record_time', [
+                $recordTime->copy()->startOfMinute(),
+                $recordTime->copy()->endOfMinute()
+            ])
+            ->first();
+        $dataToSave = collect($fieldsToCheck)->mapWithKeys(fn($f) => [$f => $this->$f])->toArray();
+        if ($record) {
+            $record->update($dataToSave);
+        } else {
+            $record = MonitoringRecord::create([
+                'monitoring_cycle_id' => $cycle->id,
+                'id_user' => auth()->id(),
+                'record_time' => $recordTime,
+                ...$dataToSave
+            ]);
+        }
+        $now = now();
         $parenteralData = collect($this->parenteral_intakes)
-            ->filter(fn($i) => isset($i['volume']) && $i['volume'] !== '' && $i['volume'] !== null)
+            ->filter(callback: fn($i) => isset($i['volume']) && $i['volume'] !== '' && $i['volume'] !== null)
             ->map(fn($intake) => [
                 'monitoring_record_id' => $record->id,
                 'name' => $intake['name'],
                 'volume' => $intake['volume'],
-                'created_at' => $nowTimestamp,
-                'updated_at' => $nowTimestamp,
+                'created_at' => $now,
+                'updated_at' => $now,
             ])->all();
 
         // 2. Siapkan data Enteral
@@ -447,8 +305,8 @@ class PatientMonitor extends Component
                 'monitoring_record_id' => $record->id,
                 'name' => $enteral['name'],
                 'volume' => (isset($enteral['name']) && $enteral['name'] === 'puasa') ? null : $enteral['volume'],
-                'created_at' => $nowTimestamp,
-                'updated_at' => $nowTimestamp,
+                'created_at' => $now,
+                'updated_at' => $now,
             ])->all();
 
         // 3. Simpan sekaligus! (Hanya 2 query, bukan N+M query)
@@ -458,16 +316,11 @@ class PatientMonitor extends Component
         if (!empty($enteralData)) {
             \App\Models\EnteralIntake::insert($enteralData);
         }
-        // =========================
-        // Selesai (Sudah Benar)
-        // =========================
         $this->resetForm();
-        $this->dispatch('record-saved');
+        $this->dispatch('record-saved', message: 'Data Observasi berhasil dicatat!');
+
     }
 
-    /**
-     * Mencatat event observasi tunggal (seperti Cyanosis, Pucat, dll.)
-     */// Di PatientMonitor.php
     public function resetForm(): void
     {
         // 1. Reset semua field biasa
@@ -533,13 +386,7 @@ class PatientMonitor extends Component
         return view('livewire.patient-monitor')->layout('layouts.app');
     }
 
-    public $latestTempIncubator = null;
-    public $latestTempSkin = null;
-    public $latestHR = null;
-    public $latestRR = null;
-    public $latestBPSystolic = null;
-    public $latestBPDiastolic = null;
-    public $latestMAP = null;
+
     #[On('refresh-observasi')]
     #[On('record-saved')]
     public function loadRecords(): void
@@ -557,25 +404,9 @@ class PatientMonitor extends Component
             ->where('sheet_date', $currentSheetDate->format('Y-m-d'))
             ->first();
 
-        // 3. PERBAIKAN: Cari Siklus Sebelumnya (Jauh lebih sederhana)
-        $previousSheetDate = $currentSheetDate->copy()->subDay()->format('Y-m-d');
-
-        $previousCycle = MonitoringCycle::where('no_rawat', $this->no_rawat)
-            ->where('sheet_date', $previousSheetDate) // <-- Pakai sheet_date
-            ->first();
-
-        // 4. Logika Balance Siklus Sebelumnya (Ini sudah benar)
-        if ($previousCycle && is_null($previousCycle->calculated_balance_24h)) {
-            $this->calculateAndSaveBalance($previousCycle);
-            $previousCycle->refresh();
-        }
-        $this->previousBalance24h = $previousCycle ? $previousCycle->calculated_balance_24h : null;
-
         // 5. Muat Data Siklus Saat Ini (Ini semua sudah benar)
         if ($currentCycle) {
             $this->currentCycleId = $currentCycle->id;
-            $this->daily_iwl = $currentCycle->daily_iwl;
-
             // Ambil SEMUA record HANYA untuk kalkulasi
             $allCycleRecords = MonitoringRecord::with('parenteralIntakes', 'enteralIntakes')
                 ->where('monitoring_cycle_id', $currentCycle->id)
@@ -586,96 +417,6 @@ class PatientMonitor extends Component
                 ->distinct()
                 ->orderBy('medication_name', 'asc')
                 ->pluck('medication_name');
-
-            // Kalkulasi balance 3 jam (Ini sudah benar)
-            $this->balancePer3Hours = [];
-            $cycleStart = Carbon::parse($currentCycle->start_time);
-
-            for ($i = 0; $i < 8; $i++) { // 8 blok x 3 jam = 24 jam
-                $blockStart = $cycleStart->copy()->addHours($i * 3);
-                $blockEnd = $blockStart->copy()->addHours(3)->subSecond(); // e.g., 06:00:00 s/d 08:59:59
-
-                // Filter record yang masuk di blok waktu ini
-                $recordsInBlock = $allCycleRecords->whereBetween('record_time', [$blockStart, $blockEnd]);
-
-                $totalMasuk = $recordsInBlock->sum(
-                    fn($r) =>
-                    ($r->intake_ogt ?? 0) +
-                    ($r->intake_oral ?? 0) +
-                    $r->parenteralIntakes->sum('volume') +
-                    $r->enteralIntakes->sum('volume')
-                );
-
-                $totalKeluar = $recordsInBlock->sum(
-                    fn($r) =>
-                    ($r->output_urine ?? 0) +
-                    ($r->output_bab ?? 0) +
-                    ($r->output_residu ?? 0) +
-                    ($r->output_ngt ?? 0) +
-                    ($r->output_drain ?? 0)
-                );
-
-                $balance = $totalMasuk - $totalKeluar;
-
-                $this->balancePer3Hours[] = [
-                    'label' => $blockStart->format('H:i') . ' - ' . $blockEnd->format('H:i'),
-                    'masuk' => $totalMasuk,
-                    'keluar' => $totalKeluar,
-                    'balance' => $balance,
-                ];
-            }
-
-            // Kalkulasi total untuk TAMPILAN siklus saat ini
-            $this->totalIntake24h = $allCycleRecords->sum(fn($r) => ($r->intake_ogt ?? 0) + ($r->intake_oral ?? 0) + $r->parenteralIntakes->sum('volume') + $r->enteralIntakes->sum('volume'));
-            $this->totalOutput24h = $allCycleRecords->sum(fn($r) => ($r->output_urine ?? 0) + ($r->output_bab ?? 0) + ($r->output_residu ?? 0) + ($r->output_ngt ?? 0) + ($r->output_drain ?? 0));
-            $this->totalUrine24h = $allCycleRecords->sum('output_urine');
-            $this->balance24h = $this->totalIntake24h - $this->totalOutput24h - ($this->daily_iwl ?? 0);
-
-            $chartRecords = $allCycleRecords->sortBy('record_time');
-
-            $chartData = collect([
-                'temp_incubator' => 'temp_incubator',
-                'temp_skin' => 'temp_skin',
-                'hr' => 'hr',
-                'rr' => 'rr',
-                'bp_systolic' => 'blood_pressure_systolic',
-                'bp_diastolic' => 'blood_pressure_diastolic',
-            ])
-                ->mapWithKeys(fn($dbField, $chartKey) => [
-                    $chartKey => $chartRecords
-                        ->filter(fn($r) => is_numeric($r->$dbField) && $r->$dbField !== null)
-                        ->map(fn($r) => [
-                            'x' => $r->record_time,
-                            'y' => (float) $r->$dbField,
-                        ])
-                        ->values()
-                ])->toArray();
-
-            // Kirim ke frontend
-            $latestRecord = $allCycleRecords->sortByDesc('record_time')->first();
-            if ($latestRecord) {
-                $this->latestTempIncubator = $latestRecord->temp_incubator;
-                $this->latestTempSkin = $latestRecord->temp_skin;
-                $this->latestHR = $latestRecord->hr;
-                $this->latestRR = $latestRecord->rr;
-                $this->latestBPSystolic = $latestRecord->blood_pressure_systolic;
-                $this->latestBPDiastolic = $latestRecord->blood_pressure_diastolic;
-                if (!is_null($this->latestBPSystolic) && !is_null($this->latestBPDiastolic)) {
-                    $systolic = (float) $this->latestBPSystolic;
-                    $diastolic = (float) $this->latestBPDiastolic;
-                    $this->latestMAP = round($diastolic + (1 / 3) * ($systolic - $diastolic));
-                } else {
-                    $this->latestMAP = null;
-                }
-            } else {
-                // Reset nilai jika tidak ada record
-                $this->latestTempIncubator = $this->latestTempSkin = $this->latestHR = $this->latestRR = null;
-                $this->latestBPSystolic = $this->latestBPDiastolic = $this->latestMAP = null;
-            }
-
-            $this->dispatch('update-chart', ['chartData' => $chartData]);
-
-            // ... (Logika repeater Anda sudah benar) ...
             $recordIds = $allCycleRecords->pluck('id');
             $uniqueInfusionNames = \App\Models\ParenteralIntake::whereIn('monitoring_record_id', $recordIds)
                 ->distinct()
@@ -694,25 +435,13 @@ class PatientMonitor extends Component
 
         } else {
             $this->currentCycleId = null;
-            $this->daily_iwl = null;
-            $this->balance24h = 0;
-            $this->totalIntake24h = 0;
-            $this->totalOutput24h = 0;
-            $this->totalUrine24h = 0;
             $this->recentMedicationNames = new Collection();
             $this->parenteral_intakes = [];
             $this->enteral_intakes = [];
-            $this->dispatch('update-chart', ['chartData' => []]);
         }
-        $this->reloadRepeaterNames();
         $this->dispatch('repeaters-ready');
         $this->dispatch('cycle-updated', cycleId: $this->currentCycleId);
     }
-
-    /**
-     * FUNGSI BARU 2:
-     * Mengosongkan 5 field input di form.
-     */
     public function resetFormFields()
     {
         $this->reset([
@@ -725,27 +454,38 @@ class PatientMonitor extends Component
     }
     public function updatedSelectedDate($value)
     {
-        if (Carbon::parse($value)->isToday()) {
-            $this->record_time = now()->format('Y-m-d\TH:i');
-        } else {
-            $this->record_time = Carbon::parse($value)->startOfDay()->addHours(6)->format('Y-m-d\TH:i');
-        }
-        $this->loadRecords();
+        // 1. Tentukan tanggal baru
+        $newDate = Carbon::parse($value)->format('Y-m-d');
+        // 2. Redirect ke URL baru (sama seperti tombol panah)
+        return $this->redirect(route('patient.monitor', [
+            'no_rawat' => str_replace('/', '_', $this->no_rawat),
+            'date' => $newDate
+        ]), navigate: true);
     }
     public function goToPreviousDay()
     {
-        $this->selectedDate = Carbon::parse($this->selectedDate)->subDay()->format('Y-m-d');
-        $this->updatedSelectedDate($this->selectedDate);
-    }
+        // 1. Hitung tanggal baru
+        $newDate = Carbon::parse($this->selectedDate)->subDay()->format('Y-m-d');
 
+        // 2. Redirect ke URL baru.
+        // 'navigate: true' membuatnya cepat seperti SPA (Single Page App)
+        return $this->redirect(route('patient.monitor', [
+            'no_rawat' => str_replace('/', '_', $this->no_rawat),
+            'date' => $newDate
+        ]), navigate: true);
+    }
     public function goToNextDay()
     {
         if (!Carbon::parse($this->selectedDate)->isToday()) {
-            $this->selectedDate = Carbon::parse($this->selectedDate)->addDay()->format('Y-m-d');
-            $this->updatedSelectedDate($this->selectedDate);
+            // 1. Hitung tanggal baru
+            $newDate = Carbon::parse($this->selectedDate)->addDay()->format('Y-m-d');
+            // 2. Redirect ke URL baru.
+            return $this->redirect(route('patient.monitor', [
+                'no_rawat' => str_replace('/', '_', $this->no_rawat),
+                'date' => $newDate
+            ]), navigate: true);
         }
     }
-
     public function savePippScore($data)
     {
         $totalScore = $data['total_score'];
@@ -767,45 +507,11 @@ class PatientMonitor extends Component
             ]);
 
             $this->dispatch('refresh-pip');
-            $this->dispatch('record-saved', ['message' => 'Penilaian Nyeri (PIPP) berhasil dicatat!']);
+            $this->dispatch('record-saved', 'Penilaian Nyeri (PIPP) berhasil dicatat!');
         } else {
-            $this->dispatch('error-notification', ['message' => 'Simpan data observasi pertama untuk membuat siklus.']);
+            $this->dispatch('error-notification', 'Simpan data observasi pertama untuk membuat siklus.');
         }
     }
-
-
-    /**
-     * Fungsi helper untuk menghitung dan menyimpan balance siklus yang sudah selesai.
-     */
-    private function calculateAndSaveBalance(MonitoringCycle $cycle)
-    {
-        $records = MonitoringRecord::with('parenteralIntakes')->where('monitoring_cycle_id', $cycle->id)->get();
-
-        $totalIntake = $records->sum(fn($r) => ($r->intake_ogt ?? 0) + ($r->intake_oral ?? 0) + $r->parenteralIntakes->sum('volume'));
-        $totalOutput = $records->sum(fn($r) => ($r->output_urine ?? 0) + ($r->output_bab ?? 0) + ($r->output_residu ?? 0) + ($r->output_ngt ?? 0) + ($r->output_drain ?? 0));
-        $iwl = $cycle->daily_iwl ?? 0;
-
-        $cycle->calculated_balance_24h = $totalIntake - $totalOutput - $iwl;
-        $cycle->save();
-    }
-    public function saveDailyIwl()
-    {
-        if ($this->currentCycleId) {
-            $this->validate(['daily_iwl' => 'nullable|numeric']);
-
-            $cycle = MonitoringCycle::find($this->currentCycleId);
-            $cycle->daily_iwl = $this->daily_iwl ?: null; // Simpan IWL harian
-            $cycle->calculated_balance_24h = $this->totalIntake24h - $this->totalOutput24h - ($this->daily_iwl ?? 0);
-            $cycle->save();
-            $this->balance24h = $this->totalIntake24h - $this->totalOutput24h - ($this->daily_iwl ?? 0);
-            $this->dispatch('record-saved', ['message' => 'Estimasi IWL Harian berhasil disimpan!']);
-        } else {
-            $this->dispatch('error-notification', ['message' => 'Siklus belum aktif.']);
-        }
-    }
-
-    public $selectedTab = 'ventilator';
-
     /**
      * Menyimpan SEMUA kejadian yang dipilih di modal dalam satu record.
      */
@@ -838,42 +544,6 @@ class PatientMonitor extends Component
         ]);
         $this->dispatch('record-saved', message: 'Kejadian berhasil dicatat!');
     }
-
-    public function saveMedication($data)
-    {
-        $validated = Validator::make($data, [
-            'medication_name' => 'required|string|max:255',
-            'dose' => 'required|string|max:100',
-            'route' => 'required|string|max:100',
-            'given_at' => 'required|date_format:Y-m-d\TH:i',
-        ])->validate();
-
-        if ($this->currentCycleId) {
-            try {
-                Medication::create([
-                    'monitoring_cycle_id' => $this->currentCycleId,
-                    'id_user' => auth()->id(),
-                    // Ambil nilai dari $validated (atau $data), bukan $this->...
-                    'medication_name' => $validated['medication_name'],
-                    'dose' => $validated['dose'],
-                    'route' => $validated['route'],
-                    'given_at' => $validated['given_at'],
-                ]);
-
-                $this->dispatch('refresh-medications'); // Refresh tabel riwayat obat
-                $this->dispatch('record-saved', ['message' => 'Pemberian obat berhasil dicatat!']);
-                return true;
-            } catch (\Exception $e) {
-                $this->dispatch('error-notification', ['message' => 'Gagal menyimpan obat: ' . $e->getMessage()]);
-                return false;
-            }
-        } else {
-            $this->dispatch('error-notification', ['message' => 'Simpan data observasi pertama untuk membuat siklus.']);
-            return false;
-        }
-    }
-
-
     public function saveBloodGasResult($data)
     {
         $validated = Validator::make($data, [
@@ -902,15 +572,13 @@ class PatientMonitor extends Component
                 'id_user' => auth()->id(),
             ] + $validated);
             $this->dispatch('refresh-blood-gas');
-            $this->dispatch('record-saved', ['message' => 'Hasil Gas Darah berhasil dicatat!']);
+            $this->dispatch('record-saved', 'Hasil Gas Darah berhasil dicatat!');
             $this->dispatch('close-blood-gas-modal');
             return true;
         } catch (\Exception $e) {
-            $this->dispatch('error-notification', ['message' => 'Gagal menyimpan gas darah: ' . $e->getMessage()]);
-            return false; // Sinyal gagal
+            $this->dispatch('error-notification', message: "Gagal menyimpan gas darah: " . $e->getMessage());
+            return false;
         }
     }
-
-
 
 }

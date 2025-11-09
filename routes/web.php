@@ -8,6 +8,7 @@ use App\Livewire\Monitoring\AnesthesiaShow;
 use App\Livewire\Nicu\MonitoringHistory;
 use App\Livewire\PatientList;
 use App\Livewire\PatientMonitor;
+use App\Livewire\Picu\MonitoringHistory as PicuMonitoringHistory;
 use App\Livewire\Picu\PicuPatientMonitor;
 use App\Livewire\Picu\Workspace;
 use Illuminate\Support\Facades\Route;
@@ -26,7 +27,7 @@ Route::get('/icu/workspace/{noRawat}/{sheetDate?}', App\Livewire\Icu\Workspace::
     ->middleware('auth')
     ->name('monitoring.icu.workspace');
 
-// ICU
+// NICU
 Route::get('monitoring/nicu/{no_rawat}/{date?}', PatientMonitor::class)
     ->middleware(['auth'])
     ->name('patient.monitor');
@@ -37,6 +38,9 @@ Route::get('/patient-history/{no_rawat}', MonitoringHistory::class)
 Route::get('monitoring/picu/{no_rawat}', PicuPatientMonitor::class)
     ->middleware(['auth'])
     ->name('monitoring.picu');
+Route::get('/patient-history/{no_rawat}/picu', PicuMonitoringHistory::class)
+    ->middleware(['auth'])
+    ->name('patient.picu.history');
 Route::get('monitoring/nicu/{no_rawat}/report/{cycle_id}/report/pdf', [ReportController::class, 'generateReportPdf'])
     ->middleware(['auth'])
     ->name('monitoring.report.pdf');

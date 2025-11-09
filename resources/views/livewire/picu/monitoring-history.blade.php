@@ -13,7 +13,7 @@
             </div>
             <div class="flex flex-col">
                 <h2 class="text-sm sm:text-base font-semibold text-primary-700 dark:text-primary-300">
-                    Riwayat Monitoring NICU
+                    Riwayat Monitoring PICU
                 </h2>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {{ $pasien->nm_pasien ?? 'Pasien N/A' }}
@@ -29,7 +29,7 @@
         <div class="w-full sm:w-auto flex-shrink-0">
             @if($hasOngoingCycle)
             @else
-            <a href="{{ route('patient.monitor', ['no_rawat' => str_replace('/', '_', $noRawat)]) }}" wire:navigate class="inline-flex w-full sm:w-auto justify-center items-center px-4 py-2
+            <a href="{{ route('monitoring.picu', ['no_rawat' => str_replace('/', '_', $noRawat)]) }}" wire:navigate class="inline-flex w-full sm:w-auto justify-center items-center px-4 py-2
                          bg-primary-600 text-white font-semibold rounded-lg shadow-md
                          hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600
                          transition duration-150 ease-in-out text-sm">
@@ -90,14 +90,14 @@
 
                 <div class="flex-shrink-0 text-right space-x-2">
                     {{-- Tombol Cetak --}}
-                    <a href="{{ route('monitoring.report.pdf', ['no_rawat' => str_replace('/', '_', $cycle->no_rawat), 'cycle_id' => $cycle->id]) }}" target="_blank" class="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                    <a href="{{ route('monitoring.picu.report.pdf', ['no_rawat' => str_replace('/', '_', $cycle->no_rawat), 'cycle_id' => $cycle->id]) }}" target="_blank" class="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition">
                         Cetak
                     </a>
 
                     {{-- Tombol Buka / Lihat Catatan --}}
                     @if($isCycleFinished)
                     @else
-                    <a href="{{ route('patient.monitor', ['no_rawat' => str_replace('/', '_', $cycle->no_rawat), 'date' => $cycle->start_time->format('Y-m-d')]) }}" wire:navigate class="inline-flex items-center px-3 py-2 bg-primary-600 text-white rounded-lg text-xs font-semibold hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition">
+                    <a href="{{ route('monitoring.picu', ['no_rawat' => str_replace('/', '_', $cycle->no_rawat), 'date' => $cycle->start_time->format('Y-m-d')]) }}" wire:navigate class="inline-flex items-center px-3 py-2 bg-primary-600 text-white rounded-lg text-xs font-semibold hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition">
                         Buka Catatan
                     </a>
                     @endif
@@ -105,7 +105,7 @@
             </div>
             @empty
             <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-10 text-center border border-gray-100 dark:border-gray-700">
-                <p class="text-gray-500 dark:text-gray-400">Belum ada riwayat monitoring NICU untuk pasien ini.</p>
+                <p class="text-gray-500 dark:text-gray-400">Belum ada riwayat monitoring PICU untuk pasien ini.</p>
             </div>
             @endforelse
     </div>
@@ -163,14 +163,14 @@
 
                     <div class="mt-3 flex space-x-2">
                         {{-- Tombol Desktop / Cetak --}}
-                        <a href="{{ route('monitoring.report.pdf', ['no_rawat' => str_replace('/', '_', $cycle->no_rawat), 'cycle_id' => $cycle->id]) }}" target="_blank" class="flex-1 text-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                        <a href="{{ route('monitoring.picu.report.pdf', ['no_rawat' => str_replace('/', '_', $cycle->no_rawat), 'cycle_id' => $cycle->id]) }}" target="_blank" class="flex-1 text-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition">
                             Cetak
                         </a>
 
                         {{-- Tombol Buka / Lihat --}}
                         @if($isCycleFinished)
                         @else
-                        <a href="{{ route('patient.monitor', ['no_rawat' => str_replace('/', '_', $cycle->no_rawat), 'date' => $cycle->start_time->format('Y-m-d')]) }}" wire:navigate class="flex-1 text-center px-3 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition">
+                        <a href="{{ route('monitoring.picu', ['no_rawat' => str_replace('/', '_', $cycle->no_rawat), 'date' => $cycle->start_time->format('Y-m-d')]) }}" wire:navigate class="flex-1 text-center px-3 py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition">
                             Buka Catatan
                         </a>
                         @endif

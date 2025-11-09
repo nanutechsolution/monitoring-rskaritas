@@ -16,10 +16,9 @@ $logout = function (Logout $logout) {
             <div class="flex">
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}" wire:navigate>
-                        <img src="{{ asset('logo/lg_karitas.png') }}" alt="Logo" class="h-10 w-auto">
+                        <img src="{{ asset('logo/lg_karitas.png') }}" alt="Logo" class="h-12 w-auto">
                     </a>
                 </div>
-
                 <!-- Menu Desktop -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>

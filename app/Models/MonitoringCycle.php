@@ -16,6 +16,7 @@ class MonitoringCycle extends Model
      */
     protected $fillable = [
         'no_rawat',
+        'sheet_date',
         'therapy_program',
         'start_time',
         'end_time',

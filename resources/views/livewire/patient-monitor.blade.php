@@ -18,25 +18,16 @@
                         <p class="text-sm text-gray-500 dark:text-gray-400">Pemantauan kondisi pasien secara real-time</p>
                     </div>
                 </div>
-
                 <div class="flex flex-wrap items-center justify-end gap-2">
-                    <button wire:click="goToPreviousDay" type="button" title="Hari Sebelumnya" class="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md text-gray-600 dark:text-gray-300 transition-colors shadow-sm">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                        </svg>
-                    </button>
-
-                    <input type="date" wire:model.blur="selectedDate" class="form-input py-2 px-3 text-sm rounded-md shadow-sm
-                                  border-gray-300 dark:border-gray-600
-                                  bg-white dark:bg-gray-700
-                                  text-gray-900 dark:text-gray-200
-                                  focus:ring-primary-500 focus:border-primary-500">
-
-                    <button wire:click="goToNextDay" type="button" title="Hari Berikutnya" class="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md text-gray-600 dark:text-gray-300 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" @if(\Carbon\Carbon::parse($selectedDate)->isToday()) disabled @endif>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </button>
+                    {{-- Jam Observasi (read-only) --}}
+                    {{-- <div x-data="{ currentTime: new Date() }" x-init="setInterval(() => currentTime = new Date(), 1000)" class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal & Jam Observasi</label>
+                        <div class="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 shadow-sm px-3 py-2 sm:text-sm text-gray-700 dark:text-gray-300">
+                            <span x-text="currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })"></span>
+                            <span> | </span>
+                            <span x-text="currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })"></span>
+                        </div>
+                    </div> --}}
 
                     @if($currentCycleId)
                     <a href="{{ route('monitoring.report.pdf', ['no_rawat' => str_replace('/', '_', $no_rawat), 'cycle_id' => $currentCycleId]) }}" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 border
@@ -54,11 +45,9 @@
                     @endif
                 </div>
             </div>
-
             <div class="overflow-x-auto py-3 -mx-3 scroll-smooth scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
                 <div class="flex gap-3 px-3 min-w-max snap-x snap-mandatory">
                     @include('livewire.patient-monitor.partials.modal-kejadian-cepat')
-                    @include('livewire.patient-monitor.partials.modal-obat')
                     @include('livewire.patient-monitor.partials.modal-gasdarah')
 
                     <div x-data="{ showPippModal: false }">
@@ -193,7 +182,9 @@
                             </div>
                         </div>
                     </div>
-                    <livewire:therapy-program-modal :current-cycle-id="$currentCycleId" :no-rawat="$no_rawat" wire:key="'therapy-modal-'.$currentCycleId" />
+                    @if ($currentCycleId)
+                    <livewire:therapy-program-modal :currentCycleId="$currentCycleId" :no-rawat="$no_rawat" wire:key="'therapy-modal-'.$currentCycleId" />
+                    @endif
                 </div>
             </div>
         </div>
@@ -203,12 +194,17 @@
                     <div class="p-6 text-gray-900 dark:text-gray-100">
                         <div class="mt-4">
                             <h3 class="text-lg font-medium border-b dark:border-gray-700 pb-3">Form Input Observasi</h3>
-                            <div class="mt-4" x-data="{ currentTime: new Date() }" x-init="setInterval(() => currentTime = new Date(), 1000)">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Jam Observasi</label>
+                            <div x-data="{
+        currentTime: new Date(@json(now()->timestamp * 1000))
+    }" x-init="setInterval(() => currentTime = new Date(currentTime.getTime() + 1000), 1000)" class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal & Jam Observasi</label>
                                 <div class="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 shadow-sm px-3 py-2 sm:text-sm text-gray-700 dark:text-gray-300">
+                                    <span x-text="currentTime.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })"></span>
+                                    <span> - </span>
                                     <span x-text="currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })"></span>
                                 </div>
                             </div>
+
                         </div>
                         <div class="border-b border-gray-200 dark:border-gray-700 mt-4">
                             <nav class="bg-gray-50 dark:bg-gray-900 shadow-sm -mb-px flex space-x-2 sm:space-x-4 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800 px-2 py-1" aria-label="Tabs">
@@ -243,18 +239,24 @@
                     </div>
                     <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 space-y-3 border-t dark:border-gray-600">
                         <div class="text-right">
-                            <button type="submit" wire:loading.attr="disabled" @click="$dispatch('sync-repeaters')" class="inline-flex justify-center rounded-md border border-transparent
-                                           bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm
-                                           hover:bg-primary-700
-                                           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-                                           dark:focus:ring-offset-gray-800">
+                            <button type{{"="}} "submit" wire:loading.attr="disabled" @click="$dispatch('sync-repeaters')" @disabled($isReadOnly) class="inline-flex justify-center rounded-md border border-transparent
+                       bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm
+                       hover:bg-primary-700
+                       focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+                       dark:focus:ring-offset-gray-800
+                       disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span wire:loading.remove wire:target="saveRecord">Simpan Catatan</span>
                                 <span wire:loading wire:target="saveRecord">Menyimpan...</span>
                             </button>
+                            @error('record')
+                            <div class="text-red-500 text-sm mt-2">{{ $message }}</div>
+                            @enderror
+                            @error('record_time')
+                            <div class="text-red-500 text-sm mt-2">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </form>
-                @include('livewire.patient-monitor.partials.alat-terpasang')
             </div>
             <div class="lg:col-span-2" wire:init="loadData">
                 <div wire:loading wire:target="loadData" class="w-full">
@@ -274,6 +276,7 @@
                                     <button wire:click.prevent="$set('activeOutputTab', 'obat_cairan')" type="button" class="{{ $activeOutputTab === 'obat_cairan' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600' }} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Obat & Cairan</button>
                                     <button wire:click.prevent="$set('activeOutputTab', 'penilaian_lab')" type="button" class="{{ $activeOutputTab === 'penilaian_lab' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600' }} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Penilaian & Lab</button>
                                     <button wire:click.prevent="$set('activeOutputTab', 'vantilator')" type="button" class="{{ $activeOutputTab === 'vantilator' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600' }} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Ventilator</button>
+                                    <button wire:click.prevent="$set('activeOutputTab', 'alat')" type="button" class="{{ $activeOutputTab === 'alat' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600' }} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Alat Terpasang</button>
                                 </nav>
                             </div>
                         </div>
@@ -282,8 +285,7 @@
                 <div>
                     <div x-show="$wire.activeOutputTab === 'ringkasan'" class="space-y-6">
                         <livewire:nicu.hemodynamic-chart-nicu :no_rawat="$no_rawat" :selectedDate="$selectedDate" wire:key="'chart-hemo-'.$currentCycleId" lazy />
-                        @include('livewire.patient-monitor.partials.output-ringkasan-3jam')
-                        @include('livewire.patient-monitor.partials.output-ringkasan-balance')
+                        <livewire:nicu.fluid-balance :no_rawat="$no_rawat" :selectedDate="$selectedDate" :isReadOnly="$isReadOnly" wire:key="'fluid-balance-'.$currentCycleId" lazy />
                     </div>
                     <div x-show="$wire.activeOutputTab === 'observasi'" class="space-y-6">
                         <livewire:observasi-table :cycleId="$currentCycleId" wire:key="'static-observasi-table'" lazy />
@@ -298,6 +300,9 @@
                     </div>
                     <div x-show="$wire.activeOutputTab === 'vantilator'" class="space-y-6">
                         <livewire:ventilator-table :cycleId="$currentCycleId" wire:key="'static-vent-table'" lazy />
+                    </div>
+                    <div x-show="$wire.activeOutputTab === 'alat'" class="space-y-6">
+                        <livewire:nicu.device-list :no_rawat="$no_rawat" :selectedDate="$selectedDate" wire:key="'device-list-'.$currentCycleId" lazy />
                     </div>
                 </div>
             </div>

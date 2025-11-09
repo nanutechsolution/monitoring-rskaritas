@@ -1,5 +1,4 @@
 @php
-    // --- Kelas Helper untuk Konsistensi ---
 
     // Label Standar
     $labelClasses = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
@@ -111,7 +110,7 @@
     </div>
 
     <div x-show="mode === 'monitor'" x-transition>
-        <div class="{{ $cardClasses }} p-4"> {{-- Beri padding lebih besar --}}
+        <div class="{{ $cardClasses }} p-4">
             <h5 class="{{ $cardTitleClasses }}">Setting Ventilator</h5>
             <div class="grid grid-cols-2 gap-4 items-start">
                 <div class="flex flex-col">

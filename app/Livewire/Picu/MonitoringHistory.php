@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Nicu;
+namespace App\Livewire\Picu;
 
-use App\Models\MonitoringCycle;
+use App\Models\PicuMonitoringCycle;
 use App\Models\RegPeriksa;
 use Livewire\Component;
 use Illuminate\Support\Collection;
@@ -19,24 +19,24 @@ class MonitoringHistory extends Component
         $this->noRawat = str_replace('_', '/', $no_rawat);
 
         $regPeriksa = RegPeriksa::where('no_rawat', $this->noRawat)
-                        ->with('pasien')
-                        ->firstOrFail();
+            ->with('pasien')
+            ->firstOrFail();
 
         $this->pasien = $regPeriksa->pasien;
 
-        $this->cycles = MonitoringCycle::where('no_rawat', $this->noRawat)
-                            ->orderBy('start_time', 'desc')
-                            ->get();
+        $this->cycles = PicuMonitoringCycle::where('no_rawat', $this->noRawat)
+            ->orderBy('start_time', 'desc')
+            ->get();
 
         // Cek apakah ada siklus ongoing
-        $this->hasOngoingCycle = $this->cycles->contains(function($cycle) {
+        $this->hasOngoingCycle = $this->cycles->contains(function ($cycle) {
             return $cycle->end_time->isFuture();
         });
     }
 
     public function render()
     {
-        return view('livewire.nicu.monitoring-history')
-                ->layout('layouts.app');
+        return view('livewire.picu.monitoring-history')
+            ->layout('layouts.app');
     }
 }

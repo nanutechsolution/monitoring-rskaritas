@@ -1,7 +1,6 @@
 @if ($showModal)
 <div class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
     <div class="absolute inset-0 bg-gray-800/60 transition-opacity" wire:click="closeModal"></div>
-
     <div x-data="{
     // 1. Inisialisasi variabel Alpine dengan data dari Livewire (tapi di-defer)
     gestational_age:       @entangle('gestational_age').defer,

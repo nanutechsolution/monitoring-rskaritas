@@ -10,6 +10,18 @@ class TherapyProgram extends Model
 {
     use HasFactory;
 
+
+    protected $fillable = [
+        'monitoring_cycle_id',
+        'no_rawat',
+        'id_user',
+        'masalah_klinis',
+        'program_terapi',
+        'nutrisi_enteral',
+        'nutrisi_parenteral',
+        'pemeriksaan_lab'
+    ];
+
     /**
      * Izinkan pengisian massal untuk semua kolom kecuali 'id'.
      * Ini cara cepat untuk $guarded.
@@ -53,8 +65,8 @@ class TherapyProgram extends Model
         // 2. Jika TIDAK ditemukan di pegawai (null),
         //    baru kita cek ke tabel 'admin' (karena ini query ke DB).
         $isAdmin = DB::table('admin')
-                      ->whereRaw("usere = AES_ENCRYPT(?, 'nur')", [$this->id_user])
-                      ->exists();
+            ->whereRaw("usere = AES_ENCRYPT(?, 'nur')", [$this->id_user])
+            ->exists();
 
         if ($isAdmin) {
             return 'Admin Utama'; // Ini adalah admin!

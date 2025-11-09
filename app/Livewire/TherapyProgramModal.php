@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\TherapyProgram;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class TherapyProgramModal extends Component
 {
@@ -15,6 +16,14 @@ class TherapyProgramModal extends Component
 
     // Properti untuk data riwayat
     public $therapy_program_history = [];
+
+    // Properti ini perlu didefinisikan agar error validasi dapat ditampilkan
+    public $masalah = '';
+    public $program = '';
+    public $enteral = '';
+    public $parenteral = '';
+    public $lab = '';
+
 
     /**
      * Mount method untuk menerima props dari parent
@@ -53,14 +62,12 @@ class TherapyProgramModal extends Component
         $program = TherapyProgram::find($programId);
 
         if ($program) {
-            // Kirim event yang akan ditangkap oleh x-data di view
-            $this->dispatch('load-therapy-form', [
-                'masalah' => $program->masalah_klinis,
-                'program' => $program->program_terapi,
-                'enteral' => $program->nutrisi_enteral,
-                'parenteral' => $program->nutrisi_parenteral,
-                'lab' => $program->pemeriksaan_lab,
-            ]);
+            // Isi properti Livewire, ini akan mengisi form karena x-model terikat ke properti ini
+            $this->masalah = $program->masalah_klinis;
+            $this->program = $program->program_terapi;
+            $this->enteral = $program->nutrisi_enteral;
+            $this->parenteral = $program->nutrisi_parenteral;
+            $this->lab = $program->pemeriksaan_lab;
         }
     }
 
@@ -69,12 +76,15 @@ class TherapyProgramModal extends Component
      */
     public function saveTherapyProgram($data)
     {
+        // PENTING: Jika currentCycleId hilang, lempar Livewire ValidationException.
+        // Livewire akan menampilkan error dan menjaga modal tetap terbuka.
         if (!$this->currentCycleId) {
-            $this->dispatch('error-notification', message: 'Simpan data observasi pertama untuk membuat siklus terapi.');
-            return;
+            throw ValidationException::withMessages([
+                'currentCycleId' => ['Simpan data observasi pertama untuk membuat siklus terapi.'],
+            ]);
         }
 
-        // Validasi data dari Alpine
+        // Livewire akan menangani kegagalan validasi, modal tidak akan tertutup.
         $validatedData = Validator::make($data, [
             'masalah_klinis' => 'required|string',
             'program_terapi' => 'required|string',
@@ -86,10 +96,9 @@ class TherapyProgramModal extends Component
         $latestProgram = TherapyProgram::where('monitoring_cycle_id', $this->currentCycleId)
             ->latest()
             ->first();
-
         $currentUserId = Auth::id();
 
-        // Cek duplikasi
+        // Cek apakah data tidak berubah
         if (
             $latestProgram &&
             $latestProgram->masalah_klinis === $validatedData['masalah_klinis'] &&
@@ -99,22 +108,32 @@ class TherapyProgramModal extends Component
             $latestProgram->pemeriksaan_lab === $validatedData['pemeriksaan_lab'] &&
             $latestProgram->id_user === $currentUserId
         ) {
-            $this->dispatch('notify', 'Info: Tidak ada perubahan pada program terapi.');
+            // Notifikasi info, modal tetap terbuka
+            $this->dispatch('notify', message: 'Info: Tidak ada perubahan pada program terapi.');
             return;
         }
 
         // Buat data baru
-        TherapyProgram::create([
-            'monitoring_cycle_id' => $this->currentCycleId,
-            'no_rawat' => $this->no_rawat,
-            'id_user' => $currentUserId,
-        ] + $validatedData);
+        try {
+            TherapyProgram::create([
+                'monitoring_cycle_id' => $this->currentCycleId,
+                'no_rawat' => $this->no_rawat,
+                'id_user' => $currentUserId,
+            ] + $validatedData);
+
+        } catch (\Exception $e) {
+            // Notifikasi error, modal tetap terbuka
+            $this->dispatch('error-notification', message: 'Gagal menyimpan: ' . $e->getMessage());
+            return;
+        }
 
         // Muat ulang riwayat
         $this->loadTherapyHistoryOnly();
 
-        $this->dispatch('record-saved', message: 'Program Terapi berhasil disimpan!');
+        // PENTING: HANYA DISPATCH EVENT SUKSES JIKA BENAR-BENAR BERHASIL
+        $this->dispatch('therapy-saved-success', message: 'Program Terapi berhasil disimpan!');
     }
+
 
     /**
      * Render view.

@@ -6,7 +6,6 @@
 @php
 use Carbon\Carbon;
 
-// --- Logika PHP Anda (Sudah Benar) ---
 $jamList = $medications->pluck('given_at')
     ->map(fn($t) => Carbon::parse($t)->format('H:i'))
     ->unique()
@@ -128,3 +127,5 @@ $border = 'border dark:border-gray-600';
         </div>
     </div>
 </div>
+
+

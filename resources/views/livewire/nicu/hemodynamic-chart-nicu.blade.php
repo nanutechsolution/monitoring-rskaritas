@@ -2,119 +2,119 @@
      x-data="{
         chart: null,
         darkMode: document.documentElement.classList.contains('dark'),
+
         colors: {
-            primary: '{{ config('tailwindcss.theme.extend.colors.primary.600', '#3b82f6') }}',
-            danger: '{{ config('tailwindcss.theme.extend.colors.danger.600', '#dc2626') }}',
             green: '#22c55e',
             yellow: '#eab308',
+            danger: '#dc2626',
+            primary: '#3b82f6',
             purple: '#a855f7',
             pink: '#ec4899'
         },
 
-        setChartColors(isDark) {
-            if (!this.chart) return;
-            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-            const labelColor = isDark ? '#9ca3af' : '#6b7280';
-            const titleColor = isDark ? '#d1d5db' : '#374151';
-            this.chart.options.plugins.legend.labels.color = labelColor;
-            this.chart.options.scales.x.title.color = titleColor;
-            this.chart.options.scales.x.ticks.color = labelColor;
-            this.chart.options.scales.x.grid.color = gridColor;
-            if(this.chart.options.scales.yTtv) {
-                this.chart.options.scales.yTtv.title.color = titleColor;
-                this.chart.options.scales.yTtv.ticks.color = labelColor;
-                this.chart.options.scales.yTtv.grid.color = gridColor;
-            }
-            if(this.chart.options.scales.ySuhu) {
-                this.chart.options.scales.ySuhu.title.color = titleColor;
-                this.chart.options.scales.ySuhu.ticks.color = labelColor;
-                this.chart.options.scales.ySuhu.grid.color = gridColor;
-            }
-            this.chart.update('none');
+        init() {
+            // Minta Livewire load data chart saat inisialisasi
+            $wire.loadChartData();
+
+            // Watch dark mode untuk update warna chart
+            this.$watch('darkMode', (val) => {
+                this.updateChartColors(val);
+            });
         },
 
-        initChart() {
-            const isDark = this.darkMode;
-            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-            const labelColor = isDark ? '#9ca3af' : '#6b7280';
-            const titleColor = isDark ? '#d1d5db' : '#374151';
+        // Update chart saat Livewire mengirim event
+        updateChart(event) {
+            const chartData = event.detail.chartData || {};
+            if (!chartData) return;
+
+            if (this.chart) this.chart.destroy();
+
             const ctx = this.$refs.canvas.getContext('2d');
+
             this.chart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     datasets: [
-                        { label: 'Temp inkubator', data: [], borderColor: this.colors.green, tension: 0.1, spanGaps: true, borderDash: [5, 5], yAxisID: 'ySuhu' },
-                        { label: 'Temp Skin', data: [], borderColor: this.colors.yellow, tension: 0.1, spanGaps: true, yAxisID: 'ySuhu' },
-                        { label: 'Heart Rate', data: [], borderColor: this.colors.danger, tension: 0.1, spanGaps: true, yAxisID: 'yTtv' },
-                        { label: 'Resp. Rate', data: [], borderColor: this.colors.primary, tension: 0.1, spanGaps: true, yAxisID: 'yTtv' },
-                        { label: 'Tensi Sistolik', data: [], borderColor: this.colors.purple, fill: false, tension: 0.1, pointRadius: 3, spanGaps: true, pointBackgroundColor: this.colors.purple, yAxisID: 'yTtv' },
-                        { label: 'Tensi Diastolik', data: [], borderColor: this.colors.pink, fill: '-1', backgroundColor: 'rgba(236, 72, 153, 0.1)', borderDash: [5, 5], spanGaps: true, tension: 0.1, pointRadius: 3, pointBackgroundColor: this.colors.pink, yAxisID: 'yTtv'}
+                        { label: 'Temp inkubator', data: chartData.temp_incubator || [], borderColor: this.colors.green, tension: 0.1, spanGaps: true },
+                        { label: 'Temp Skin', data: chartData.temp_skin || [], borderColor: this.colors.yellow, tension: 0.1, spanGaps: true },
+                        { label: 'Heart Rate', data: chartData.hr || [], borderColor: this.colors.danger, tension: 0.1, spanGaps: true },
+                        { label: 'Resp. Rate', data: chartData.rr || [], borderColor: this.colors.primary, tension: 0.1, spanGaps: true },
+                        { label: 'Tensi Sistolik', data: chartData.bp_systolic || [], borderColor: this.colors.purple, fill: false, pointRadius: 3, tension: 0.1, spanGaps: true },
+                        { label: 'Tensi Diastolik', data: chartData.bp_diastolic || [], borderColor: this.colors.pink, fill: '-1', backgroundColor: 'rgba(236,72,153,0.2)', borderDash: [5,5], pointRadius: 3, tension: 0.1, spanGaps: true }
                     ]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, animation: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
                     interaction: { mode: 'index', intersect: false },
                     scales: {
                         x: {
                             type: 'timeseries',
                             time: { unit: 'minute', displayFormats: { minute: 'HH:mm' } },
-                            ticks: { source: 'data', maxRotation: 0, autoSkip: true, color: labelColor },
-                            grid: { color: gridColor },
-                            title: { display: true, text: 'Waktu', color: titleColor }
+                            ticks: { color: this.darkMode ? '#9ca3af' : '#6b7280', maxRotation: 0, autoSkip: true },
+                            grid: { color: this.darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
                         },
-                        yTtv: {
-                            type: 'linear', position: 'left', title: { display: true, text: 'Nadi / RR / Tensi', color: titleColor },
-                            beginAtZero: false, ticks: { color: labelColor }, grid: { color: gridColor }
-                        },
-                        ySuhu: {
-                            type: 'linear', position: 'right', title: { display: true, text: 'Suhu (°C)', color: titleColor },
-                            min: 30, suggestedMax: 42, ticks: { color: labelColor }, grid: { drawOnChartArea: false },
+                        y: {
+                            beginAtZero: false,
+                            ticks: { color: this.darkMode ? '#9ca3af' : '#6b7280' },
+                            grid: { color: this.darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }
                         }
                     },
                     plugins: {
-                        legend: { labels: { color: labelColor } }
+                        legend: { labels: { color: this.darkMode ? '#d1d5db' : '#374151' } }
                     }
                 }
             });
         },
 
-        updateChart(event) {
+        // Update warna chart saat dark mode berubah
+        updateChartColors(isDark) {
             if (!this.chart) return;
-            const chartData = event.detail.chartData;
-            if (chartData === undefined) return; // Guard clause
 
-            this.chart.data.datasets[0].data = chartData.temp_incubator || [];
-            this.chart.data.datasets[1].data = chartData.temp_skin || [];
-            this.chart.data.datasets[2].data = chartData.hr || [];
-            this.chart.data.datasets[3].data = chartData.rr || [];
-            this.chart.data.datasets[4].data = chartData.bp_systolic || [];
-            this.chart.data.datasets[5].data = chartData.bp_diastolic || [];
+            const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+            const labelColor = isDark ? '#9ca3af' : '#6b7280';
+
+            this.chart.options.scales.x.ticks.color = labelColor;
+            this.chart.options.scales.x.grid.color = gridColor;
+            this.chart.options.scales.y.ticks.color = labelColor;
+            this.chart.options.scales.y.grid.color = gridColor;
+            this.chart.options.plugins.legend.labels.color = labelColor;
 
             this.chart.update('none');
+        },
+
+        // Notifikasi sukses
+        showNotification(event) {
+            const type = event.detail?.type || 'success';
+            const message = event.detail?.message || '✅ Data berhasil disimpan!';
+            const notif = document.createElement('div');
+            notif.innerText = message;
+            notif.className = `fixed top-5 right-5 py-2 px-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-gray-500 text-white'
+            }`;
+            document.body.appendChild(notif);
+            setTimeout(() => { notif.classList.add('opacity-0'); setTimeout(() => notif.remove(), 300); }, 3000);
+        },
+
+        // Notifikasi error
+        showErrorNotification(event) {
+            const message = event.detail?.message || '❌ Terjadi kesalahan!';
+            const notif = document.createElement('div');
+            notif.innerText = message;
+            notif.className = 'fixed top-5 right-5 bg-red-500 text-white py-2 px-4 rounded-lg shadow-lg z-50';
+            document.body.appendChild(notif);
+            setTimeout(() => { notif.classList.add('opacity-0'); setTimeout(() => notif.remove(), 300); }, 4000);
         }
      }"
-
-    x-init="
-        // Tunggu 1 'tick' agar Alpine selesai memuat $refs
-        $nextTick(() => {
-
-            initChart(); // 1. Buat kerangka chart
-
-            // 2. Pasang listener dark mode
-            $watch('darkMode', (val) => {
-                setChartColors(val);
-            });
-
-            // 3. TAMBAHKAN INI:
-            //    Setelah chart siap, MINTA data ke server.
-            $wire.loadChartData();
-
-        });
-    "
-
-    {{-- Listener ini sekarang akan menangkap data dari mount() DAN refreshChartData() --}}
-    @window:update-hemo-chart.window="updateChart($event)"
-    class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 rounded-lg">
+     x-init="init()"
+     x-on:update-hemo-chart.window="updateChart($event)"
+     x-on:record-saved.window="showNotification($event)"
+     x-on:error-notification.window="showErrorNotification($event)"
+     class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 rounded-lg"
+>
 
     <div class="p-6 text-gray-900 dark:text-gray-100">
         <h3 class="text-lg font-medium text-primary-700 dark:text-primary-300">Tren Hemodinamik</h3>
