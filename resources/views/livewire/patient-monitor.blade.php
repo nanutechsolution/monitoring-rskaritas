@@ -19,15 +19,12 @@
                     </div>
                 </div>
                 <div class="flex flex-wrap items-center justify-end gap-2">
-                    {{-- Jam Observasi (read-only) --}}
-                    {{-- <div x-data="{ currentTime: new Date() }" x-init="setInterval(() => currentTime = new Date(), 1000)" class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal & Jam Observasi</label>
-                        <div class="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 shadow-sm px-3 py-2 sm:text-sm text-gray-700 dark:text-gray-300">
-                            <span x-text="currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })"></span>
-                            <span> | </span>
-                            <span x-text="currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })"></span>
-                        </div>
-                    </div> --}}
+                    <a href="{{ route('patient.history' ,['no_rawat' => str_replace('/', '_', $no_rawat) ]) }}" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-400 text-gray-700 rounded-lg hover:bg-gray-200 shadow transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Kembali
+                    </a>
 
                     @if($currentCycleId)
                     <a href="{{ route('monitoring.report.pdf', ['no_rawat' => str_replace('/', '_', $no_rawat), 'cycle_id' => $currentCycleId]) }}" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 border

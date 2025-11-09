@@ -380,11 +380,9 @@ class PicuPatientMonitor extends Component
         // ===============================================
         $hasMainData = collect($fieldsToCheck)->some(fn($f) => !empty($this->$f) && $this->$f !== null);
 
-        // Perbaikan: Cek 'isset' dan '!=' '' alih-alih '!empty()' agar '0' terhitung
         $hasParenteral = collect($this->parenteral_intakes)->some(fn($i) => isset($i['volume']) && $i['volume'] !== '' && $i['volume'] !== null);
 
         $hasEnteral = collect($this->enteral_intakes)->some(fn($i) => (isset($i['volume']) && $i['volume'] !== '' && $i['volume'] !== null) || strtolower($i['name']) === 'puasa');
-
         if (!$hasMainData && !$hasParenteral && !$hasEnteral) {
             $this->addError('record', 'Minimal satu field harus diisi.');
             return;
@@ -394,10 +392,11 @@ class PicuPatientMonitor extends Component
         if ($now->hour < 6) {
             $cycleStartTime->subDay();
         }
-        $cycleEndTime = $cycleStartTime->copy()->addDay()->subSecond();
 
+        $cycleEndTime = $cycleStartTime->copy()->addDay()->subSecond();
+        $sheetDate = $cycleStartTime->toDateString();
         $cycle = PicuMonitoringCycle::firstOrCreate(
-            ['no_rawat' => $this->no_rawat, 'start_time' => $cycleStartTime],
+            ['no_rawat' => $this->no_rawat, 'sheet_date' => $sheetDate, 'start_time' => $cycleStartTime],
             ['end_time' => $cycleEndTime]
         );
         $record = PicuMonitoringRecord::updateOrCreate(
@@ -409,7 +408,7 @@ class PicuPatientMonitor extends Component
                 [
                     'monitoring_cycle_id' => $cycle->id,
                     'id_user' => auth()->id(),
-                    'record_time' => $this->record_time,
+                    'record_time' => $now,
                 ],
                 collect($fieldsToCheck)->mapWithKeys(fn($f) => [
                     $f => $this->$f !== null ? $this->$f : null

@@ -21,28 +21,13 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2 justify-end">
-                        <button wire:click="goToPreviousDay" type="button" title="Hari Sebelumnya" class="flex items-center justify-center p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg shadow transition text-gray-600 dark:text-gray-300">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        <!-- Tombol Kembali -->
+                        <a href="{{ route('patient.picu.history' ,['no_rawat' => str_replace('/', '_', $no_rawat) ]) }}" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-400 text-gray-700 rounded-lg hover:bg-gray-200 shadow transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
-                        </button>
-                        <!-- Input Tanggal -->
-                        <div class="relative">
-                            <input type="date" wire:model.blur="selectedDate" class="form-input py-2 px-3 rounded-lg border border-gray-300 dark:border-gray-600
-                                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200
-                                      shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm">
-                            <button type="button" x-on:click="$wire.set('selectedDate', new Date().toISOString().split('T')[0])" class="absolute right-1 top-1/2 -translate-y-1/2 px-2 py-1 text-xs
-                                       bg-primary-500 text-white rounded hover:bg-primary-600 transition">
-                                Today
-                            </button>
-                        </div>
-
-                        <!-- Tombol Hari Berikutnya -->
-                        <button wire:click="goToNextDay" type="button" title="Hari Berikutnya" class="flex items-center justify-center p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg shadow transition text-gray-600 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed" @if(\Carbon\Carbon::parse($selectedDate)->isToday()) disabled @endif>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
+                            Kembali
+                        </a>
 
                         <!-- Tombol Cetak -->
                         @if($currentCycleId)
@@ -55,6 +40,7 @@
                         </a>
                         @endif
                     </div>
+
                 </div>
                 <!-- Scrollable Tombol Aksi (Modal) -->
                 <div class="overflow-x-auto py-3 scroll-smooth scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
@@ -73,9 +59,15 @@
                         <div class="p-6 text-gray-900 dark:text-gray-100">
                             <h3 class="text-lg font-medium border-b dark:border-gray-700 pb-3">Form Input Observasi</h3>
                             <div class="mt-4" x-data="{ currentTime: new Date() }" x-init="setInterval(() => currentTime = new Date(), 1000)">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Jam Observasi</label>
-                                <div class="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 shadow-sm px-3 py-2 sm:text-sm text-gray-700 dark:text-gray-300">
-                                    <span x-text="currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })"></span>
+                                <div x-data="{
+        currentTime: new Date(@json(now()->timestamp * 1000))
+    }" x-init="setInterval(() => currentTime = new Date(currentTime.getTime() + 1000), 1000)" class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal & Jam Observasi</label>
+                                    <div class="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 shadow-sm px-3 py-2 sm:text-sm text-gray-700 dark:text-gray-300">
+                                        <span x-text="currentTime.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })"></span>
+                                        <span> - </span>
+                                        <span x-text="currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })"></span>
+                                    </div>
                                 </div>
                             </div>
 

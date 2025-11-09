@@ -18,6 +18,7 @@ class PicuMonitoringCycle extends Model
      */
     protected $fillable = [
         'no_rawat',
+        'sheet_date',
         'therapy_program',
         'start_time',
         'end_time',
@@ -25,7 +26,8 @@ class PicuMonitoringCycle extends Model
 
     protected $casts = [
         'start_time' => 'datetime',
-        'end_time' => 'datetime', // jika ada
+        'end_time' => 'datetime',
+        'sheet_date' =>'date'
     ];
 
 
