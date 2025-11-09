@@ -23,7 +23,8 @@ class MonitoringCycle extends Model
 
     protected $casts = [
         'start_time' => 'datetime',
-        'end_time' => 'datetime', // jika ada
+        'end_time' => 'datetime',
+        'sheet_date' => 'date',
     ];
 
 

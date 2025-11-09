@@ -116,7 +116,7 @@
                             <td class="px-6 py-4 text-sm">
                                 <div class="flex items-center space-x-2">
                                     <a href="{{ route('monitoring.icu.history', ['noRawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-200 dark:hover:bg-indigo-700">ICU</a>
-                                    <a href="{{ route('monitoring.nicu', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-700">NICU</a>
+                                    <a href="{{ route('patient.history', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-700">NICU</a>
                                     <a href="{{ route('monitoring.picu', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-700">PICU</a>
                                     <a href="{{ route('monitoring.anestesi.history', ['noRawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-700">Anestesi</a>
                                 </div>
@@ -154,7 +154,7 @@
                         </div>
                         <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-2">
                             <a href="{{ route('monitoring.icu.history', ['noRawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-200 dark:hover:bg-indigo-700">ICU</a>
-                            <a href="{{ route('monitoring.nicu', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-700">NICU</a>
+                            <a href="{{ route('patient.history', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-700">NICU</a>
                             <a href="{{ route('monitoring.picu', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-700">PICU</a>
                             <a href="{{ route('monitoring.anestesi.history', ['noRawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-700">Anestesi</a>
                         </div>

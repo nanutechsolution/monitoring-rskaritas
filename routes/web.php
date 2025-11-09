@@ -5,6 +5,7 @@ use App\Livewire\Icu\PatientHistory;
 use App\Livewire\Monitoring\AnesthesiaCreate;
 use App\Livewire\Monitoring\AnesthesiaHistory;
 use App\Livewire\Monitoring\AnesthesiaShow;
+use App\Livewire\Nicu\MonitoringHistory;
 use App\Livewire\PatientList;
 use App\Livewire\PatientMonitor;
 use App\Livewire\Picu\PicuPatientMonitor;
@@ -24,9 +25,15 @@ Route::get('/icu/history/{noRawat}', PatientHistory::class)
 Route::get('/icu/workspace/{noRawat}/{sheetDate?}', App\Livewire\Icu\Workspace::class)
     ->middleware('auth')
     ->name('monitoring.icu.workspace');
-Route::get('monitoring/nicu/{no_rawat}', PatientMonitor::class)
+
+// ICU
+Route::get('monitoring/nicu/{no_rawat}/{date?}', PatientMonitor::class)
     ->middleware(['auth'])
-    ->name('monitoring.nicu');
+    ->name('patient.monitor');
+Route::get('/patient-history/{no_rawat}', MonitoringHistory::class)
+    ->middleware(['auth'])
+    ->name('patient.history');
+// picu
 Route::get('monitoring/picu/{no_rawat}', PicuPatientMonitor::class)
     ->middleware(['auth'])
     ->name('monitoring.picu');

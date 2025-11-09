@@ -16,21 +16,27 @@ class CairanTable extends Component
     {
         $this->cycleId = $cycleId;
         $this->fluidRecords = new Collection();
+    }
+    /**
+     * Listener untuk event 'cycle-updated' dari parent.
+     * Ini akan memperbaiki masalah 'lazy' load.
+     */
+    #[On('cycle-updated')]
+    public function updateCycleId($cycleId)
+    {
+        $this->cycleId = $cycleId;
         $this->loadFluidRecords();
     }
 
     /**
-     * TAMBAHKAN FUNGSI INI
-     * Hook ini akan otomatis berjalan saat $cycleId diperbarui
-     * oleh PatientMonitor (saat Anda ganti hari).
+     * Listener untuk event 'record-saved'
      */
-    public function updatedCycleId($newCycleId)
+    #[On('record-saved')]
+    public function refreshTable()
     {
-        $this->cycleId = $newCycleId;
-        $this->loadFluidRecords(); // Muat ulang data cairan
+        $this->loadFluidRecords();
     }
 
-    #[On('record-saved')]
     public function loadFluidRecords()
     {
         if (!$this->cycleId) {

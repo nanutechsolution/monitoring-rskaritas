@@ -281,11 +281,10 @@
                 </div>
                 <div>
                     <div x-show="$wire.activeOutputTab === 'ringkasan'" class="space-y-6">
-                        @include('livewire.patient-monitor.partials.output-grafik')
+                        <livewire:nicu.hemodynamic-chart-nicu :no_rawat="$no_rawat" :selectedDate="$selectedDate" wire:key="'chart-hemo-'.$currentCycleId" lazy />
                         @include('livewire.patient-monitor.partials.output-ringkasan-3jam')
                         @include('livewire.patient-monitor.partials.output-ringkasan-balance')
                     </div>
-
                     <div x-show="$wire.activeOutputTab === 'observasi'" class="space-y-6">
                         <livewire:observasi-table :cycleId="$currentCycleId" wire:key="'static-observasi-table'" lazy />
                     </div>

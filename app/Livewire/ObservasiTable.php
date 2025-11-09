@@ -9,48 +9,49 @@ use Illuminate\Support\Collection;
 
 class ObservasiTable extends Component
 {
-
     public ?int $cycleId = null;
     public Collection $records;
 
-
-    /**
-     * INI PERBAIKANNYA: Tambahkan "?int"
-     * Ini mengizinkan $cycleId untuk bernilai null saat dipanggil
-     */
     public function mount(?int $cycleId)
     {
         $this->cycleId = $cycleId;
-        $this->records = new Collection(); // Inisialisasi koleksi kosong
-        $this->loadRecords();
+        $this->records = new Collection();
+        // Hapus loadRecords() dari mount, biarkan 'lazy'
+        // $this->loadRecords();
     }
 
-    /**
-     * TAMBAHKAN FUNGSI INI
-     * Hook ini akan otomatis berjalan saat properti 'cycleId'
-     * diperbarui oleh komponen parent (PatientMonitor).
-     */
-    public function updatedCycleId($newCycleId)
-    {
-        $this->cycleId = $newCycleId;
-        $this->loadRecords();
-    }
+    // Hapus fungsi updatedCycleId($newCycleId)
+    // Kita akan ganti dengan listener yang lebih andal
 
     /**
-     * Ganti nama 'refreshTable' menjadi 'loadRecords'
-     * agar bisa dipanggil oleh 'mount' DAN oleh listener.
+     * Listener untuk event 'record-saved' dari parent.
      */
     #[On('record-saved')]
+    public function refreshTable()
+    {
+        $this->loadRecords();
+    }
+
+    /**
+     * Listener untuk event baru 'cycle-updated' dari parent.
+     * Ini akan memperbaiki masalah 'lazy' load.
+     */
+    #[On('cycle-updated')]
+    public function updateCycleId($cycleId)
+    {
+        $this->cycleId = $cycleId;
+        $this->loadRecords();
+    }
+
     public function loadRecords()
     {
-        // Pengecekan ini SANGAT PENTING
         if (!$this->cycleId) {
-            $this->records = new Collection(); // Pastikan tetap collection kosong
+            $this->records = new Collection();
             return;
         }
 
         $this->records = MonitoringRecord::where('monitoring_cycle_id', $this->cycleId)
-            ->with('pegawai') // Selalu Eager Load relasi yg Anda pakai di view
+            ->with('pegawai')
             ->orderByDesc('record_time')
             ->get();
     }

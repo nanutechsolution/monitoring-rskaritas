@@ -47,25 +47,21 @@ class PatientHeader extends Component
                 'p.no_rkm_medis',
                 'p.tgl_lahir',
                 'p.jk',
-                // Ambil berat_badan dari pasien_bayi JIKA ADA, jika tidak, mungkin perlu query lain?
-                'pb.berat_badan', // Asumsi ini berat lahir
+                'pb.berat_badan',
                 'pb.proses_lahir',
                 'ki.tgl_masuk',
                 'ki.diagnosa_awal',
                 'd.nm_dokter',
                 'pj.png_jawab as jaminan',
-                'rp.tgl_registrasi', // Mungkin tidak perlu ditampilkan, tapi ada di query asli
-                'rp.no_rawat', // Mungkin tidak perlu ditampilkan, tapi ada di query asli
+                'rp.tgl_registrasi',
+                'rp.no_rawat',
                 'rp.stts as status_rujukan',
                 'b.nm_bangsal as asal_bangsal'
-                // Tambahkan field lain jika diperlukan header, misal 'umur_kehamilan' dari 'pasien_bayi'?
             )
-            // Kondisi where stts_pulang mungkin perlu disesuaikan tergantung kapan header ini ditampilkan
-            ->where('ki.stts_pulang', '-') // Hanya ambil yang masih dirawat?
+            ->where('ki.stts_pulang', '-')
             ->where('rp.no_rawat', $this->no_rawat)
-            ->orderBy('ki.tgl_masuk', 'desc') // Ambil data inap terakhir jika ada multiple?
+            ->orderBy('ki.tgl_masuk', 'desc')
             ->first();
-
         if (!$rawData) {
             // Beri pesan yang lebih sesuai jika hanya data pasien yang tidak ada
             abort(404, 'Data registrasi atau kamar inap pasien tidak ditemukan.');
@@ -76,23 +72,19 @@ class PatientHeader extends Component
         // Assign ke properti publik untuk view
         $this->nama_pasien = $rawData->nm_pasien;
         $this->no_rkm_medis = $rawData->no_rkm_medis;
-        $this->tgl_lahir = Carbon::parse($rawData->tgl_lahir)->isoFormat('D MMMM Y'); // Format tanggal
+        $this->tgl_lahir = Carbon::parse($rawData->tgl_lahir)->isoFormat('D MMMM Y');
         $this->jk = ($rawData->jk == 'L' ? 'Laki-laki' : 'Perempuan');
         $this->nm_dokter = $rawData->nm_dokter;
         $this->diagnosa_awal = $rawData->diagnosa_awal;
-        $this->tgl_masuk = Carbon::parse($rawData->tgl_masuk)->isoFormat('D MMMM Y HH:mm'); // Format tanggal masuk
-
+        $this->tgl_masuk = Carbon::parse(time: $rawData->tgl_masuk)->isoFormat('D MMMM Y HH:mm');
         $this->berat_lahir = $rawData->berat_badan ?? null;
         $this->cara_persalinan = $rawData->proses_lahir ?? 'Tidak Diketahui';
         $this->jaminan = $rawData->jaminan ?? null;
         $this->status_rujukan = $rawData->status_rujukan ?? null;
         $this->asal_bangsal = $rawData->asal_bangsal ?? null;
-        // --- Kalkulasi Usia ---
         $tanggalLahirCarbon = isset($rawData->tgl_lahir) ? Carbon::parse($rawData->tgl_lahir) : null;
         if ($tanggalLahirCarbon) {
             $this->umur_bayi = $tanggalLahirCarbon->diffInDays(now());
-            // Kalkulasi Umur Koreksi (asumsi $this->umur_kehamilan sudah diisi dari sumber lain)
-            // PASTIKAN $this->umur_kehamilan memiliki nilai yang benar sebelum kalkulasi ini
             $mingguKehamilan = isset($this->umur_kehamilan) ? (int) $this->umur_kehamilan : 0;
             if ($mingguKehamilan > 0 && $mingguKehamilan < 37) {
                 $mingguPrematur = 40 - $mingguKehamilan;

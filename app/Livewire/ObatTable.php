@@ -16,18 +16,32 @@ class ObatTable extends Component
     {
         $this->cycleId = $cycleId;
         $this->medications = new Collection();
+        // HAPUS INI: $this->loadMedications();
+    }
+
+    // HAPUS FUNGSI updatedCycleId($newCycleId)
+    // Kita ganti dengan listener di bawah
+
+    /**
+     * Listener untuk event 'cycle-updated' dari parent.
+     */
+    #[On('cycle-updated')]
+    public function updateCycleId($cycleId)
+    {
+        $this->cycleId = $cycleId;
         $this->loadMedications();
     }
 
-
-    public function updatedCycleId($newCycleId)
-    {
-        $this->cycleId = $newCycleId;
-        $this->loadMedications(); // Muat ulang data
-    }
-
+    /**
+     * Listener untuk event 'record-saved' atau 'refresh-medications'
+     */
     #[On('record-saved')]
     #[On('refresh-medications')]
+    public function refreshTable()
+    {
+        $this->loadMedications();
+    }
+
     public function loadMedications()
     {
         if (!$this->cycleId) {
@@ -40,9 +54,9 @@ class ObatTable extends Component
             ->orderBy('given_at', 'desc')
             ->get();
     }
+
     public function render()
     {
-        // Arahkan ke file partial Blade Anda yang sudah ada
         return view('livewire.patient-monitor.partials.output-tabel-obat');
     }
 }

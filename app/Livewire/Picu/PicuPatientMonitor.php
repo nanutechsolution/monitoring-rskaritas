@@ -18,6 +18,8 @@ class PicuPatientMonitor extends Component
 {
     public bool $readyToLoad = false;
     public string $activeTab = 'observasi';
+    public array $balancePer3Hours = [];
+
 
     #[Locked]
     public $patient;
@@ -376,7 +378,7 @@ class PicuPatientMonitor extends Component
         // ===============================================
         // 3. LOGIKA PENGECEKAN (Perbaikan untuk menghitung volume '0')
         // ===============================================
-        $hasMainData = collect($fieldsToCheck)->some(fn($f) => isset($this->$f) && $this->$f !== '');
+        $hasMainData = collect($fieldsToCheck)->some(fn($f) => !empty($this->$f) && $this->$f !== null);
 
         // Perbaikan: Cek 'isset' dan '!=' '' alih-alih '!empty()' agar '0' terhitung
         $hasParenteral = collect($this->parenteral_intakes)->some(fn($i) => isset($i['volume']) && $i['volume'] !== '' && $i['volume'] !== null);
@@ -570,6 +572,43 @@ class PicuPatientMonitor extends Component
                 ->distinct()
                 ->orderBy('medication_name', 'asc')
                 ->pluck('medication_name');
+
+            $this->balancePer3Hours = [];
+            $cycleStart = Carbon::parse($currentCycle->start_time); // Misal: 06:00:00
+
+            for ($i = 0; $i < 8; $i++) { // 8 blok x 3 jam = 24 jam
+                $blockStart = $cycleStart->copy()->addHours($i * 3);
+                $blockEnd = $blockStart->copy()->addHours(3)->subSecond(); // e.g., 06:00:00 s/d 08:59:59
+
+                // Filter record yang masuk di blok waktu ini
+                $recordsInBlock = $allCycleRecords->whereBetween('record_time', [$blockStart, $blockEnd]);
+
+                $totalMasuk = $recordsInBlock->sum(
+                    fn($r) =>
+                    ($r->intake_ogt ?? 0) +
+                    ($r->intake_oral ?? 0) +
+                    $r->parenteralIntakes->sum('volume') +
+                    $r->enteralIntakes->sum('volume')
+                );
+
+                $totalKeluar = $recordsInBlock->sum(
+                    fn($r) =>
+                    ($r->output_urine ?? 0) +
+                    ($r->output_bab ?? 0) +
+                    ($r->output_residu ?? 0) +
+                    ($r->output_ngt ?? 0) +
+                    ($r->output_drain ?? 0)
+                );
+
+                $balance = $totalMasuk - $totalKeluar;
+
+                $this->balancePer3Hours[] = [
+                    'label' => $blockStart->format('H:i') . ' - ' . $blockEnd->format('H:i'),
+                    'masuk' => $totalMasuk,
+                    'keluar' => $totalKeluar,
+                    'balance' => $balance,
+                ];
+            }
             // Kalkulasi total untuk TAMPILAN siklus saat ini
             $this->totalIntake24h = $allCycleRecords->sum(fn($r) => ($r->intake_ogt ?? 0) + ($r->intake_oral ?? 0) + $r->parenteralIntakes->sum('volume') + $r->enteralIntakes->sum('volume'));
             $this->totalOutput24h = $allCycleRecords->sum(fn($r) => ($r->output_urine ?? 0) + ($r->output_bab ?? 0) + ($r->output_residu ?? 0) + ($r->output_ngt ?? 0) + ($r->output_drain ?? 0));

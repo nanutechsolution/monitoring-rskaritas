@@ -187,8 +187,10 @@
 
                     {{-- BARIS 2 --}}
                     <tr>
+                        @if($isPICU)
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Umur Kehamilan</td>
                         <td style="padding:4px;">{{ $patient->umur_kehamilan ?? 'N/A' }} minggu</td>
+                        @endif
 
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Diagnosis</td>
                         <td style="padding:4px;" colspan="5">{{ $patient->diagnosa_awal ?? 'N/A' }}</td>
@@ -196,9 +198,10 @@
 
                     {{-- BARIS 3 --}}
                     <tr>
+                        @if($isPICU)
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Umur Koreksi</td>
                         <td style="padding:4px;">N/A</td>
-
+                        @endif
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Asal Ruangan</td>
                         <td style="padding:4px;">{{ $patient->asal_bangsal ?? 'N/A' }}</td>
 
@@ -213,10 +216,10 @@
 
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Jaminan</td>
                         <td style="padding:4px;">{{ $patient->jaminan ?? 'N/A' }}</td>
-
+                        @if($isPICU)
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Cara Persalinan</td>
                         <td style="padding:4px;">{{ $patient->cara_persalinan ?? 'N/A' }}</td>
-
+                        @endif
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Rujukan</td>
                         <td style="padding:4px;">{{ $patient->rujukan ?? 'N/A' }}</td>
                     </tr>

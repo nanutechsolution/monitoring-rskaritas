@@ -16,11 +16,29 @@ class PippTable extends Component
     {
         $this->cycleId = $cycleId;
         $this->pippAssessments = new Collection();
+    }
+
+    /**
+     * Listener untuk event 'cycle-updated' dari parent.
+     * Ini akan memperbaiki masalah 'lazy' load.
+     */
+    #[On('cycle-updated')]
+    public function updateCycleId($cycleId)
+    {
+        $this->cycleId = $cycleId;
         $this->loadPippAssessments();
     }
 
-    #[On('record-saved')]
+    /**
+     * Listener untuk refresh data (jika ada simpan PIPP baru)
+     */
+    #[On('record-saved')] // Anda bisa hapus ini jika 'refresh-pip' selalu dipanggil
     #[On('refresh-pip')]
+    public function refreshTable()
+    {
+        $this->loadPippAssessments();
+    }
+
     public function loadPippAssessments()
     {
         if (!$this->cycleId) {
@@ -33,14 +51,9 @@ class PippTable extends Component
             ->orderBy('assessment_time', 'desc')
             ->get();
     }
-    public function updatedCycleId($newCycleId)
-    {
-        $this->cycleId = $newCycleId;
-        $this->loadPippAssessments();
-    }
+
     public function render()
     {
-        // Arahkan ke file partial Blade Anda yang sudah ada
         return view('livewire.patient-monitor.partials.output-tabel-pipp');
     }
 }

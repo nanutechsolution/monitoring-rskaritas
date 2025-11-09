@@ -9,28 +9,40 @@ use Livewire\Component;
 
 class GasDarahTable extends Component
 {
-    public ?int $cycleId =null;
+    public ?int $cycleId = null;
     public Collection $bloodGasResults;
 
     public function mount(?int $cycleId)
     {
         $this->cycleId = $cycleId;
         $this->bloodGasResults = new Collection();
-        $this->loadBloodGasResults();
-    }
-    /**
-     * TAMBAHKAN FUNGSI INI
-     * Hook ini akan otomatis berjalan saat $cycleId diperbarui
-     * oleh PatientMonitor (saat Anda ganti hari).
-     */
-    public function updatedCycleId($newCycleId)
-    {
-        $this->cycleId = $newCycleId;
-        $this->loadBloodGasResults(); // Muat ulang data gas darah
+        // HAPUS INI: $this->loadBloodGasResults();
     }
 
-    #[On('record-saved')]
+    // HAPUS FUNGSI updatedCycleId($newCycleId)
+    // Kita ganti dengan listener di bawah
+
+    /**
+     * Listener untuk event 'cycle-updated' dari parent.
+     * Ini akan memperbaiki masalah 'lazy' load.
+     */
+    #[On('cycle-updated')]
+    public function updateCycleId($cycleId)
+    {
+        $this->cycleId = $cycleId;
+        $this->loadBloodGasResults();
+    }
+
+    /**
+     * Listener untuk refresh data (jika ada simpan BGA baru)
+     */
+    #[On('record-saved')] // Anda bisa hapus ini jika 'refresh-blood-gas' selalu dipanggil
     #[On('refresh-blood-gas')]
+    public function refreshTable()
+    {
+        $this->loadBloodGasResults();
+    }
+
     public function loadBloodGasResults()
     {
         if (!$this->cycleId) {
@@ -46,7 +58,6 @@ class GasDarahTable extends Component
 
     public function render()
     {
-        // Arahkan ke file partial Blade Anda yang sudah ada
         return view('livewire.patient-monitor.partials.output-tabel-gasdarah');
     }
 }

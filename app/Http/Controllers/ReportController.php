@@ -647,6 +647,7 @@ class ReportController extends Controller
             'bloodGasMatrix' => $bloodGasMatrix,
             'bloodGasParameters' => $bloodGasParameters,
             'bloodGasHours' => $bloodGasHours,
+            'isPICU' => true,
             'title' => 'MONITORING 24 JAM NEONATUS INTENSIF CARE UNIT (NICU)',
             'therapySections' => [
                 'masalahOnly' => $masalahOnly,
@@ -742,7 +743,7 @@ class ReportController extends Controller
         // 3. Ambil Data Event
         $medications = MedicationPicu::where('monitoring_cycle_id', $cycle->id)->orderBy('given_at', 'asc')->get();
         $bloodGasResults = BloodGasResultPicu::where('monitoring_cycle_id', $cycle->id)->orderBy('taken_at', 'asc')->get();
-        $pippAssessments =[];
+        $pippAssessments = [];
 
         $cycleStart = $cycle->start_time;
         $cycleEnd = $cycle->end_time;
@@ -1223,8 +1224,7 @@ class ReportController extends Controller
             'chartVitalsBase64' => $chartVitalsBase64,
             'chartTempBase64' => $chartTempBase64,
             'chartBpBase64' => $chartBpBase64,
-            // 'chartBase64' => $chartBase64, // (Yang lama dihapus)
-
+            'isPICU' => false,
             'medications' => $medications,
             'parenteralMatrix' => $parenteralMatrix,
             'uniqueInfusions' => $uniqueInfusions,

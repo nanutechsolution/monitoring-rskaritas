@@ -93,6 +93,17 @@ class PatientMonitor extends Component
     public $previousBalance24h = null;
 
 
+    /**
+     *
+     * Otomatis berjalan SETIAP KALI user mengganti tab.
+     * Fungsinya adalah untuk "membangunkan" child component
+     * yang baru saja dibuat 'lazy'.
+     */
+    public function updatedActiveOutputTab($value)
+    {
+        $this->dispatch('cycle-updated', cycleId: $this->currentCycleId);
+    }
+
     public function loadData()
     {
         $this->readyToLoad = true;
@@ -120,33 +131,61 @@ class PatientMonitor extends Component
         }
 
     }
-    public function mount(string $no_rawat): void
+    /**
+     * Mount komponen dengan no_rawat dan tanggal (opsional).
+     *
+     * @param string $no_rawat
+     * @param string|null $date (e.g., "2025-11-08")
+     */
+    public function mount(string $no_rawat, $date = null): void
     {
         $this->no_rawat = str_replace('_', '/', $no_rawat);
-        $now = now();
-        $cycleStartTime = $now->copy()->startOfDay()->addHours(6);
-        if ($now->hour < 6) {
-            $cycleStartTime->subDay();
+
+        // 1. Tentukan Waktu Dasar
+        // Jika $date ada dari URL (diklik dari riwayat), gunakan itu.
+        // Jika tidak (dari tombol "Tambah Baru"), gunakan waktu sekarang.
+        $baseTime = $date ? \Carbon\Carbon::parse($date) : now();
+
+        // 2. Set properti $selectedDate (untuk kalender, dll)
+        $this->selectedDate = $baseTime->format('Y-m-d');
+
+        // 3. Tentukan Tanggal Sheet (sheet_date)
+        // Ini adalah logika "jam 4 subuh" Anda
+        $sheetDate = $baseTime->copy()->startOfDay();
+        if ($baseTime->hour < 6) {
+            $sheetDate->subDay(); // Jika jam 4 pagi, ikut sheet hari kemarin
         }
 
+        // 4. Cari Siklus menggunakan 'sheet_date' (Jauh lebih bersih!)
         $this->currentCycle = MonitoringCycle::where('no_rawat', $this->no_rawat)
-            ->where('start_time', $cycleStartTime)
+            ->where('sheet_date', $sheetDate->format('Y-m-d'))
             ->first();
 
         if ($this->currentCycle) {
             $this->currentCycleId = $this->currentCycle->id;
         } else {
-            $this->currentCycleId = null; // Pastikan null jika belum ada
+            $this->currentCycleId = null;
         }
-        $this->record_time = now()->format('Y-m-d\TH:i');
+
+        // 5. Atur Waktu Default untuk Input
+        if ($baseTime->isToday()) {
+            // Jika buka hari ini, default-nya jam sekarang
+            $this->record_time = now()->format('Y-m-d\TH:i');
+            $this->taken_at = now()->format('Y-m-d\TH:i');
+        } else {
+            // Jika buka riwayat, default-nya jam 06:00 di tanggal itu
+            $defaultRecordTime = $baseTime->copy()->startOfDay()->addHours(6);
+            $this->record_time = $defaultRecordTime->format('Y-m-d\TH:i');
+            $this->taken_at = $defaultRecordTime->format('Y-m-d\TH:i');
+        }
+
+        // 6. Inisialisasi properti lain
         $this->patientDevices = new \Illuminate\Database\Eloquent\Collection();
         $this->recentMedicationNames = new \Illuminate\Support\Collection();
-        $this->taken_at = now()->format('Y-m-d\TH:i');
-        $this->selectedDate = now()->format('Y-m-d');
     }
     public function loadPatientDevices(): void
     {
-        if (!$this->readyToLoad || !$this->currentCycle) { // Tambahkan cek $this->currentCycle
+        if (!$this->readyToLoad || !$this->currentCycle) {
             $this->patientDevices = new \Illuminate\Database\Eloquent\Collection();
             return;
         }
@@ -364,7 +403,6 @@ class PatientMonitor extends Component
             $cycleStartTime->subDay();
         }
         $cycleEndTime = $cycleStartTime->copy()->addDay()->subSecond();
-
         $cycle = MonitoringCycle::firstOrCreate(
             ['no_rawat' => $this->no_rawat, 'start_time' => $cycleStartTime],
             ['end_time' => $cycleEndTime]
@@ -502,10 +540,8 @@ class PatientMonitor extends Component
     public $latestBPSystolic = null;
     public $latestBPDiastolic = null;
     public $latestMAP = null;
-
-    // Di PatientMonitor.php
-    #[On('refresh-observasi')] // Anda masih bisa biarkan ini jika 'saveEvent' menggunakannya
-    #[On('record-saved')] // Tambahkan ini agar ringkasan juga ikut refresh
+    #[On('refresh-observasi')]
+    #[On('record-saved')]
     public function loadRecords(): void
     {
         if (!$this->readyToLoad) {
@@ -513,30 +549,29 @@ class PatientMonitor extends Component
             return;
         }
 
-        // 1. Logika Siklus (Ini sudah benar)
-        $targetDate = Carbon::parse(time: $this->selectedDate)->startOfDay();
-        $cycleStartTime = $targetDate->copy()->addHours(6);
-        if ($targetDate->isToday() && now()->hour < 6) {
-            $cycleStartTime->subDay();
-        }
+        // 1. Tentukan Tanggal (Ini sudah benar)
+        $currentSheetDate = Carbon::parse($this->selectedDate);
 
+        // 2. Cari Siklus Saat Ini (Cara Anda sudah benar)
         $currentCycle = MonitoringCycle::where('no_rawat', $this->no_rawat)
-            ->where('start_time', $cycleStartTime)
+            ->where('sheet_date', $currentSheetDate->format('Y-m-d'))
             ->first();
 
-        $previousCycleStartTime = $cycleStartTime->copy()->subDay();
+        // 3. PERBAIKAN: Cari Siklus Sebelumnya (Jauh lebih sederhana)
+        $previousSheetDate = $currentSheetDate->copy()->subDay()->format('Y-m-d');
+
         $previousCycle = MonitoringCycle::where('no_rawat', $this->no_rawat)
-            ->where('start_time', $previousCycleStartTime)
+            ->where('sheet_date', $previousSheetDate) // <-- Pakai sheet_date
             ->first();
 
-        // 2. Logika Balance Siklus Sebelumnya (Ini sudah benar)
+        // 4. Logika Balance Siklus Sebelumnya (Ini sudah benar)
         if ($previousCycle && is_null($previousCycle->calculated_balance_24h)) {
             $this->calculateAndSaveBalance($previousCycle);
             $previousCycle->refresh();
         }
         $this->previousBalance24h = $previousCycle ? $previousCycle->calculated_balance_24h : null;
 
-        // 3. Muat Data Siklus Saat Ini (VERSI RINGKAS)
+        // 5. Muat Data Siklus Saat Ini (Ini semua sudah benar)
         if ($currentCycle) {
             $this->currentCycleId = $currentCycle->id;
             $this->daily_iwl = $currentCycle->daily_iwl;
@@ -546,47 +581,49 @@ class PatientMonitor extends Component
                 ->where('monitoring_cycle_id', $currentCycle->id)
                 ->get();
 
-            // Ambil nama obat (jika masih diperlukan di modal)
+            // Ambil nama obat
             $this->recentMedicationNames = Medication::where('monitoring_cycle_id', $currentCycle->id)
                 ->distinct()
                 ->orderBy('medication_name', 'asc')
                 ->pluck('medication_name');
 
+            // Kalkulasi balance 3 jam (Ini sudah benar)
+            $this->balancePer3Hours = [];
+            $cycleStart = Carbon::parse($currentCycle->start_time);
 
-                $this->balancePer3Hours = [];
-        $cycleStart = Carbon::parse($currentCycle->start_time); // Misal: 06:00:00
+            for ($i = 0; $i < 8; $i++) { // 8 blok x 3 jam = 24 jam
+                $blockStart = $cycleStart->copy()->addHours($i * 3);
+                $blockEnd = $blockStart->copy()->addHours(3)->subSecond(); // e.g., 06:00:00 s/d 08:59:59
 
-        for ($i = 0; $i < 8; $i++) { // 8 blok x 3 jam = 24 jam
-            $blockStart = $cycleStart->copy()->addHours($i * 3);
-            $blockEnd = $blockStart->copy()->addHours(3)->subSecond(); // e.g., 06:00:00 s/d 08:59:59
+                // Filter record yang masuk di blok waktu ini
+                $recordsInBlock = $allCycleRecords->whereBetween('record_time', [$blockStart, $blockEnd]);
 
-            // Filter record yang masuk di blok waktu ini
-            $recordsInBlock = $allCycleRecords->whereBetween('record_time', [$blockStart, $blockEnd]);
+                $totalMasuk = $recordsInBlock->sum(
+                    fn($r) =>
+                    ($r->intake_ogt ?? 0) +
+                    ($r->intake_oral ?? 0) +
+                    $r->parenteralIntakes->sum('volume') +
+                    $r->enteralIntakes->sum('volume')
+                );
 
-            $totalMasuk = $recordsInBlock->sum(fn($r) =>
-                ($r->intake_ogt ?? 0) +
-                ($r->intake_oral ?? 0) +
-                $r->parenteralIntakes->sum('volume') +
-                $r->enteralIntakes->sum('volume')
-            );
+                $totalKeluar = $recordsInBlock->sum(
+                    fn($r) =>
+                    ($r->output_urine ?? 0) +
+                    ($r->output_bab ?? 0) +
+                    ($r->output_residu ?? 0) +
+                    ($r->output_ngt ?? 0) +
+                    ($r->output_drain ?? 0)
+                );
 
-            $totalKeluar = $recordsInBlock->sum(fn($r) =>
-                ($r->output_urine ?? 0) +
-                ($r->output_bab ?? 0) +
-                ($r->output_residu ?? 0) +
-                ($r->output_ngt ?? 0) +
-                ($r->output_drain ?? 0)
-            );
+                $balance = $totalMasuk - $totalKeluar;
 
-            $balance = $totalMasuk - $totalKeluar;
-
-            $this->balancePer3Hours[] = [
-                'label' => $blockStart->format('H:i') . ' - ' . $blockEnd->format('H:i'),
-                'masuk' => $totalMasuk,
-                'keluar' => $totalKeluar,
-                'balance' => $balance,
-            ];
-        }
+                $this->balancePer3Hours[] = [
+                    'label' => $blockStart->format('H:i') . ' - ' . $blockEnd->format('H:i'),
+                    'masuk' => $totalMasuk,
+                    'keluar' => $totalKeluar,
+                    'balance' => $balance,
+                ];
+            }
 
             // Kalkulasi total untuk TAMPILAN siklus saat ini
             $this->totalIntake24h = $allCycleRecords->sum(fn($r) => ($r->intake_ogt ?? 0) + ($r->intake_oral ?? 0) + $r->parenteralIntakes->sum('volume') + $r->enteralIntakes->sum('volume'));
@@ -594,10 +631,8 @@ class PatientMonitor extends Component
             $this->totalUrine24h = $allCycleRecords->sum('output_urine');
             $this->balance24h = $this->totalIntake24h - $this->totalOutput24h - ($this->daily_iwl ?? 0);
 
-            // Data untuk Grafik (ASC)
             $chartRecords = $allCycleRecords->sortBy('record_time');
 
-            // ... (Logika $chartData Anda sudah benar) ...
             $chartData = collect([
                 'temp_incubator' => 'temp_incubator',
                 'temp_skin' => 'temp_skin',
@@ -669,9 +704,9 @@ class PatientMonitor extends Component
             $this->enteral_intakes = [];
             $this->dispatch('update-chart', ['chartData' => []]);
         }
-
         $this->reloadRepeaterNames();
         $this->dispatch('repeaters-ready');
+        $this->dispatch('cycle-updated', cycleId: $this->currentCycleId);
     }
 
     /**
