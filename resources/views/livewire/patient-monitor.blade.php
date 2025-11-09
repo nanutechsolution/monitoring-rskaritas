@@ -282,6 +282,7 @@
                 <div>
                     <div x-show="$wire.activeOutputTab === 'ringkasan'" class="space-y-6">
                         @include('livewire.patient-monitor.partials.output-grafik')
+                        @include('livewire.patient-monitor.partials.output-ringkasan-3jam')
                         @include('livewire.patient-monitor.partials.output-ringkasan-balance')
                     </div>
 

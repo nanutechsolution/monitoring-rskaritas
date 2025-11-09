@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Locked;
 class PatientMonitor extends Component
 {
+
+    public array $balancePer3Hours = [];
     public bool $readyToLoad = false;
     public string $activeTab = 'observasi';
 
@@ -549,6 +551,42 @@ class PatientMonitor extends Component
                 ->distinct()
                 ->orderBy('medication_name', 'asc')
                 ->pluck('medication_name');
+
+
+                $this->balancePer3Hours = [];
+        $cycleStart = Carbon::parse($currentCycle->start_time); // Misal: 06:00:00
+
+        for ($i = 0; $i < 8; $i++) { // 8 blok x 3 jam = 24 jam
+            $blockStart = $cycleStart->copy()->addHours($i * 3);
+            $blockEnd = $blockStart->copy()->addHours(3)->subSecond(); // e.g., 06:00:00 s/d 08:59:59
+
+            // Filter record yang masuk di blok waktu ini
+            $recordsInBlock = $allCycleRecords->whereBetween('record_time', [$blockStart, $blockEnd]);
+
+            $totalMasuk = $recordsInBlock->sum(fn($r) =>
+                ($r->intake_ogt ?? 0) +
+                ($r->intake_oral ?? 0) +
+                $r->parenteralIntakes->sum('volume') +
+                $r->enteralIntakes->sum('volume')
+            );
+
+            $totalKeluar = $recordsInBlock->sum(fn($r) =>
+                ($r->output_urine ?? 0) +
+                ($r->output_bab ?? 0) +
+                ($r->output_residu ?? 0) +
+                ($r->output_ngt ?? 0) +
+                ($r->output_drain ?? 0)
+            );
+
+            $balance = $totalMasuk - $totalKeluar;
+
+            $this->balancePer3Hours[] = [
+                'label' => $blockStart->format('H:i') . ' - ' . $blockEnd->format('H:i'),
+                'masuk' => $totalMasuk,
+                'keluar' => $totalKeluar,
+                'balance' => $balance,
+            ];
+        }
 
             // Kalkulasi total untuk TAMPILAN siklus saat ini
             $this->totalIntake24h = $allCycleRecords->sum(fn($r) => ($r->intake_ogt ?? 0) + ($r->intake_oral ?? 0) + $r->parenteralIntakes->sum('volume') + $r->enteralIntakes->sum('volume'));
