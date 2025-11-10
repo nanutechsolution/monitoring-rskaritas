@@ -815,9 +815,9 @@ class PicuPatientMonitor extends Component
             $cycleStartTime->subDay();
         }
         $cycleEndTime = $cycleStartTime->copy()->addDay()->subSecond();
-
+        $sheetDate = $cycleStartTime->toDateString();
         $cycle = PicuMonitoringCycle::firstOrCreate(
-            ['no_rawat' => $this->no_rawat, 'start_time' => $cycleStartTime],
+            ['no_rawat' => $this->no_rawat, 'sheet_date' => $sheetDate, 'start_time' => $cycleStartTime],
             ['end_time' => $cycleEndTime]
         );
 

@@ -524,9 +524,9 @@ class PatientMonitor extends Component
             $cycleStartTime->subDay();
         }
         $cycleEndTime = $cycleStartTime->copy()->addDay()->subSecond();
-
+        $sheetDate = $now->copy()->startOfDay();
         $cycle = MonitoringCycle::firstOrCreate(
-            ['no_rawat' => $this->no_rawat, 'start_time' => $cycleStartTime],
+            ['no_rawat' => $this->no_rawat, 'sheet_date' => $sheetDate, 'start_time' => $cycleStartTime],
             ['end_time' => $cycleEndTime]
         );
 
