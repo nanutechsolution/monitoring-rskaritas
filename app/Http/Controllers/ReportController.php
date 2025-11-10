@@ -1389,25 +1389,20 @@ class ReportController extends Controller
             $mergedData['cuff_pressure'] = $recordsInMinute->last(fn($r) => $r->cuff_pressure !== null)?->cuff_pressure;
             $mergedData['fall_risk_assessment'] = $recordsInMinute->last(fn($r) => $r->fall_risk_assessment !== null)?->fall_risk_assessment;
             $mergedData['irama_ekg'] = $recordsInMinute->last(fn($r) => $r->irama_ekg !== null)?->irama_ekg;
-            // Add ventilator fields if needed
             $mergedData['ventilator_mode'] = $recordsInMinute->last(fn($r) => $r->ventilator_mode !== null)?->ventilator_mode;
             $mergedData['ventilator_f'] = $recordsInMinute->last(fn($r) => $r->ventilator_f !== null)?->ventilator_f;
             $mergedData['ventilator_tv'] = $recordsInMinute->last(fn($r) => $r->ventilator_tv !== null)?->ventilator_tv;
             $mergedData['ventilator_fio2'] = $recordsInMinute->last(fn($r) => $r->ventilator_fio2 !== null)?->ventilator_fio2;
             $mergedData['ventilator_peep'] = $recordsInMinute->last(fn($r) => $r->ventilator_peep !== null)?->ventilator_peep;
             $mergedData['ventilator_ie_ratio'] = $recordsInMinute->last(fn($r) => $r->ventilator_ie_ratio !== null)?->ventilator_ie_ratio;
-            // --- TAMBAHKAN LOGIKA PUPIL DI SINI ---
             $lastPupilLeftSize = $recordsInMinute->last(fn($r) => $r->pupil_left_size_mm !== null);
             $lastPupilLeftReflex = $recordsInMinute->last(fn($r) => $r->pupil_left_reflex !== null);
             $lastPupilRightSize = $recordsInMinute->last(fn($r) => $r->pupil_right_size_mm !== null);
             $lastPupilRightReflex = $recordsInMinute->last(fn($r) => $r->pupil_right_reflex !== null);
-
             $mergedData['pupil_left_size_mm'] = $lastPupilLeftSize?->pupil_left_size_mm;
             $mergedData['pupil_left_reflex'] = $lastPupilLeftReflex?->pupil_left_reflex;
             $mergedData['pupil_right_size_mm'] = $lastPupilRightSize?->pupil_right_size_mm;
             $mergedData['pupil_right_reflex'] = $lastPupilRightReflex?->pupil_right_reflex;
-            // --- AKHIR TAMBAHAN PUPIL ---
-
             // Kumpulkan cairan, catatan, tindakan (kode ini sudah benar)
             foreach ($recordsInMinute as $record) {
                 if ($record->cairan_masuk_volume !== null && $record->cairan_masuk_volume > 0) {
@@ -1439,16 +1434,37 @@ class ReportController extends Controller
         $registrasi = RegPeriksa::with(['pasien', 'poliklinik', 'penjab', 'dpjpRanap.dokter'])
             ->where('no_rawat', $noRawatDb)->firstOrFail();
         $dpjpDokters = $registrasi->dpjpRanap->map(fn($dpjp) => $dpjp->dokter)->filter();
-        $originatingWardName = $registrasi->poliklinik->nm_poli ?? 'N/A';
-        $currentKamarInap = KamarInap::where('no_rawat', $noRawatDb)
-            ->orderBy('tgl_masuk', 'desc')->orderBy('jam_masuk', 'desc')
-            ->with(['kamar.bangsal'])->first();
+        $kamarInapHistory = KamarInap::where('no_rawat', $noRawatDb)
+            ->orderBy('tgl_masuk', 'desc')
+            ->orderBy('jam_masuk', 'desc')
+            ->with('kamar.bangsal') // Eager load relasi yang dibutuhkan
+            ->get();
+        if ($kamarInapHistory->count() > 1) {
+            // Kasus A: Pasien Pindahan Kamar Inap
+            // Ambil record ke-2 dari belakang (ruangan sebelumnya)
+            $previousKamarInap = $kamarInapHistory->skip(1)->first();
+
+            $originatingWardName = $previousKamarInap->kamar->bangsal->nm_bangsal ?? 'N/A';
+
+        } elseif ($kamarInapHistory->count() === 1) {
+            // Kasus B: Pasien baru masuk Kamar Inap (tidak ada riwayat pindah kamar)
+            // Ruangan asal adalah Poliklinik/IGD tempat registrasi
+            $originatingWardName = $this->registrasi->poliklinik->nm_poli ?? 'N/A';
+        } else {
+            // Kasus C: Tidak ada riwayat Kamar Inap sama sekali (error atau belum masuk)
+            $originatingWardName = $this->registrasi->poliklinik->nm_poli ?? 'N/A';
+        }
+        $currentKamarInap = $kamarInapHistory->first();
+        $currentKamarInap = $kamarInapHistory->first(); // Record terbaru
         $currentRoomName = 'N/A';
-        $currentInstallasiName = 'N/A';
+        // $currentInstallasiName = 'N/A';
+        $currentInstallasiName = 'RAWAT INAP';
+
         if ($currentKamarInap && $currentKamarInap->kamar) {
-            $currentRoomName = ($currentKamarInap->kamar->bangsal->nm_bangsal ?? '')
+            $bangsalName = $currentKamarInap->kamar->bangsal->nm_bangsal ?? 'N/A';
+
+            $currentRoomName = ($bangsalName)
                 . ' / ' . ($currentKamarInap->kamar->kd_kamar ?? '');
-            $currentInstallasiName = $currentKamarInap->kamar->bangsal->nm_bangsal ?? 'N/A';
         }
         $uniqueParenteralFluids = $allRawRecords
             ->where('is_parenteral', true)

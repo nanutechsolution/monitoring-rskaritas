@@ -19,7 +19,7 @@ class PatientDevice extends Model
         'size',
         'location',
         'installation_date',
-        'removal_date',           // <-- [PERBAIKAN] Ini wajib ada
+        'removal_date',
         'installed_by_user_id',
         'removed_by_user_id'
     ];

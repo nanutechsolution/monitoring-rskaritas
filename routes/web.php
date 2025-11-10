@@ -20,9 +20,11 @@ Route::get('/', function () {
 Route::get('dashboard', PatientList::class)
     ->middleware(['auth'])
     ->name('dashboard');
+
 Route::get('/icu/history/{noRawat}', PatientHistory::class)
     ->middleware('auth')
     ->name('monitoring.icu.history');
+
 Route::get('/icu/workspace/{noRawat}/{sheetDate?}', App\Livewire\Icu\Workspace::class)
     ->middleware('auth')
     ->name('monitoring.icu.workspace');
@@ -47,9 +49,13 @@ Route::get('monitoring/nicu/{no_rawat}/report/{cycle_id}/report/pdf', [ReportCon
 Route::get('monitoring/picu/{no_rawat}/report/{cycle_id}/report/pdf', [ReportController::class, 'generateReportPicuPdf'])
     ->middleware(['auth'])
     ->name('monitoring.picu.report.pdf');
+
+
 Route::get('/icu/workspace/{noRawat}/{sheetDate}/print', [ReportController::class, 'printPdf'])
     ->middleware('auth')
     ->name('monitoring.icu.print');
+
+
 Route::get('monitoring/anestesi/history/{noRawat}', AnesthesiaHistory::class)
     ->name('monitoring.anestesi.history');
 Route::get('monitoring/anestesi/create/{noRawat}', AnesthesiaCreate::class)

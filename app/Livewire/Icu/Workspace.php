@@ -36,7 +36,7 @@ class Workspace extends Component
         $this->noRawatDb = str_replace('_', '/', $noRawat);
         $latestPemeriksaan = DB::table('pemeriksaan_ranap')
             ->where('no_rawat', $this->noRawatDb)
-            ->orderByDesc('tgl_perawatan') // Urutkan tanggal terbaru dulu
+            ->orderByDesc('tgl_perawatan')
             ->orderByDesc('jam_rawat')     // Lalu jam terbaru
             ->first(); // Ambil satu baris teratas
         // Simpan data ke properti (Logic ini tetap sama)
@@ -50,20 +50,51 @@ class Workspace extends Component
         ])
             ->where('no_rawat', $this->noRawatDb)
             ->firstOrFail();
+        $firstKamarInap = DB::table('kamar_inap')
+            ->where('no_rawat', $this->noRawatDb)
+            ->orderBy('tgl_masuk', 'asc')
+            ->orderBy('jam_masuk', 'asc')
+            ->first();
+
+        $startDate = $firstKamarInap ? $firstKamarInap->tgl_masuk : $this->registrasi->tgl_registrasi;
         $this->dpjpDokters = $this->registrasi->dpjpRanap->map(function ($dpjp) {
             return $dpjp->dokter;
         })->filter();
-        // Ambil Nama Asal Ruangan
-        $this->originatingWardName = $this->registrasi->poliklinik->nm_poli ?? 'N/A';
+        $kamarInapHistory = KamarInap::where('no_rawat', $this->noRawatDb)
+            ->orderBy('tgl_masuk', 'desc')
+            ->orderBy('jam_masuk', 'desc')
+            ->get();
+        // 2. Tentukan Ruangan Asal (Prioritas: Kamar Inap Sebelumnya)
+        if ($kamarInapHistory->count() > 1) {
+            // Pasien pindahan dari kamar/bangsal lain (ambil record ke-2 dari belakang)
+            $previousKamarInap = $kamarInapHistory->skip(1)->first(); // Record ke-2 terbaru
 
-        // --- TAMBAHKAN LOGIKA CARI KAMAR SAAT INI ---
+            // Ambil nama bangsal dari kamar sebelumnya
+            $previousKamar = DB::table('kamar')->where('kd_kamar', $previousKamarInap->kd_kamar)->first();
+            $previousBangsal = DB::table('bangsal')->where('kd_bangsal', $previousKamar->kd_bangsal)->first();
+
+            $this->originatingWardName = $previousBangsal->nm_bangsal ?? 'N/A';
+        } else {
+            // Pasien baru masuk ke kamar inap (langsung dari Poli/IGD)
+            // Gunakan Poliklinik/IGD sebagai ruangan asal.
+            $this->originatingWardName = $this->registrasi->poliklinik->nm_poli ?? 'N/A';
+        }
+        $currentKamarInap = $kamarInapHistory->first();
+        if ($currentKamarInap) {
+            $currentKamarInap->load('kamar.bangsal'); // Load relasi hanya pada record terakhir
+            // Gabungkan nama bangsal dan nomor kamar (sesuaikan nama kolom)
+            $this->currentRoomName = ($currentKamarInap->kamar->bangsal->nm_bangsal ?? '')
+                . ' / ' . ($currentKamarInap->kamar->kd_kamar ?? '');
+        } else {
+            $this->currentRoomName = 'N/A';
+        }
         // Cari record kamar_inap terbaru
         $currentKamarInap = KamarInap::where('no_rawat', $this->noRawatDb)
             ->orderBy('tgl_masuk', 'desc')
             ->orderBy('jam_masuk', 'desc')
-            ->with(['kamar.bangsal']) // Asumsi relasi KamarInap->kamar->bangsal
+            ->with(['kamar.bangsal'])
             ->first();
-
+        // dd($currentKamarInap->kamar);
         if ($currentKamarInap && $currentKamarInap->kamar) {
             // Gabungkan nama bangsal dan nomor kamar (sesuaikan nama kolom)
             $this->currentRoomName = ($currentKamarInap->kamar->bangsal->nm_bangsal ?? '')
@@ -80,7 +111,8 @@ class Workspace extends Component
         }
         $targetDate = $sheetDate ? \Carbon\Carbon::parse($sheetDate)->toDateString() : $hospitalDate; // Gunakan $hospitalDate jika $sheetDate null
         $targetDateCarbon = \Carbon\Carbon::parse($targetDate);
-
+        $startDateCarbon = \Carbon\Carbon::parse($startDate); // Tambahkan parsing untuk startDate
+        $hospitalDayNumber = abs($targetDateCarbon->diffInDays($startDateCarbon)) + 1;
         $this->cycle = MonitoringCycleIcu::firstOrCreate(
             [
                 'no_rawat' => $this->noRawatDb,
@@ -88,7 +120,7 @@ class Workspace extends Component
             ],
             [
                 'asal_ruangan' => $this->originatingWardName,
-                'hari_rawat_ke' => now()->diffInDays($this->registrasi->tgl_registrasi) + 1,
+                'hari_rawat_ke' => $hospitalDayNumber,
                 'start_time' => $targetDateCarbon->copy()->startOfDay()->addHours($hospitalDayStartHour),
                 'end_time' => $targetDateCarbon->copy()->startOfDay()->addHours($hospitalDayStartHour)->addDay(),
             ]
@@ -96,9 +128,6 @@ class Workspace extends Component
 
         // 4. Logic BC Kumulatif (jika baru dibuat)
         if ($this->cycle->wasRecentlyCreated) {
-            // if ($this->registrasi->kd_dokter) {
-            //     $this->cycle->dpjpDokter()->attach($this->registrasi->kd_dokter);
-            // }
             $previousHospitalDate = \Carbon\Carbon::parse($targetDate)->subDay()->toDateString();
             $previousCycle = MonitoringCycleIcu::where('no_rawat', $this->noRawatDb)
                 ->where('sheet_date', $previousHospitalDate)
@@ -150,7 +179,7 @@ class Workspace extends Component
             'ukuran' => 'nullable|string|max:20',
             'lokasi' => 'nullable|string|max:50',
             'tanggal_pasang' => 'nullable|date_format:Y-m-d',
-        ])->validate(); // Otomatis throw error jika gagal
+        ])->validate();
 
         // 2. Tambahkan ID cycle dan simpan
         $validatedData['monitoring_cycle_icu_id'] = $this->cycle->id;
@@ -161,10 +190,6 @@ class Workspace extends Component
 
         // 4. Kirim notifikasi sukses
         $this->dispatch('notification-sent', ['message' => 'Alat/Tube berhasil ditambahkan.', 'type' => 'success']);
-
-        // 5. (Opsional) Kirim event kembali ke Alpine untuk menutup modal
-        // $this->dispatch('device-saved-close-modal');
-        // Atau biarkan Alpine menutupnya sendiri
     }
     /**
      * Mengisi form data statis dengan nilai dari database.

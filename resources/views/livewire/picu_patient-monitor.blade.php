@@ -48,7 +48,9 @@
                         @include('livewire.patient-monitor.partials.modal-kejadian-cepat')
                         @include('livewire.patient-monitor.partials.modal-obat')
                         @include('livewire.patient-monitor.partials.modal-gasdarah')
-                        <livewire:therapy-program-modal-picu :current-cycle-id="$currentCycleId" :no-rawat="$no_rawat" wire:key="'therapy-modal-'.$currentCycleId" />
+                        @if ($currentCycleId)
+                        <livewire:therapy-program-modal-picu :currentCycleId="$currentCycleId" :no-rawat="$no_rawat" wire:key="'therapy-modal-'.$currentCycleId" />
+                        @endif
                     </div>
                 </div>
             </div>

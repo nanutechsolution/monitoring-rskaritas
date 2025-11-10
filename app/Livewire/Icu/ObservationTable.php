@@ -10,8 +10,8 @@ use Illuminate\Support\Str;
 class ObservationTable extends Component
 {
     public MonitoringCycleIcu $cycle;
-    // Jika Anda ingin filter shift di tabel ini juga, tambahkan:
-    // public string $filterShift = 'all';
+
+    public string $filterDuration = 'block_6hr';
 
     public function mount(MonitoringCycleIcu $cycle)
     {
@@ -77,8 +77,6 @@ class ObservationTable extends Component
                 'pupil_right_reflex' => null,
             ];
 
-            // Ambil data TTV/Obs TERAKHIR
-            // (Lengkapi semua field TTV/Obs di sini)
             $mergedData['suhu'] = $recordsInMinute->last(fn($r) => $r->suhu !== null)?->suhu;
             $mergedData['nadi'] = $recordsInMinute->last(fn($r) => $r->nadi !== null)?->nadi;
             $mergedData['tensi_sistol'] = $recordsInMinute->last(fn($r) => $r->tensi_sistol !== null)?->tensi_sistol;
@@ -94,7 +92,18 @@ class ObservationTable extends Component
             $mergedData['pupil_left_reflex'] = $recordsInMinute->last(fn($r) => $r->pupil_left_reflex !== null)?->pupil_left_reflex;
             $mergedData['pupil_right_size_mm'] = $recordsInMinute->last(fn($r) => $r->pupil_right_size_mm !== null)?->pupil_right_size_mm;
             $mergedData['pupil_right_reflex'] = $recordsInMinute->last(fn($r) => $r->pupil_right_reflex !== null)?->pupil_right_reflex;
-            // ... (Tambahkan semua field TTV/Obs lain: vent, nyeri, kesadaran, dll.)
+            $mergedData['irama_ekg'] = $recordsInMinute->last(fn($r) => $r->irama_ekg !== null)?->irama_ekg;
+            $mergedData['kesadaran'] = $recordsInMinute->last(fn($r) => $r->kesadaran !== null)?->kesadaran;
+            $mergedData['nyeri'] = $recordsInMinute->last(fn($r) => $r->nyeri !== null)?->nyeri;
+            $mergedData['cuff_pressure'] = $recordsInMinute->last(fn($r) => $r->cuff_pressure !== null)?->cuff_pressure;
+            $mergedData['fall_risk_assessment'] = $recordsInMinute->last(fn($r) => $r->fall_risk_assessment !== null)?->fall_risk_assessment;
+            $mergedData['ventilator_mode'] = $recordsInMinute->last(fn($r) => $r->ventilator_mode !== null)?->ventilator_mode;
+            $mergedData['ventilator_f'] = $recordsInMinute->last(fn($r) => $r->ventilator_f !== null)?->ventilator_f;
+            $mergedData['ventilator_tv'] = $recordsInMinute->last(fn($r) => $r->ventilator_tv !== null)?->ventilator_tv;
+            $mergedData['ventilator_fio2'] = $recordsInMinute->last(fn($r) => $r->ventilator_fio2 !== null)?->ventilator_fio2;
+            $mergedData['ventilator_peep'] = $recordsInMinute->last(fn($r) => $r->ventilator_peep !== null)?->ventilator_peep;
+            $mergedData['ventilator_pinsp'] = $recordsInMinute->last(fn($r) => $r->ventilator_pinsp !== null)?->ventilator_pinsp;
+            $mergedData['ventilator_ie_ratio'] = $recordsInMinute->last(fn($r) => $r->ventilator_ie_ratio !== null)?->ventilator_ie_ratio;
 
             // Kumpulkan data (NORMALISASI NAMA CAIRAN DI SINI)
             foreach ($recordsInMinute as $record) {
@@ -134,7 +143,6 @@ class ObservationTable extends Component
         return $this->cycle->records()
             ->with('inputter:nik,nama')
             ->orderBy('observation_time', 'asc')
-            // ->when($this->filterShift != 'all', ...) // Filter bisa ditambahkan di sini
             ->get();
     }
     /**
@@ -196,6 +204,24 @@ class ObservationTable extends Component
         return $this->allRawRecords->where('is_enteral', true)->whereNotNull('cairan_masuk_volume')->pluck('cairan_masuk_jenis')
             ->map(fn($name) => Str::title($name))->unique()->sort();
     }
+
+    /**
+     * [BARU] Menghasilkan array jam dalam urutan klinis (06, 07, ..., 05)
+     */
+    #[Computed]
+    public function clinicalHours(): array
+    {
+        $hours = [];
+        // Mulai dari jam 6
+        for ($i = 6; $i < 24; $i++) {
+            $hours[] = str_pad($i, 2, '0', STR_PAD_LEFT);
+        }
+        // Lanjutkan dengan jam 0 hingga 5 (hari berikutnya)
+        for ($i = 0; $i < 6; $i++) {
+            $hours[] = str_pad($i, 2, '0', STR_PAD_LEFT);
+        }
+        return $hours;
+    }
     /**
      * [Computed Property BARU]
      * Menghitung total cairan masuk & keluar PER JAM untuk tabel ringkasan.
@@ -228,10 +254,137 @@ class ObservationTable extends Component
 
         return $hourlySlots;
     }
+
+
+    /**
+     * Menghitung ringkasan balance berdasarkan filter durasi (1, 3, atau 6 jam).
+     */
+    #[Computed]
+    public function hourlyBalanceSummary(): array
+    {
+        $summary = collect($this->hourlyFluidSummary);
+        $duration = $this->filterDuration;
+        $balances = [];
+
+        // [UBAH] Menggunakan urutan jam klinis yang baru
+        $hours = $this->clinicalHours;
+
+        // Loop melalui setiap jam klinis untuk menghitung akumulasi
+        foreach ($hours as $currentHourStr) {
+            $currentHour = (int) $currentHourStr;
+            $masuk = 0;
+            $keluar = 0;
+
+            // Hitung akumulasi untuk periode $duration jam terakhir
+            for ($i = 0; $i < $duration; $i++) {
+                $checkHour = $currentHour - $i;
+
+                // Tangani rollover (misal: jam 06 - 1 = jam 05 hari sebelumnya, tapi dalam siklus ini, jam 06 adalah awal)
+                // Kita perlu memetakan kembali jam yang mundur ke jam di rentang 00-23.
+                // Logika: Jika currentHour adalah 06, dan duration 6, kita cek jam 06, 05, 04, 03, 02, 01.
+
+                $checkHour = ($checkHour < 0) ? 24 + $checkHour : $checkHour;
+
+                $checkHourStr = str_pad($checkHour, 2, '0', STR_PAD_LEFT);
+
+                if (isset($summary[$checkHourStr])) {
+                    $masuk += $summary[$checkHourStr]['masuk'];
+                    $keluar += $summary[$checkHourStr]['keluar'];
+                }
+            }
+
+            $balances[$currentHourStr] = [
+                'hour' => $currentHourStr,
+                'masuk' => $masuk,
+                'keluar' => $keluar,
+                'balance' => $masuk - $keluar,
+            ];
+        }
+        return collect($balances)->sortBy(fn($item, $key) => array_search($key, $this->clinicalHours))->all();
+    }
+
+    /**
+     * [UBAH TOTAL] Menghitung Ringkasan Balance dalam Blok Waktu Tetap.
+     */
+    #[Computed]
+    public function fixedBlockSummary(): array
+    {
+        $hourlySummary = collect($this->hourlyFluidSummary);
+        $duration = $this->filterDuration;
+        $blocks = [];
+
+        // 1. Tentukan Blok Waktu Berdasarkan Filter
+        $blockDefinitions = [];
+
+        if ($duration === 'block_shift') {
+            // Blok Shift (Pagi: 06-13, Sore: 14-20, Malam: 21-05)
+            $blockDefinitions = [
+                'PAGI (06-13)' => range(6, 13), // 8 jam
+                'SORE (14-20)' => range(14, 20), // 7 jam
+                'MALAM (21-05)' => array_merge(range(21, 23), range(0, 5)), // 9 jam
+            ];
+        } elseif ($duration === 'block_6hr') {
+            // Blok 6 Jam Klinis (06-11, 12-17, 18-23, 00-05)
+            $blockDefinitions = [
+                '06-11' => range(6, 11),
+                '12-17' => range(12, 17),
+                '18-23' => range(18, 23),
+                '00-05' => range(0, 5),
+            ];
+        } else {
+            // Blok Waktu Standar (1 atau 3 jam), dimulai dari 06
+            $durationInt = (int) $duration;
+            $clinicalHours = $this->clinicalHours();
+            $totalHours = count($clinicalHours);
+            $startIndex = 0;
+
+            while ($startIndex < $totalHours) {
+                $blockHours = [];
+                for ($i = 0; $i < $durationInt; $i++) {
+                    $index = ($startIndex + $i) % $totalHours;
+                    $blockHours[] = (int) $clinicalHours[$index];
+                }
+
+                $blockStart = str_pad($blockHours[0], 2, '0', STR_PAD_LEFT);
+                $blockEnd = str_pad(end($blockHours), 2, '0', STR_PAD_LEFT);
+
+                if ($durationInt === 1) {
+                    $label = $blockStart; // Jika 1 Jam, tampilkan jam saja
+                } else {
+                    $label = "{$blockStart}-{$blockEnd}"; // Cth: 06-08
+                }
+
+                $blockDefinitions[$label] = $blockHours;
+                $startIndex += $durationInt;
+            }
+        }
+
+        // 2. Hitung Total untuk Setiap Blok
+        foreach ($blockDefinitions as $label => $hoursInBlock) {
+            $masuk = 0;
+            $keluar = 0;
+
+            foreach ($hoursInBlock as $hour) {
+                $hourStr = str_pad($hour, 2, '0', STR_PAD_LEFT);
+                $masuk += $hourlySummary[$hourStr]['masuk'] ?? 0;
+                $keluar += $hourlySummary[$hourStr]['keluar'] ?? 0;
+            }
+
+            $blocks[$label] = [
+                'label' => $label,
+                'masuk' => $masuk,
+                'keluar' => $keluar,
+                'balance' => $masuk - $keluar,
+            ];
+        }
+
+        return $blocks;
+    }
     public function render()
     {
         return view('livewire.icu.observation-table', [
-            'allParameters' => $this->parameters()
+            'allParameters' => $this->parameters(),
+            'fluidSummary' => $this->fixedBlockSummary(),
         ])->layout('layouts.app');
     }
 }
