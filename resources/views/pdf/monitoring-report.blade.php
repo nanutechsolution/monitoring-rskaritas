@@ -191,9 +191,14 @@
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Umur Kehamilan</td>
                         <td style="padding:4px;">{{ $patient->umur_kehamilan ?? 'N/A' }} minggu</td>
                         @endif
-
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Diagnosis</td>
-                        <td style="padding:4px;" colspan="5">{{ $patient->diagnosa_awal ?? 'N/A' }}</td>
+                        <td style="padding:4px;" colspan="5">
+                            @forelse($diagnosaPasien as $diagnosa)
+                            {{ $loop->iteration }}. {{ $diagnosa }}<br>
+                            @empty
+                            N/A
+                            @endforelse
+                        </td>
                     </tr>
 
                     {{-- BARIS 3 --}}
@@ -202,11 +207,18 @@
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Umur Koreksi</td>
                         <td style="padding:4px;">N/A</td>
                         @endif
+
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Asal Ruangan</td>
                         <td style="padding:4px;">{{ $patient->asal_bangsal ?? 'N/A' }}</td>
 
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Dokter DPJP</td>
-                        <td style="padding:4px;" colspan="3">{{ $patient->nm_dokter ?? 'N/A' }}</td>
+                        <td style="padding:4px; max-width:200px; word-wrap:break-word;" colspan="3">
+                            @if($dpjpDokters->isNotEmpty())
+                            {!! implode(', ', $dpjpDokters->pluck('nm_dokter')->toArray()) !!}
+                            @else
+                            -
+                            @endif
+                        </td>
                     </tr>
 
                     {{-- BARIS 4 --}}
@@ -216,10 +228,12 @@
 
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Jaminan</td>
                         <td style="padding:4px;">{{ $patient->jaminan ?? 'N/A' }}</td>
+
                         @if($isPICU)
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Cara Persalinan</td>
                         <td style="padding:4px;">{{ $patient->cara_persalinan ?? 'N/A' }}</td>
                         @endif
+
                         <td style="background:#f0f0f0; padding:4px; font-weight:bold;">Rujukan</td>
                         <td style="padding:4px;">{{ $patient->rujukan ?? 'N/A' }}</td>
                     </tr>
@@ -227,11 +241,8 @@
             </td>
         </tr>
     </table>
-
     <h2>{{ $title }}</h2>
     <hr>
-    {{-- HEADER COMPACT A3 LANDSCAPE 3-COLUMN --}}
-
     <table class="border" style="width: 100%; table-layout: fixed; border-spacing: 0;">
         <tr>
             <td style="width: 33.3%; vertical-align: top; padding: 0 1px;">

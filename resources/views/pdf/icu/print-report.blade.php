@@ -249,8 +249,6 @@
             margin-bottom: 12px;
         }
 
-
-
     </style>
 </head>
 <body>
@@ -321,7 +319,7 @@
 
 
     {{-- Tabel Utama Dua Kolom (Layout Kiri & Kanan) --}}
-  <table class="layout-table no-border">
+    <table class="layout-table no-border">
         <tr>
             {{-- ==================== KOLOM KIRI (Data Statis & Balance) ==================== --}}
             <td class="left-col">
@@ -476,7 +474,7 @@
             {{-- ==================== KOLOM KANAN (Tabel Observasi) =================== --}}
             <td class="right-col">
                 {{-- Tabel Observasi Dinamis (Per Menit) --}}
-              <table class="observation-table">
+                <table class="observation-table">
                     <thead>
                         <tr>
                             <th class="param-label">Parameter</th>

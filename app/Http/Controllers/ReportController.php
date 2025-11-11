@@ -140,7 +140,15 @@ class ReportController extends Controller
             ->orderBy('ki.tgl_masuk', 'desc')
             ->first();
 
-
+        $registrasi = RegPeriksa::with(['pasien', 'poliklinik', 'penjab', 'dpjpRanap.dokter'])
+            ->where('no_rawat', $no_rawat)->firstOrFail();
+        $dpjpDokters = $registrasi->dpjpRanap->map(fn($dpjp) => $dpjp->dokter)->filter();
+        $diagnosaPasien = DB::table('diagnosa_pasien')
+            ->join('penyakit', 'diagnosa_pasien.kd_penyakit', '=', 'penyakit.kd_penyakit')
+            ->where('diagnosa_pasien.no_rawat', $cycle->no_rawat)
+            ->where('diagnosa_pasien.status', 'Ranap')
+            ->orderBy('diagnosa_pasien.prioritas', 'asc')
+            ->pluck('penyakit.nm_penyakit');
         // 3. Ambil Data Event
         $medications = Medication::where('monitoring_cycle_id', $cycle->id)->orderBy('given_at', 'asc')->get();
         $bloodGasResults = BloodGasResult::where('monitoring_cycle_id', $cycle->id)->orderBy('taken_at', 'asc')->get();
@@ -166,6 +174,12 @@ class ReportController extends Controller
             ->orderBy('tgl_perawatan', 'asc')
             ->orderBy('jam_rawat', 'asc')
             ->get();
+        $diagnosaPasien = DB::table('diagnosa_pasien')
+            ->join('penyakit', 'diagnosa_pasien.kd_penyakit', '=', 'penyakit.kd_penyakit')
+            ->where('diagnosa_pasien.no_rawat', $cycle->no_rawat)
+            ->where('diagnosa_pasien.status', 'Ranap')
+            ->orderBy('diagnosa_pasien.prioritas', 'asc')
+            ->pluck('penyakit.nm_penyakit');
         // 4. Bangun Matriks Data Per Jam
         $records = MonitoringRecord::with('parenteralIntakes')
             ->where('monitoring_cycle_id', $cycle->id)
@@ -436,8 +450,6 @@ class ReportController extends Controller
         $iwl = $cycle->daily_iwl ?? 0;
         $balance = $totalIntake - $totalOutput - $iwl;
         $totalUrine = array_sum($fluidMatrix['output_urine']);
-
-
         // ---------------------------------------------------
         // 5. Buat Chart (LOGIKA BARU)
         // ---------------------------------------------------
@@ -486,8 +498,6 @@ class ReportController extends Controller
 
             ],
         ];
-
-
         // --- PERSIAPAN DATA UNTUK CHART 2: SUHU ---
         // Filter $records HANYA untuk yg memiliki data Suhu
         $tempRecords = $records->filter(function ($r) {
@@ -619,6 +629,8 @@ class ReportController extends Controller
             'cycle' => $cycle,
             'records' => $records,
             'setting' => $setting,
+            'dpjpDokters' => $dpjpDokters,
+            'diagnosaPasien' => $diagnosaPasien,
 
             // --- GANTI DARI 1 CHART MENJADI 3 ---
             'chartVitalsBase64' => $chartVitalsBase64,
@@ -663,7 +675,9 @@ class ReportController extends Controller
                 'iwl' => $iwl,
                 'balance' => $balance,
             ],
-            'umur_bayi' => Carbon::parse($patientData->tgl_lahir)->diffInDays($cycle->start_time),
+            'umur_bayi' => Carbon::parse($patientData->tgl_lahir)
+                ->diffInDays(Carbon::parse($cycle->start_time)),
+
             'hari_rawat_ke' => Carbon::parse($patientData->tgl_masuk)->diffInDays($cycle->start_time) + 1,
         ];
         $dataForSoap = [
@@ -770,8 +784,15 @@ class ReportController extends Controller
             ->where('monitoring_cycle_id', $cycle->id)
             ->orderBy('record_time', 'asc')
             ->get();
-
-        // Tentukan jam untuk kolom (mulai jam 6 pagi sampai 5 pagi berikutnya)
+        $registrasi = RegPeriksa::with(['pasien', 'poliklinik', 'penjab', 'dpjpRanap.dokter'])
+            ->where('no_rawat', $cycle->no_rawat)->firstOrFail();
+        $dpjpDokters = $registrasi->dpjpRanap->map(fn($dpjp) => $dpjp->dokter)->filter();
+        $diagnosaPasien = DB::table('diagnosa_pasien')
+            ->join('penyakit', 'diagnosa_pasien.kd_penyakit', '=', 'penyakit.kd_penyakit')
+            ->where('diagnosa_pasien.no_rawat', $cycle->no_rawat)
+            ->where('diagnosa_pasien.status', 'Ranap')
+            ->orderBy('diagnosa_pasien.prioritas', 'asc')
+            ->pluck('penyakit.nm_penyakit');
         $reportHours = $records
             ->pluck('record_time')
             ->map(fn($time) => \Carbon\Carbon::parse($time)->format('H:i'))
@@ -1220,6 +1241,9 @@ class ReportController extends Controller
             'records' => $records,
             'setting' => $setting,
 
+            'dpjpDokters' => $dpjpDokters,
+            'diagnosaPasien' => $diagnosaPasien,
+
             // --- GANTI DARI 1 CHART MENJADI 3 ---
             'chartVitalsBase64' => $chartVitalsBase64,
             'chartTempBase64' => $chartTempBase64,
@@ -1318,7 +1342,7 @@ class ReportController extends Controller
             ->get();
         $diagnosaPasien = DB::table('diagnosa_pasien')
             ->join('penyakit', 'diagnosa_pasien.kd_penyakit', '=', 'penyakit.kd_penyakit')
-            ->where('diagnosa_pasien.no_rawat', $noRawatDb)
+            ->where('diagnosa_pasien.no_rawat', $cycle->no_rawat)
             ->where('diagnosa_pasien.status', 'Ranap') // Hanya ambil diagnosa Ranap
             ->orderBy('diagnosa_pasien.prioritas', 'asc') // Urutkan berdasarkan prioritas
             ->pluck('penyakit.nm_penyakit');

@@ -117,7 +117,24 @@
 
                             <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                                 {{ $patient->regPeriksa->pasien->jk == 'L' ? 'Laki-laki' : 'Perempuan' }}
-                                <span class="text-xs text-gray-400">({{ \Carbon\Carbon::parse($patient->regPeriksa->pasien->tgl_lahir)->age }} thn)</span>
+                                @php
+                                $dob = \Carbon\Carbon::parse($patient->regPeriksa->pasien->tgl_lahir);
+                                $now = \Carbon\Carbon::now();
+
+                                // Hitung interval
+                                $diff = $dob->diff($now);
+
+                                $years = $diff->y; // integer
+                                $months = $diff->m; // integer
+                                $days = $diff->d; // integer
+                                @endphp
+
+                                <span class="text-xs text-gray-400">
+                                    {{ $years > 0 ? $years.' Th ' : '' }}
+                                    {{ $months > 0 ? $months.' Bl ' : '' }}
+                                    {{ $days > 0 ? $days.' Hr' : '' }}
+                                </span>
+
                                 <br>
                                 <span class="text-xs text-gray-500">
                                     Jenis Bayar: {{ $patient->regPeriksa->penjab->png_jawab ?? $patient->regPeriksa->kd_pj ?? '-' }}
@@ -181,10 +198,25 @@
 
                         {{-- Info pasien --}}
                         <div class="mt-2 text-xs text-gray-600 dark:text-gray-300 space-y-1">
+                            @php
+                            $dob = \Carbon\Carbon::parse($patient->regPeriksa->pasien->tgl_lahir);
+                            $now = \Carbon\Carbon::now();
+                            $diff = $dob->diff($now);
+
+                            $years = $diff->y;
+                            $months = $diff->m;
+                            $days = $diff->d;
+
+                            $ageFormatted = ($years > 0 ? $years.' Th ' : '') .
+                            ($months > 0 ? $months.' Bl ' : '') .
+                            ($days > 0 ? $days.' Hr' : '');
+                            @endphp
+
                             <p>
                                 {{ $patient->regPeriksa->pasien->jk == 'L' ? 'Laki-laki' : 'Perempuan' }},
-                                {{ \Carbon\Carbon::parse($patient->regPeriksa->pasien->tgl_lahir)->age ?? '-' }} thn
+                                {{ $ageFormatted ?: '-' }}
                             </p>
+
                             <p>
                                 Bayar: {{ $patient->regPeriksa->penjab->png_jawab ?? $patient->regPeriksa->kd_pj ?? '-' }}
                             </p>
@@ -225,6 +257,7 @@
                     </div>
                     @endforelse
                 </div>
+
                 {{-- Pagination --}}
                 @if($patients->hasPages())
                 <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6 bg-gray-50 dark:bg-gray-800 rounded-b-xl">
