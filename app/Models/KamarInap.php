@@ -47,11 +47,8 @@ class KamarInap extends Model
     protected $casts = [
         'tgl_masuk' => 'date',
         'jam_masuk' => 'datetime:H:i:s',
-        'tgl_keluar' => 'date',
-        'jam_keluar' => 'datetime:H:i:s',
     ];
 
-    // --- DEFINISI RELASI ---
 
     /**
      * Relasi ke tabel 'kamar'.
@@ -70,4 +67,11 @@ class KamarInap extends Model
         // Foreign key 'no_rawat', Primary key di tabel 'reg_periksa' adalah 'no_rawat'
         return $this->belongsTo(RegPeriksa::class, 'no_rawat', 'no_rawat');
     }
+
+
+    public function getWaktuMasukAttribute()
+    {
+        return $this->tgl_masuk->isoFormat('D MMM YY') . ', ' . $this->jam_masuk->format('H:i');
+    }
+
 }

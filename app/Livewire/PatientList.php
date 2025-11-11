@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Models\Bangsal;
+use App\Models\KamarInap;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Illuminate\View\View;
@@ -21,55 +23,53 @@ class PatientList extends Component
 
     public function mount()
     {
-        $this->wards = DB::table('bangsal')
-            ->where('status', '1')
+        $this->wards = Bangsal::where('status', '1')
             ->orderBy('nm_bangsal')
             ->pluck('nm_bangsal')
-            ->all();
+            ->toArray();
     }
 
     private function queryPatients()
     {
-        $query = DB::table('kamar_inap as ki')
-            ->join('reg_periksa as rp', 'ki.no_rawat', '=', 'rp.no_rawat')
-            ->join('pasien as p', 'rp.no_rkm_medis', '=', 'p.no_rkm_medis')
-            ->join('kamar as k', 'ki.kd_kamar', '=', 'k.kd_kamar')
-            ->join('bangsal as b', 'k.kd_bangsal', '=', 'b.kd_bangsal')
-            ->select(
-                'p.nm_pasien',
-                'p.no_rkm_medis',
-                'ki.no_rawat',
-                'b.nm_bangsal',
-                'p.tgl_lahir',
-                'p.jk',
-                'ki.tgl_masuk'
-            )
-            ->where('ki.stts_pulang', '-');
+        $query = KamarInap::with([
+            'regPeriksa.pasien',
+            'regPeriksa.penjab',
+            'kamar.bangsal',
+        ])
+            ->where('tgl_keluar', '0000-00-00')
+            ->where('jam_keluar', '0000:00:00')
+            ->where('stts_pulang', '-');
 
-        // Terapkan filter pencarian
+        // 🔍 Filter pencarian (nama, no RM, no rawat)
         if (trim($this->search) !== '') {
-            $query->where(function ($q) {
-                $q->where('p.nm_pasien', 'like', '%' . $this->search . '%')
-                    ->orWhere('p.no_rkm_medis', 'like', '%' . $this->search . '%')
-                    ->orWhere('ki.no_rawat', 'like', '%' . $this->search . '%');
+            $search = $this->search;
+            $query->whereHas('regPeriksa.pasien', function ($q) use ($search) {
+                $q->where('nm_pasien', 'like', "%$search%")
+                    ->orWhere('no_rkm_medis', 'like', "%$search%");
+            })->orWhere('no_rawat', 'like', "%$search%");
+        }
+
+        // 📅 Filter tanggal masuk
+        if ($this->filterDate) {
+            $dateCarbon = Carbon::parse($this->filterDate);
+            $query->whereBetween('tgl_masuk', [
+                $dateCarbon->startOfDay(),
+                $dateCarbon->endOfDay(),
+            ]);
+        }
+
+        // 🏥 Filter bangsal
+        if ($this->filterWard !== '') {
+            $filterWard = $this->filterWard;
+            $query->whereHas('kamar.bangsal', function ($q) use ($filterWard) {
+                $q->where('nm_bangsal', $filterWard);
             });
         }
 
-        // Terapkan filter tanggal masuk
-        if ($this->filterDate) {
-            $dateCarbon = Carbon::parse($this->filterDate);
-            $query->whereBetween('ki.tgl_masuk', [$dateCarbon->startOfDay(), $dateCarbon->endOfDay()]);
-        }
-
-        // Terapkan filter bangsal
-        if ($this->filterWard !== '') {
-            $query->where('b.nm_bangsal', $this->filterWard);
-        }
-
-        // Urutkan (misal tgl masuk terbaru) dan paginasi
-        return $query->orderBy('ki.tgl_masuk', 'desc')
-            ->paginate(10); // 10 pasien per halaman
+        // 📋 Urutkan dan paginasi
+        return $query->orderBy('tgl_masuk', 'desc')->paginate(10);
     }
+
 
     // Reset halaman jika filter berubah
     public function updated($propertyName)

@@ -101,16 +101,39 @@
                         @forelse ($patients as $patient)
                         <tr class="hover:bg-primary-50 dark:hover:bg-gray-700 transition">
                             <td class="px-6 py-4">
-                                <div class="text-sm font-semibold text-primary-700 dark:text-primary-300">{{ $patient->nm_pasien }}</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">RM: {{ $patient->no_rkm_medis }}</div>
+                                <div class="text-sm font-semibold text-primary-700 dark:text-primary-300">
+                                    {{ $patient->regPeriksa->pasien->nm_pasien ?? '-' }}
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    No Rawat: {{ $patient->regPeriksa->no_rawat ?? '-' }}
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    RM: {{ $patient->regPeriksa->pasien->no_rkm_medis ?? '-' }}
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    Alamat: {{ $patient->regPeriksa->pasien->alamat ?? '-' }}
+                                </div>
                             </td>
+
                             <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                                {{ $patient->jk_desc }} <span class="text-xs text-gray-400">({{ $patient->umur }} thn)</span>
+                                {{ $patient->regPeriksa->pasien->jk == 'L' ? 'Laki-laki' : 'Perempuan' }}
+                                <span class="text-xs text-gray-400">({{ \Carbon\Carbon::parse($patient->regPeriksa->pasien->tgl_lahir)->age }} thn)</span>
+                                <br>
+                                <span class="text-xs text-gray-500">
+                                    Jenis Bayar: {{ $patient->regPeriksa->penjab->png_jawab ?? $patient->regPeriksa->kd_pj ?? '-' }}
+                                </span>
+
                             </td>
+
+
                             <td class="px-6 py-4">
-                                <div class="text-sm text-gray-800 dark:text-gray-100">{{ $patient->nm_bangsal }}</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">Masuk:
-                                    {{ \Carbon\Carbon::parse($patient->tgl_masuk)->isoFormat('D MMM YY, HH:mm') }}
+                                <div class="text-sm text-gray-800 dark:text-gray-100">
+                                    {{ $patient->kamar->bangsal->nm_bangsal ?? '-' }}
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    Masuk: {{ $patient->tgl_masuk->isoFormat('D MMM YY') }}, {{ $patient->jam_masuk->format('H:i') }}
+                                    <br>
+                                    Status : {{ $patient->stts_pulang === '-' ? 'Belum Pulang' : $patient->stts_pulang }}
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-sm">
@@ -141,22 +164,56 @@
                     <div class="px-4 py-4 hover:bg-primary-50 dark:hover:bg-gray-700 transition">
                         <div class="flex justify-between items-center">
                             <div>
-                                <p class="text-base font-semibold text-primary-700 dark:text-primary-300">{{ $patient->nm_pasien }}</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">RM: {{ $patient->no_rkm_medis }}</p>
+                                <p class="text-base font-semibold text-primary-700 dark:text-primary-300">
+                                    {{ $patient->regPeriksa->pasien->nm_pasien ?? '-' }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    No Rawat: {{ $patient->regPeriksa->no_rawat ?? '-' }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    RM: {{ $patient->regPeriksa->pasien->no_rkm_medis ?? '-' }}
+                                </p>
                             </div>
                             <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                                {{ $patient->nm_bangsal }}
+                                {{ $patient->kamar->bangsal->nm_bangsal ?? '-' }}
                             </span>
                         </div>
+
+                        {{-- Info pasien --}}
                         <div class="mt-2 text-xs text-gray-600 dark:text-gray-300 space-y-1">
-                            <p>{{ $patient->jk_desc }}, {{ $patient->umur }} thn</p>
-                            <p>Masuk: {{ \Carbon\Carbon::parse($patient->tgl_masuk)->isoFormat('D MMM YY, HH:mm') }}</p>
+                            <p>
+                                {{ $patient->regPeriksa->pasien->jk == 'L' ? 'Laki-laki' : 'Perempuan' }},
+                                {{ \Carbon\Carbon::parse($patient->regPeriksa->pasien->tgl_lahir)->age ?? '-' }} thn
+                            </p>
+                            <p>
+                                Bayar: {{ $patient->regPeriksa->penjab->png_jawab ?? $patient->regPeriksa->kd_pj ?? '-' }}
+                            </p>
+                            <p>
+                                Status Pulang: {{ $patient->stts_pulang === '-' ? 'Belum Pulang' : $patient->stts_pulang }}
+                            </p>
+                            <p>
+                                Alamat: {{ $patient->regPeriksa->pasien->alamat ?? '-' }}
+                            </p>
+                            <p>
+                                Masuk: {{ $patient->tgl_masuk->isoFormat('D MMM YY') ?? '-' }},
+                                {{ $patient->jam_masuk->format('H:i') ?? '-' }}
+                            </p>
                         </div>
+
+                        {{-- Aksi tombol --}}
                         <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-2">
-                            <a href="{{ route('monitoring.icu.history', ['noRawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-200 dark:hover:bg-indigo-700">ICU</a>
-                            <a href="{{ route('patient.history', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-700">NICU</a>
-                            <a href="{{ route('patient.picu.history', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-700">PICU</a>
-                            <a href="{{ route('monitoring.anestesi.history', ['noRawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-700">Anestesi</a>
+                            <a href="{{ route('monitoring.icu.history', ['noRawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-200 dark:hover:bg-indigo-700">
+                                ICU
+                            </a>
+                            <a href="{{ route('patient.history', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-700">
+                                NICU
+                            </a>
+                            <a href="{{ route('patient.picu.history', ['no_rawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-700">
+                                PICU
+                            </a>
+                            <a href="{{ route('monitoring.anestesi.history', ['noRawat' => str_replace('/', '_', $patient->no_rawat)]) }}" wire:navigate class="px-2 py-1 text-xs rounded bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-700">
+                                Anestesi
+                            </a>
                         </div>
                     </div>
                     @empty
@@ -168,7 +225,6 @@
                     </div>
                     @endforelse
                 </div>
-
                 {{-- Pagination --}}
                 @if($patients->hasPages())
                 <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6 bg-gray-50 dark:bg-gray-800 rounded-b-xl">
