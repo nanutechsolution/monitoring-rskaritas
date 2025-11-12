@@ -17,7 +17,7 @@ class ObservasiTable extends Component
         $this->cycleId = $cycleId;
         $this->records = new Collection();
         // Hapus loadRecords() dari mount, biarkan 'lazy'
-        // $this->loadRecords();
+        $this->loadRecords();
     }
 
     // Hapus fungsi updatedCycleId($newCycleId)

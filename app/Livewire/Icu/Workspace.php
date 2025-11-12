@@ -163,7 +163,7 @@ class Workspace extends Component
     {
         return [
             'ALAT' => ['IV Line', 'CVC', 'Arteri Line', 'Swanz Ganz', 'Lainnya (Alat)'],
-            'TUBE' => ['NGT', 'Urin Kateter', 'WSD', 'Drain', 'Lainnya (Tube)'], // ETT/TT dicatat di TTV/Obs
+            'TUBE' => ['NGT', 'Urin Kateter', 'WSD', 'Drain', 'Lainnya (Tube)'],
         ];
     }
 
@@ -241,33 +241,13 @@ class Workspace extends Component
         session()->flash('message-statis', 'Data statis berhasil diperbarui.');
         $this->dispatch('static-data-updated');
     }
-    /**
-     * Helper untuk mendapatkan tanggal "Hari RS" hari ini.
-     */
-    private function getTodayHospitalDate(): string
-    {
-        $currentTime = now();
-        $hospitalDayStartHour = 7;
-        if ($currentTime->hour < $hospitalDayStartHour) {
-            return $currentTime->subDay()->toDateString();
-        }
-        return $currentTime->toDateString();
-    }
-
-
-    /**
-     * [Computed Property]
-     * Mengambil daftar log inputan real-time untuk ditampilkan di Tab Log.
-     */
-    #[Computed] // Biarkan persist: false agar selalu update
+    #[Computed]
     public function logRecords()
     {
-        // Ambil 100 record terakhir, diurutkan dari yang terbaru
-        // Pastikan relasi 'inputter' di-load
         return $this->cycle->records()
             ->with('inputter:nik,nama')
             ->orderBy('observation_time', 'desc')
-            ->take(100)
+            ->take(value: 100)
             ->get();
     }
     public function render()

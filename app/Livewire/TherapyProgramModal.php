@@ -15,6 +15,7 @@ class TherapyProgramModal extends Component
     public $no_rawat;
 
     // Properti untuk data riwayat
+    public $showTherapyModal = false;
     public $therapy_program_history = [];
 
     // Properti ini perlu didefinisikan agar error validasi dapat ditampilkan
@@ -23,6 +24,26 @@ class TherapyProgramModal extends Component
     public $enteral = '';
     public $parenteral = '';
     public $lab = '';
+
+    public function save()
+    {
+        $this->saveTherapyProgram([
+            'masalah_klinis' => $this->masalah,
+            'program_terapi' => $this->program,
+            'nutrisi_enteral' => $this->enteral,
+            'nutrisi_parenteral' => $this->parenteral,
+            'pemeriksaan_lab' => $this->lab,
+        ]);
+    }
+
+    public function resetForm()
+    {
+        $this->masalah = '';
+        $this->program = '';
+        $this->enteral = '';
+        $this->parenteral = '';
+        $this->lab = '';
+    }
 
 
     /**
