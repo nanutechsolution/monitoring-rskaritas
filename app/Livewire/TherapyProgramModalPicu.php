@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\PicuTherapyProgram;
 use Livewire\Component;
+use App\Models\TherapyProgram;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +16,7 @@ class TherapyProgramModalPicu extends Component
     public $no_rawat;
 
     // Properti untuk data riwayat
+    public $showTherapyModal = false;
     public $therapy_program_history = [];
 
     // Properti ini perlu didefinisikan agar error validasi dapat ditampilkan
@@ -23,6 +25,26 @@ class TherapyProgramModalPicu extends Component
     public $enteral = '';
     public $parenteral = '';
     public $lab = '';
+
+    public function save()
+    {
+        $this->saveTherapyProgram([
+            'masalah_klinis' => $this->masalah,
+            'program_terapi' => $this->program,
+            'nutrisi_enteral' => $this->enteral,
+            'nutrisi_parenteral' => $this->parenteral,
+            'pemeriksaan_lab' => $this->lab,
+        ]);
+    }
+
+    public function resetForm()
+    {
+        $this->masalah = '';
+        $this->program = '';
+        $this->enteral = '';
+        $this->parenteral = '';
+        $this->lab = '';
+    }
 
 
     /**
@@ -108,7 +130,6 @@ class TherapyProgramModalPicu extends Component
             $latestProgram->pemeriksaan_lab === $validatedData['pemeriksaan_lab'] &&
             $latestProgram->id_user === $currentUserId
         ) {
-            // Notifikasi info, modal tetap terbuka
             $this->dispatch('notify', message: 'Info: Tidak ada perubahan pada program terapi.');
             return;
         }
@@ -122,15 +143,12 @@ class TherapyProgramModalPicu extends Component
             ] + $validatedData);
 
         } catch (\Exception $e) {
-            // Notifikasi error, modal tetap terbuka
             $this->dispatch('error-notification', message: 'Gagal menyimpan: ' . $e->getMessage());
             return;
         }
 
         // Muat ulang riwayat
         $this->loadTherapyHistoryOnly();
-
-        // PENTING: HANYA DISPATCH EVENT SUKSES JIKA BENAR-BENAR BERHASIL
         $this->dispatch('therapy-saved-success', message: 'Program Terapi berhasil disimpan!');
     }
 

@@ -502,7 +502,7 @@ class PicuPatientMonitor extends Component
 
     public function render(): View
     {
-        return view('livewire.picu_patient-monitor')->layout('layouts.app');
+        return view('livewire.picu.input-patient-monitor-picu')->layout('layouts.app');
     }
 
     public $latestTempIncubator = null;

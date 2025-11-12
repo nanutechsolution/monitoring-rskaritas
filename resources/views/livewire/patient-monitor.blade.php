@@ -44,7 +44,6 @@
             </div>
             <div class="overflow-x-auto py-3 -mx-3 scroll-smooth scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
                 <div class="flex gap-3 px-3 min-w-max snap-x snap-mandatory">
-
                     @if ($currentCycleId)
                     @include('livewire.patient-monitor.partials.modal-kejadian-cepat')
                     @include('livewire.patient-monitor.partials.modal-gasdarah')
