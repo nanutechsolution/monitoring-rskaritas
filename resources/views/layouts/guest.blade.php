@@ -1,6 +1,6 @@
 @php
-    $logo = getSettingLogo();
-    $wallpaper = getSettingWallpaper();
+$logo = getSettingLogo();
+$wallpaper = getSettingWallpaper();
 @endphp
 
 <!DOCTYPE html>
@@ -21,15 +21,14 @@
 <body class="font-sans antialiased">
 
     <!-- Background Dinamis -->
-    <div class="relative min-h-screen flex items-center justify-center"
-         style="background: {{ $wallpaper ? 'url('.$wallpaper.') center/cover no-repeat' : '#f8fafc' }};">
+    <div class="relative min-h-screen flex items-center justify-center" style="background: {{ $wallpaper ? 'url('.$wallpaper.') center/cover no-repeat' : '#f8fafc' }};">
 
         <!-- Overlay gelap lembut -->
         <div class="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
 
-        <!-- Card Form Login -->
-        <div class="relative z-10 w-full max-w-md p-8 bg-white/80 dark:bg-gray-900/70 backdrop-blur-md shadow-2xl rounded-2xl border border-white/20 animate-fade-in">
 
+        <!-- Card Form Login -->
+        <div class="relative z-10 w-full max-w-md p-8 bg-white/90 dark:bg-gray-900/80 backdrop-blur-md shadow-2xl rounded-2xl border border-white/20 animate-fade-in">
             <!-- Logo -->
             <div class="flex justify-center mb-6">
                 <img src="{{ $logo ?? asset('logo/lg_karitas.png') }}" alt="Logo" class="h-20 w-auto drop-shadow-lg">
@@ -37,11 +36,10 @@
 
             <!-- Judul -->
             <div class="text-center mb-6">
-                <h1 class="text-2xl font-semibold text-karitas-blue-700 dark:text-karitas-blue-300">Selamat Datang</h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Masuk untuk mengakses sistem RS Karitas</p>
+                <h1 class="text-2xl font-semibold text-blue-700 dark:text-blue-300">Selamat Datang</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-200 mt-1">Masuk untuk mengakses sistem RS Karitas</p>
             </div>
-
-          {{ $slot }}
+            {{ $slot }}
 
             <!-- Footer -->
             <div class="mt-6 text-center text-xs text-gray-400 dark:text-gray-500">
@@ -53,12 +51,21 @@
     <!-- Tailwind Animation -->
     <style>
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .animate-fade-in {
             animation: fadeIn 0.5s ease-out;
         }
+
     </style>
 </body>
 </html>

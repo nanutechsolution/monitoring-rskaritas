@@ -1,17 +1,17 @@
 @php
 
-    // Label Standar
-    $labelClasses = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
+// Label Standar
+$labelClasses = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
 
-    // Input Form Biasa
-    $inputClasses = 'mt-1 block w-full rounded-md shadow-sm sm:text-sm
-                     border-gray-300 dark:border-gray-600
-                     bg-white dark:bg-gray-700
-                     text-gray-900 dark:text-gray-200
-                     focus:border-primary-500 focus:ring-primary-500';
+// Input Form Biasa
+$inputClasses = 'mt-1 block w-full rounded-md shadow-sm sm:text-sm
+border-gray-300 dark:border-gray-600
+bg-white dark:bg-gray-700
+text-gray-900 dark:text-gray-200
+focus:border-primary-500 focus:ring-primary-500';
 
-    // Teks Error
-    $errorClasses = 'text-xs text-danger-600 dark:text-danger-400 mt-1';
+// Teks Error
+$errorClasses = 'text-xs text-danger-600 dark:text-danger-400 mt-1';
 @endphp
 
 <div>
@@ -42,113 +42,8 @@
         <div class="flex-1 rounded-l-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-3 py-2 text-gray-700 dark:text-gray-200 text-sm">
             {{ $skala_nyeri ?? '-' }}
         </div>
-        <button type="button" @click="showPippModal = true"
-                class="rounded-r-md border border-l-0 border-gray-300 dark:border-gray-600
-                       bg-white dark:bg-gray-700
-                       px-3 py-2
-                       hover:bg-primary-50 dark:hover:bg-gray-600
-                       transition-all"
-                title="Penilaian Nyeri">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3h6a2 2 0 012 2v16l-5-2-5 2V5a2 2 0 012-2z" />
-            </svg>
-        </button>
-    </div>
-    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Klik ikon untuk menilai nyeri pasien.</p>
-
-    <div x-show="showPippModal" x-cloak x-trap.noscroll="showPippModal" @keydown.escape.window="showPippModal = false"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm"
-         x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-         x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
-
-        <div @click.outside="showPippModal = false"
-             class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-6xl w-full overflow-hidden">
-
-            <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
-                <h3 class="text-xl md:text-2xl font-bold text-center w-full text-gray-900 dark:text-gray-100">
-                    PENILAIAN NYERI<br>PADA PEDIATRIC FLACC
-                </h3>
-                <button @click="showPippModal = false" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none">&times;</button>
-            </div>
-
-            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[80vh] overflow-y-auto">
-
-                <div class="md:col-span-2">
-                    <h4 class="font-bold mb-2 text-gray-900 dark:text-gray-100">Penilaian Nyeri (FLACC)</h4>
-                    <div class="overflow-x-auto border dark:border-gray-700 rounded-md">
-                        <table class="min-w-full text-sm divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-100 dark:bg-gray-700">
-                                <tr>
-                                    <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-300">Kategori</th>
-                                    <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-300">0</th>
-                                    <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-300">1</th>
-                                    <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-300">2</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-700 dark:text-gray-300">
-                                <tr>
-                                    <td class="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">Face</td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_face" value="0" class="mr-2 text-primary-600 focus:ring-primary-500">Tersenyum</label></td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_face" value="1" class="mr-2 text-primary-600 focus:ring-primary-500">Sesekali meringis</label></td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_face" value="2" class="mr-2 text-primary-600 focus:ring-primary-500">Sering mengerut</label></td>
-                                </tr>
-                                <tr>
-                                    <td class="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">Legs</td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_legs" value="0" class="mr-2 text-primary-600 focus:ring-primary-500">Rileks</label></td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_legs" value="1" class="mr-2 text-primary-600 focus:ring-primary-500">Gelisah</label></td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_legs" value="2" class="mr-2 text-primary-600 focus:ring-primary-500">Menendang</label></td>
-                                </tr>
-                                <tr>
-                                    <td class="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">Activity</td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_activity" value="0" class="mr-2 text-primary-600 focus:ring-primary-500">Tenang</label></td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_activity" value="1" class="mr-2 text-primary-600 focus:ring-primary-500">Tegang</label></td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_activity" value="2" class="mr-2 text-primary-600 focus:ring-primary-500">Melengkung</label></td>
-                                </tr>
-                                <tr>
-                                    <td class="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">Cry</td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_cry" value="0" class="mr-2 text-primary-600 focus:ring-primary-500">Tidak menangis</label></td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_cry" value="1" class="mr-2 text-primary-600 focus:ring-primary-500">Merintih</label></td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_cry" value="2" class="mr-2 text-primary-600 focus:ring-primary-500">Menjerit</label></td>
-                                </tr>
-                                <tr>
-                                    <td class="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">Consolability</td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_consolability" value="0" class="mr-2 text-primary-600 focus:ring-primary-500">Tenang</label></td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_consolability" value="1" class="mr-2 text-primary-600 focus:ring-primary-500">Diyakinkan</label></td>
-                                    <td class="px-3 py-2"><label class="cursor-pointer"><input type="radio" x-model="flacc_consolability" value="2" class="mr-2 text-primary-600 focus:ring-primary-500">Sulit dibujuk</label></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="md:col-span-1">
-                    <h4 class="font-bold mb-2 text-center text-gray-900 dark:text-gray-100">WONG BAKER FACE</h4>
-                    <img src="{{ asset('img/image.png') }}" alt="Wong Baker Face Scale" class="w-full rounded-md border dark:border-gray-700">
-                    <div class="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-md text-center">
-                        <span class="text-lg font-medium text-gray-900 dark:text-gray-100">TOTAL SKOR:</span>
-                        <span class="text-4xl font-bold ml-2 text-primary-600 dark:text-primary-400" x-text="totalFlaccScore"></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex justify-end p-4 bg-gray-50 dark:bg-gray-900 border-t dark:border-gray-700">
-                <button type="button" @click="showPippModal = false"
-                        class="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition shadow-sm">
-                    Batal
-                </button>
-                <button type="button" @click="$wire.set('skala_nyeri', totalFlaccScore); showPippModal = false"
-                        class="ml-3 px-4 py-2 text-sm font-medium text-white
-                               bg-primary-600 rounded-md hover:bg-primary-700
-                               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-                               dark:focus:ring-offset-gray-800">
-                    Gunakan Skor Ini (<span x-text="totalFlaccScore"></span>)
-                </button>
-            </div>
-
-        </div>
     </div>
 </div>
-
 <div>
     <label for="humidifier_inkubator" class="{{ $labelClasses }}">Humidifier Inkubator</label>
     <input type="text" id="humidifier_inkubator" wire:model.defer="humidifier_inkubator" class="{{ $inputClasses }}">

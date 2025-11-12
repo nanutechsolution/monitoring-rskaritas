@@ -20,7 +20,6 @@ export default {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
 
-            // 4. Custom Grid Columns (dari file Anda - DIPERTAHANKAN)
             gridTemplateColumns: {
                 '25': 'repeat(25, minmax(0, 1fr))',
             },

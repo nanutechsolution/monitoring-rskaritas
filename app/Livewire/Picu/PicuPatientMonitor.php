@@ -25,7 +25,7 @@ class PicuPatientMonitor extends Component
     public $patient;
     public string $no_rawat;
     public $record_time;
-    public $temp_incubator, $temp_skin, $hr, $rr;
+    public $temp_skin, $hr, $rr;
     public $blood_pressure_systolic, $blood_pressure_diastolic;
     public $sat_o2, $irama_ekg, $skala_nyeri, $humidifier_inkubator;
     #[Locked]
@@ -290,8 +290,6 @@ class PicuPatientMonitor extends Component
     }
     protected $rules = [
         'record_time' => 'required|date',
-
-        'temp_incubator' => 'nullable|numeric|between:25,40',
         'temp_skin' => 'nullable|numeric|between:30,40',
         'hr' => 'nullable|numeric|between:30,300',
         'rr' => 'nullable|numeric|between:5,120',
@@ -307,7 +305,6 @@ class PicuPatientMonitor extends Component
     ];
 
     protected $messages = [
-        'temp_incubator.between' => 'Suhu inkubator harus antara :min° dan :max° C.',
         'temp_skin.between' => 'Suhu kulit harus antara :min° dan :max° C.',
         'hr.between' => 'Denyut jantung harus antara :min dan :max x/menit.',
         'rr.between' => 'Laju napas harus antara :min dan :max x/menit.',
@@ -331,7 +328,6 @@ class PicuPatientMonitor extends Component
         $this->validate();
 
         $fieldsToCheck = [
-            'temp_incubator',
             'temp_skin',
             'hr',
             'rr',
@@ -374,10 +370,6 @@ class PicuPatientMonitor extends Component
             'output_ngt',
             'output_drain',
         ];
-
-        // ===============================================
-        // 3. LOGIKA PENGECEKAN (Perbaikan untuk menghitung volume '0')
-        // ===============================================
         $hasMainData = collect($fieldsToCheck)->some(fn($f) => !empty($this->$f) && $this->$f !== null);
 
         $hasParenteral = collect($this->parenteral_intakes)->some(fn($i) => isset($i['volume']) && $i['volume'] !== '' && $i['volume'] !== null);
@@ -463,7 +455,6 @@ class PicuPatientMonitor extends Component
     public function resetForm(): void
     {
         $this->reset([
-            'temp_incubator',
             'temp_skin',
             'hr',
             'rr',
@@ -629,7 +620,7 @@ class PicuPatientMonitor extends Component
 
                 $hasOutput = ($record->output_urine ?? 0) > 0 ||
                     ($record->output_bab ?? 0) > 0 ||
-                        // ($record->output_residu ?? 0) > 0 || // <-- Termasuk kolom ini
+                        // ($record->output_residu ?? 0) > 0 ||
                     ($record->output_ngt ?? 0) > 0 ||
                     ($record->output_drain ?? 0) > 0;
 
@@ -647,7 +638,6 @@ class PicuPatientMonitor extends Component
             ]);
 
             $chartData = [
-                'temp_incubator' => $dataset('temp_incubator'),
                 'temp_skin' => $dataset('temp_skin'),
                 'hr' => $dataset('hr'),
                 'rr' => $dataset('rr'),
@@ -655,7 +645,6 @@ class PicuPatientMonitor extends Component
                 'bp_diastolic' => $dataset('blood_pressure_diastolic'),
             ];
             $chartData = collect([
-                'temp_incubator' => 'temp_incubator',
                 'temp_skin' => 'temp_skin',
                 'hr' => 'hr',
                 'rr' => 'rr',
@@ -675,7 +664,6 @@ class PicuPatientMonitor extends Component
             // Kirim ke frontend
             $latestRecord = $allCycleRecords->sortByDesc('record_time')->first();
             if ($latestRecord) {
-                $this->latestTempIncubator = $latestRecord->temp_incubator;
                 $this->latestTempSkin = $latestRecord->temp_skin;
                 $this->latestHR = $latestRecord->hr;
                 $this->latestRR = $latestRecord->rr;
@@ -803,39 +791,56 @@ class PicuPatientMonitor extends Component
 
     public $selectedTab = 'ventilator';
 
-    /**
-     * Menyimpan SEMUA kejadian yang dipilih di modal dalam satu record.
-     */
     public function saveEvent()
     {
-        // Cari atau buat siklus monitoring saat ini
+        // Waktu sekarang
         $now = now();
+
+        // Tentukan siklus
         $cycleStartTime = $now->copy()->startOfDay()->addHours(6);
         if ($now->hour < 6) {
             $cycleStartTime->subDay();
         }
         $cycleEndTime = $cycleStartTime->copy()->addDay()->subSecond();
         $sheetDate = $cycleStartTime->toDateString();
+
+        // Ambil atau buat siklus
         $cycle = PicuMonitoringCycle::firstOrCreate(
             ['no_rawat' => $this->no_rawat, 'sheet_date' => $sheetDate, 'start_time' => $cycleStartTime],
             ['end_time' => $cycleEndTime]
         );
 
-        // Buat satu record baru dengan semua data event
-        PicuMonitoringRecord::create([
-            'monitoring_cycle_id' => $cycle->id,
+        // Cek apakah sudah ada record di menit yang sama
+        $existingRecord = PicuMonitoringRecord::where('monitoring_cycle_id', $cycle->id)
+            ->where('record_time', '>=', $now->copy()->startOfMinute())
+            ->where('record_time', '<=', $now->copy()->endOfMinute())
+            ->first();
+
+        $data = [
             'id_user' => auth()->id(),
-            'record_time' => $now,
             'cyanosis' => $this->event_cyanosis,
             'pucat' => $this->event_pucat,
             'ikterus' => $this->event_ikterus,
             'crt_less_than_2' => $this->event_crt_less_than_2,
             'bradikardia' => $this->event_bradikardia,
             'stimulasi' => $this->event_stimulasi,
-        ]);
+        ];
+
+        if ($existingRecord) {
+            // Update record yang ada
+            $existingRecord->update($data);
+        } else {
+            // Buat record baru
+            PicuMonitoringRecord::create(array_merge($data, [
+                'monitoring_cycle_id' => $cycle->id,
+                'record_time' => $now,
+            ]));
+        }
+
         $this->dispatch('refresh-observasi');
         $this->dispatch('record-saved', message: 'Kejadian berhasil dicatat!');
     }
+
     #[On('refresh-records')]
     public function loadRecordsOnly()
     {
@@ -877,7 +882,6 @@ class PicuPatientMonitor extends Component
         // 5. Update data Grafik (urutan ASC)
         $chartRecords = $allCycleRecords->sortBy('record_time');
         $chartData = collect([
-            'temp_incubator' => 'temp_incubator',
             'temp_skin' => 'temp_skin',
             'hr' => 'hr',
             'rr' => 'rr',
@@ -896,7 +900,6 @@ class PicuPatientMonitor extends Component
         // 6. Update Vitals Terbaru di Header
         $latestRecord = $allCycleRecords->sortByDesc('record_time')->first();
         if ($latestRecord) {
-            $this->latestTempIncubator = $latestRecord->temp_incubator;
             $this->latestTempSkin = $latestRecord->temp_skin;
             $this->latestHR = $latestRecord->hr;
             $this->latestRR = $latestRecord->rr;
@@ -912,7 +915,7 @@ class PicuPatientMonitor extends Component
             }
         } else {
             // Reset jika tidak ada record
-            $this->latestTempIncubator = $this->latestTempSkin = $this->latestHR = $this->latestRR = null;
+            $this->latestTempSkin = $this->latestHR = $this->latestRR = null;
             $this->latestBPSystolic = $this->latestBPDiastolic = $this->latestMAP = null;
         }
 

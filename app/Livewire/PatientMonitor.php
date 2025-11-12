@@ -174,12 +174,12 @@ class PatientMonitor extends Component
 
             // Numeric NICU fields with min/max
             'temp_incubator' => 'nullable|numeric|between:33,38',       // °C
-            'temp_skin' => 'nullable|numeric|between:32,37',            // °C
+            'temp_skin' => 'nullable|numeric|between:30,37',            // °C
             'hr' => 'nullable|numeric|between:80,200',                  // bpm
             'rr' => 'nullable|numeric|between:20,80',                   // breaths/min
             'blood_pressure_systolic' => 'nullable|numeric|between:50,120',
             'blood_pressure_diastolic' => 'nullable|numeric|between:30,80',
-            'sat_o2' => 'nullable|numeric|between:70,100',
+            'sat_o2' => 'nullable|numeric|between:50,100',
             'hfo_fio2' => 'nullable|numeric|between:21,100',
             'cpap_fio2' => 'nullable|numeric|between:21,100',
             'cpap_peep' => 'nullable|numeric|between:2,15',
@@ -512,12 +512,8 @@ class PatientMonitor extends Component
             $this->dispatch('error-notification', 'Simpan data observasi pertama untuk membuat siklus.');
         }
     }
-    /**
-     * Menyimpan SEMUA kejadian yang dipilih di modal dalam satu record.
-     */
     public function saveEvent()
     {
-        // Cari atau buat siklus monitoring saat ini
         $now = now();
         $cycleStartTime = $now->copy()->startOfDay()->addHours(6);
         if ($now->hour < 6) {
@@ -525,13 +521,22 @@ class PatientMonitor extends Component
         }
         $cycleEndTime = $cycleStartTime->copy()->addDay()->subSecond();
         $sheetDate = $now->copy()->startOfDay();
+
+        // Ambil atau buat cycle
         $cycle = MonitoringCycle::firstOrCreate(
             ['no_rawat' => $this->no_rawat, 'sheet_date' => $sheetDate, 'start_time' => $cycleStartTime],
             ['end_time' => $cycleEndTime]
         );
 
-        // Buat satu record baru dengan semua data event
-        MonitoringRecord::create([
+        // Format record_time sampai menit saja
+        $currentMinute = $now->format('Y-m-d H:i');
+
+        // Cek apakah sudah ada record di menit yang sama
+        $existingRecord = MonitoringRecord::where('monitoring_cycle_id', $cycle->id)
+            ->whereRaw("DATE_FORMAT(record_time, '%Y-%m-%d %H:%i') = ?", [$currentMinute])
+            ->first();
+
+        $data = [
             'monitoring_cycle_id' => $cycle->id,
             'id_user' => auth()->id(),
             'record_time' => $now,
@@ -541,9 +546,19 @@ class PatientMonitor extends Component
             'crt_less_than_2' => $this->event_crt_less_than_2,
             'bradikardia' => $this->event_bradikardia,
             'stimulasi' => $this->event_stimulasi,
-        ]);
+        ];
+
+        if ($existingRecord) {
+            // Update record yang sudah ada
+            $existingRecord->update($data);
+        } else {
+            // Buat record baru
+            MonitoringRecord::create($data);
+        }
+
         $this->dispatch('record-saved', message: 'Kejadian berhasil dicatat!');
     }
+
     public function saveBloodGasResult($data)
     {
         $validated = Validator::make($data, [
@@ -558,12 +573,11 @@ class PatientMonitor extends Component
         ])->validate();
         $results = collect($validated)->except('taken_at');
         if ($results->filter(fn($v) => $v !== null && $v !== '')->isEmpty()) {
-            $this->dispatch('error-notification', ['message' => 'Minimal satu hasil gas darah harus diisi.']);
+            $this->dispatch('error-notification', 'Minimal satu hasil gas darah harus diisi.');
             return false; // Sinyal gagal
         }
-
         if (!$this->currentCycleId) {
-            $this->dispatch('error-notification', ['message' => 'Simpan data observasi pertama untuk membuat siklus.']);
+            $this->dispatch('error-notification', 'Simpan data observasi pertama untuk membuat siklus.');
             return false; // Sinyal gagal
         }
         try {
@@ -573,7 +587,6 @@ class PatientMonitor extends Component
             ] + $validated);
             $this->dispatch('refresh-blood-gas');
             $this->dispatch('record-saved', 'Hasil Gas Darah berhasil dicatat!');
-            $this->dispatch('close-blood-gas-modal');
             return true;
         } catch (\Exception $e) {
             $this->dispatch('error-notification', message: "Gagal menyimpan gas darah: " . $e->getMessage());

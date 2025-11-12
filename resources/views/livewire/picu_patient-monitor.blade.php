@@ -88,23 +88,17 @@
                                     <button wire:click.prevent="$set('activeTab', 'cairan')" type="button" class="{{ $activeTab === 'cairan' ? $activeTabClasses : $inactiveTabClasses }} whitespace-nowrap py-2 px-3 border-b-2 font-medium text-sm rounded-t-md transition-colors">
                                         Cairan
                                     </button>
-                                    <button wire:click.prevent="$set('activeTab', 'lainnya')" type="button" class="{{ $activeTab === 'lainnya' ? $activeTabClasses : $inactiveTabClasses }} whitespace-nowrap py-2 px-3 border-b-2 font-medium text-sm rounded-t-md transition-colors">
-                                        Lain-lain
-                                    </button>
                                 </nav>
                             </div>
                             <div class="space-y-4 mt-4">
                                 <div x-show="$wire.activeTab === 'observasi'" class="space-y-4">
-                                    @include('livewire.patient-monitor.partials.tab-input-observasi')
+                                    @include('livewire.patient-monitor.partials.tab-input-observasi-picu')
                                 </div>
                                 <div x-show="$wire.activeTab === 'ventilator'" class="space-y-4">
                                     @include('livewire.patient-monitor.partials.tab-input-ventilator')
                                 </div>
                                 <div x-show="$wire.activeTab === 'cairan'" class="space-y-4">
                                     @include('livewire.patient-monitor.partials.tab-input-cairan')
-                                </div>
-                                <div x-show="$wire.activeTab === 'lainnya'" class="space-y-4">
-                                    @include('livewire.patient-monitor.partials.tab-input-lainnya')
                                 </div>
                             </div>
                         </div>
@@ -152,7 +146,7 @@
                     </div>
                     <div>
                         <div x-show="$wire.activeOutputTab === 'ringkasan'" class="space-y-6">
-                            @include('livewire.patient-monitor.partials.output-grafik')
+                            @include('livewire.patient-monitor.partials.output-grafik-picu')
                             @include('livewire.patient-monitor.partials.output-ringkasan-3jam')
                             @include('livewire.patient-monitor.partials.output-ringkasan-balance')
                         </div>
