@@ -24,7 +24,6 @@
 <div class="space-y-4">
     <div class="{{ $cardClasses }}">
         <h5 class="{{ $cardTitleClasses }}">Intake (Cairan Masuk)</h5>
-
         <div x-data="{
                 intakes: @entangle('parenteral_intakes').defer,
                 addRow() {

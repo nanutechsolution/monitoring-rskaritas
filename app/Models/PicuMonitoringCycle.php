@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PicuMonitoringCycle extends Model
 {
@@ -48,5 +49,15 @@ class PicuMonitoringCycle extends Model
     {
         return $this->hasOne(PicuTherapyProgram::class, 'monitoring_cycle_id')
             ->latestOfMany(); // Otomatis ambil yg 'created_at' terbaru
+    }
+
+
+    /**
+     * Relasi: Satu siklus memiliki banyak catatan monitoring (PicuMonitoringRecord).
+     */
+    public function records(): HasMany
+    {
+        // Foreign Key di tabel PicuMonitoringRecord adalah monitoring_cycle_id
+        return $this->hasMany(PicuMonitoringRecord::class, 'monitoring_cycle_id');
     }
 }

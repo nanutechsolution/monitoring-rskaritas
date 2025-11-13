@@ -32,8 +32,8 @@
             "Database\\Seeders\\": "database/seeders/"
         },
         "files": [
-        "app/Helpers/setting_helper.php"
-    ]
+            "app/Helpers/setting_helper.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

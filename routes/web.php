@@ -8,9 +8,10 @@ use App\Livewire\Monitoring\AnesthesiaShow;
 use App\Livewire\Nicu\MonitoringHistory;
 use App\Livewire\PatientList;
 use App\Livewire\PatientMonitor;
+use App\Livewire\Picu\MonitoringChart;
 use App\Livewire\Picu\MonitoringHistory as PicuMonitoringHistory;
 use App\Livewire\Picu\PicuPatientMonitor;
-use App\Livewire\Picu\Workspace;
+use App\Livewire\Picu\PicuPatientMonitors;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -37,7 +38,8 @@ Route::get('/patient-history/{no_rawat}', MonitoringHistory::class)
     ->middleware(['auth'])
     ->name('patient.history');
 // picu
-Route::get('monitoring/picu/{no_rawat}', PicuPatientMonitor::class)
+Route::get('/monitoring/{noRawat}/charts/{cycleId?}', MonitoringChart::class)->name('patient.picu.charts');
+Route::get('monitoring/picu/{no_rawat}', PicuPatientMonitors::class)
     ->middleware(['auth'])
     ->name('monitoring.picu');
 Route::get('/patient-history/{no_rawat}/picu', PicuMonitoringHistory::class)

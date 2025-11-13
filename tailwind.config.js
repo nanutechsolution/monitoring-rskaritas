@@ -5,8 +5,6 @@ import forms from '@tailwindcss/forms';
 export default {
     // 1. Mode Gelap (dari file Anda)
     darkMode: 'class',
-
-    // 2. Content (dari file Anda)
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
@@ -79,7 +77,9 @@ export default {
                     '800': '#991b1b',
                     '900': '#7f1d1d',
                     '950': '#450a0a',
-                }
+
+                },
+
             }
         },
     },
