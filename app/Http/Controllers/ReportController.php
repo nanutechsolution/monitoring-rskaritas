@@ -677,8 +677,9 @@ class ReportController extends Controller
             ],
             'umur_bayi' => Carbon::parse($patientData->tgl_lahir)
                 ->diffInDays(Carbon::parse($cycle->start_time)),
-
-            'hari_rawat_ke' => Carbon::parse($patientData->tgl_masuk)->diffInDays($cycle->start_time) + 1,
+            'hari_rawat_ke' => Carbon::parse($patientData->tgl_masuk)
+                ->startOfDay()
+                ->diffInDays(Carbon::parse($cycle->start_time)->startOfDay()) + 1,
         ];
         $dataForSoap = [
             'dataForSoap' => $cpptRecords,
@@ -1286,7 +1287,10 @@ class ReportController extends Controller
                 'balance' => $balance,
             ],
             'umur_bayi' => Carbon::parse($patientData->tgl_lahir)->diffInDays($cycle->start_time),
-            'hari_rawat_ke' => Carbon::parse($patientData->tgl_masuk)->diffInDays($cycle->start_time) + 1,
+            'hari_rawat_ke' => Carbon::parse($patientData->tgl_masuk)
+                ->startOfDay()
+                ->diffInDays(Carbon::parse($cycle->start_time)->startOfDay()) + 1,
+
         ];
         $dataForSoap = [
             'dataForSoap' => $cpptRecords,
@@ -1463,6 +1467,21 @@ class ReportController extends Controller
             ->orderBy('jam_masuk', 'desc')
             ->with('kamar.bangsal') // Eager load relasi yang dibutuhkan
             ->get();
+        $firstKamarInap = KamarInap::where('no_rawat', $noRawatDb)
+            ->orderBy('tgl_masuk', 'asc')
+            ->orderBy('jam_masuk', 'asc')
+            ->first();
+
+        // Tanggal mulai rawat inap
+        $startDateCarbon = $firstKamarInap
+            ? \Carbon\Carbon::parse($firstKamarInap->tgl_masuk)
+            : \Carbon\Carbon::parse($registrasi->tgl_registrasi); // fallback jika tidak ada kamar inap
+
+        // Tanggal target = tanggal sheet PDF
+        $targetDateCarbon = \Carbon\Carbon::parse($sheetDate);
+
+        // Hitung hari rawat ke
+        $hospitalDayNumber = $startDateCarbon->diffInDays($targetDateCarbon) + 1;
         if ($kamarInapHistory->count() > 1) {
             // Kasus A: Pasien Pindahan Kamar Inap
             // Ambil record ke-2 dari belakang (ruangan sebelumnya)
@@ -1531,6 +1550,7 @@ class ReportController extends Controller
             'previousBalance' => $previousBalance,
             'dpjpDokters' => $dpjpDokters,
             'diagnosaPasien' => $diagnosaPasien,
+            'hospitalDayNumber' => $hospitalDayNumber,
         ];
         $dataForSoap = [
             'dataForSoap' => $cpptRecords,
@@ -1592,7 +1612,6 @@ class ReportController extends Controller
             // --- CAIRAN ---
             ['key' => 'cairan_masuk', 'label' => 'Cairan Masuk', 'group' => 'CAIRAN'],
             ['key' => 'cairan_keluar', 'label' => 'Cairan Keluar', 'group' => 'CAIRAN'],
-
             // --- CATATAN ---
             ['key' => 'clinical_note', 'label' => 'Catatan Klinis/Masalah', 'group' => 'CATATAN'],
             ['key' => 'medication_administration', 'label' => 'Tindakan/Obat', 'group' => 'CATATAN'],

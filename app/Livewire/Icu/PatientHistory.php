@@ -29,17 +29,12 @@ class PatientHistory extends Component
             ->get();
     }
 
-    /**
-     * Helper untuk mendapatkan tanggal "Hari RS" hari ini.
-     * (Penting agar tombol "Buka Hari Ini" tidak salah)
-     */
     public function getTodayHospitalDate(): string
     {
         $currentTime = now();
-        $hospitalDayStartHour = 7; // Ganti hari jam 07:00
+        $hospitalDayStartHour = 7; 
 
         if ($currentTime->hour < $hospitalDayStartHour) {
-            // Jika jam 00:00 - 06:59, masih ikut tanggal kemarin
             return $currentTime->subDay()->toDateString();
         }
 
@@ -49,7 +44,6 @@ class PatientHistory extends Component
     public function render()
     {
         return view('livewire.icu.patient-history', [
-            // Kirim tanggal hari ini ke view
             'todayDate' => $this->getTodayHospitalDate()
         ])->layout('layouts.app');
     }

@@ -308,7 +308,7 @@
                         </tr>
                         <tr>
                             <td class="label-col">HARI RAWAT KE</td>
-                            <td>: {{ $cycle->hari_rawat_ke ?? 'N/A' }}</td>
+                            <td>: {{ $hospitalDayNumber ?? 'N/A' }}</td>
                         </tr>
                     </table>
                 </td>

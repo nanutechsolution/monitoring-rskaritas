@@ -56,7 +56,13 @@ class Workspace extends Component
             ->orderBy('jam_masuk', 'asc')
             ->first();
 
-        $startDate = $firstKamarInap ? $firstKamarInap->tgl_masuk : $this->registrasi->tgl_registrasi;
+        if ($firstKamarInap) {
+            $startDateCarbon = \Carbon\Carbon::parse($firstKamarInap->tgl_masuk);
+        } else {
+            // fallback jika tidak ada kamar inap (jarang terjadi)
+            $startDateCarbon = \Carbon\Carbon::parse($this->registrasi->tgl_registrasi);
+        }
+        // $startDate = $firstKamarInap ? $firstKamarInap->tgl_masuk : $this->registrasi->tgl_registrasi;
         $this->dpjpDokters = $this->registrasi->dpjpRanap->map(function ($dpjp) {
             return $dpjp->dokter;
         })->filter();
@@ -94,7 +100,6 @@ class Workspace extends Component
             ->orderBy('jam_masuk', 'desc')
             ->with(['kamar.bangsal'])
             ->first();
-        // dd($currentKamarInap->kamar);
         if ($currentKamarInap && $currentKamarInap->kamar) {
             // Gabungkan nama bangsal dan nomor kamar (sesuaikan nama kolom)
             $this->currentRoomName = ($currentKamarInap->kamar->bangsal->nm_bangsal ?? '')
@@ -111,8 +116,10 @@ class Workspace extends Component
         }
         $targetDate = $sheetDate ? \Carbon\Carbon::parse($sheetDate)->toDateString() : $hospitalDate; // Gunakan $hospitalDate jika $sheetDate null
         $targetDateCarbon = \Carbon\Carbon::parse($targetDate);
-        $startDateCarbon = \Carbon\Carbon::parse($startDate); // Tambahkan parsing untuk startDate
-        $hospitalDayNumber = abs($targetDateCarbon->diffInDays($startDateCarbon)) + 1;
+        // $startDateCarbon = \Carbon\Carbon::parse($startDate); // Tambahkan parsing untuk startDate
+        // $hospitalDayNumber = abs($targetDateCarbon->diffInDays($startDateCarbon)) + 1;
+        $hospitalDayNumber = $startDateCarbon->diffInDays($targetDateCarbon) + 1;
+
         $this->cycle = MonitoringCycleIcu::firstOrCreate(
             [
                 'no_rawat' => $this->noRawatDb,

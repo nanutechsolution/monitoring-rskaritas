@@ -1,15 +1,18 @@
 <?php
 
 use App\Http\Controllers\ReportController;
+use App\Livewire\Icu\IcuPatientHistoryList;
 use App\Livewire\Icu\PatientHistory;
 use App\Livewire\Monitoring\AnesthesiaCreate;
 use App\Livewire\Monitoring\AnesthesiaHistory;
 use App\Livewire\Monitoring\AnesthesiaShow;
 use App\Livewire\Nicu\MonitoringHistory;
+use App\Livewire\Nicu\NicuPatientHistoryList;
 use App\Livewire\PatientList;
 use App\Livewire\PatientMonitor;
 use App\Livewire\Picu\MonitoringChart;
 use App\Livewire\Picu\MonitoringHistory as PicuMonitoringHistory;
+use App\Livewire\Picu\PatientPicuHistoryList;
 use App\Livewire\Picu\PicuPatientMonitor;
 use App\Livewire\Picu\PicuPatientMonitors;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +37,9 @@ Route::get('/icu/workspace/{noRawat}/{sheetDate?}', App\Livewire\Icu\Workspace::
 Route::get('monitoring/nicu/{no_rawat}/{date?}', PatientMonitor::class)
     ->middleware(['auth'])
     ->name('patient.monitor');
+Route::get('/nicu/history', NicuPatientHistoryList::class)
+    ->middleware(['auth'])
+    ->name('patient.nicu.history');
 Route::get('/patient-history/{no_rawat}', MonitoringHistory::class)
     ->middleware(['auth'])
     ->name('patient.history');
@@ -42,6 +48,9 @@ Route::get('/monitoring/{noRawat}/charts/{cycleId?}', MonitoringChart::class)->n
 Route::get('monitoring/picu/{no_rawat}', PicuPatientMonitors::class)
     ->middleware(['auth'])
     ->name('monitoring.picu');
+Route::get('/patient/picu/history', PatientPicuHistoryList::class)
+    ->middleware(['auth'])
+    ->name('patient.picu.history.list');
 Route::get('/patient-history/{no_rawat}/picu', PicuMonitoringHistory::class)
     ->middleware(['auth'])
     ->name('patient.picu.history');
@@ -56,6 +65,11 @@ Route::get('monitoring/picu/{no_rawat}/report/{cycle_id}/report/pdf', [ReportCon
 Route::get('/icu/workspace/{noRawat}/{sheetDate}/print', [ReportController::class, 'printPdf'])
     ->middleware('auth')
     ->name('monitoring.icu.print');
+
+Route::get('/monitoring/icu/history', IcuPatientHistoryList::class)
+    ->middleware('auth')
+    ->name('monitoring.icu.history.list');
+
 
 
 Route::get('monitoring/anestesi/history/{noRawat}', AnesthesiaHistory::class)

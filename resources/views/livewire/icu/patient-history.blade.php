@@ -1,8 +1,6 @@
 <div class="max-w-7xl mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- ===== KOLOM KIRI (KONTEN UTAMA) ===== -->
     <div class="lg:col-span-2 space-y-6">
 
-        <!-- KARTU "RIWAYAT LAMPAU" (Sekarang jadi konten utama di kiri) -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="p-3 sm:p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
                 <h3 class="text-sm sm:text-lg font-semibold text-gray-800 dark:text-gray-100">Riwayat Lembar Observasi</h3>
@@ -21,15 +19,7 @@
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
                         @forelse ($allCycles as $cycle)
-                        <!--
-                            TIPS UX:
-                            Buat seluruh baris bisa diklik sambil tetap menghormati wire:navigate.
-                            'x-data' inisialisasi kosong.
-                            '@click' menemukan link di dalam baris dan 'mengkliknya'.
-                        -->
-                        <tr class="hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-                            x-data
-                            @click="$el.querySelector('a').click()">
+                        <tr class="hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors cursor-pointer" x-data @click="$el.querySelector('a').click()">
                             <td class="px-3 py-3 whitespace-nowrap font-medium text-gray-800 dark:text-gray-100">
                                 {{ $cycle->sheet_date->isoFormat('D MMM Y') }}
                                 @if($cycle->sheet_date->isSameDay($todayDate))
@@ -46,12 +36,11 @@
                                 {{ ($cycle->previous_balance ?? 0) + ($cycle->calculated_balance_24h ?? 0) }} ml
                             </td>
                             <td class="px-3 py-3 text-right">
-                                <!-- Tombol 'Buka' ini sekarang menjadi target klik untuk <tr> -->
+                                @if($cycle->sheet_date->isSameDay($todayDate))
                                 <a href="{{ route('monitoring.icu.workspace', [
                                         'noRawat' => str_replace('/', '_', $registrasi->no_rawat),
                                         'sheetDate' => $cycle->sheet_date->toDateString()
-                                    ]) }}" wire:navigate
-                                   class="inline-flex items-center
+                                    ]) }}" wire:navigate class="inline-flex items-center
                                           text-primary-600 dark:text-primary-400
                                           hover:text-primary-800 dark:hover:text-primary-300
                                           font-medium text-xs sm:text-sm">
@@ -59,6 +48,17 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H3m0 0l4 4m-4-4l4-4m10 8h4v-8h-4" />
                                     </svg>
                                     Buka
+                                </a>
+                                @endif
+                                <a href="{{ route('monitoring.icu.print', [
+                                'noRawat' => str_replace('/', '_', $registrasi->no_rawat),
+                                'sheetDate' => $cycle->sheet_date->toDateString()
+                            ]) }}" target="_blank" class="inline-block bg-gray-600 dark:bg-gray-600 text-white dark:text-gray-200
+                              px-3 py-1 rounded-md shadow text-xs font-medium
+                              hover:bg-gray-700 dark:hover:bg-gray-500 transition-colors
+                              focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
+                              dark:focus:ring-offset-gray-800">
+                                    Cetak PDF
                                 </a>
                             </td>
                         </tr>
@@ -111,8 +111,7 @@
             <a href="{{ route('monitoring.icu.workspace', [
                     'noRawat' => str_replace('/', '_', $registrasi->no_rawat),
                     'sheetDate' => $todayDate
-                ]) }}" wire:navigate
-               class="inline-flex items-center justify-center gap-1.5 sm:gap-2
+                ]) }}" wire:navigate class="inline-flex items-center justify-center gap-1.5 sm:gap-2
                       w-full
                       bg-primary-600 hover:bg-primary-700
                       text-white px-4 sm:px-8 py-3 rounded-md

@@ -24,6 +24,15 @@ $logout = function (Logout $logout) {
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Kamar Inap') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('monitoring.icu.history.list')" :active="request()->routeIs('monitoring.icu.history.list')" wire:navigate>
+                        {{ __('Riwayat ICU') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('patient.picu.history.list')" :active="request()->routeIs('patient.picu.history.list')" wire:navigate>
+                        {{ __('Riwayat PICU') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('patient.nicu.history')" :active="request()->routeIs('patient.nicu.history')" wire:navigate>
+                        {{ __('Riwayat NICU') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -98,11 +107,15 @@ $logout = function (Logout $logout) {
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                 {{ __('Kamar Inap') }}
             </x-responsive-nav-link>
-
-            <!-- Tombol Dark Mode Mobile -->
-            <button @click="window.theme.toggle()" x-bind:title="window.theme.darkMode ? 'Switch to light' : 'Switch to dark'" class="w-full text-start p-2 text-primary-700 dark:text-gray-200 hover:bg-primary-600 dark:hover:bg-gray-700 rounded">
-                {{ __('Toggle Dark Mode') }}
-            </button>
+            <x-responsive-nav-link :href="route('monitoring.icu.history.list')" :active="request()->routeIs('monitoring.icu.history.list')" wire:navigate>
+                {{ __('Riwayat ICU') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('patient.picu.history.list')" :active="request()->routeIs('patient.picu.history.list')" wire:navigate>
+                {{ __('Riwayat PICU') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('patient.nicu.history')" :active="request()->routeIs('patient.nicu.history')" wire:navigate>
+                {{ __('Riwayat NICU') }}
+            </x-responsive-nav-link>
         </div>
 
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">

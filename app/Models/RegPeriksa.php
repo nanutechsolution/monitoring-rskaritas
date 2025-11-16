@@ -105,5 +105,22 @@ class RegPeriksa extends Model
     }
 
 
+    // relasi ke MonitoringCycleICU
+    public function monitoringCycleIcu()
+    {
+        return $this->hasMany(MonitoringCycleIcu::class, 'no_rawat', 'no_rawat');
+    }
+
+
+    // Relasi ke PICU Monitoring Cycle
+    public function picuMonitoringCycles()
+    {
+        return $this->hasMany(PicuMonitoringCycle::class, 'no_rawat', 'no_rawat');
+    }
+
+    public function monitoringCycles()
+    {
+        return $this->hasMany(\App\Models\MonitoringCycle::class, 'no_rawat', 'no_rawat');
+    }
 
 }
