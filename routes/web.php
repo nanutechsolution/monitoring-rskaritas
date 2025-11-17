@@ -8,6 +8,7 @@ use App\Livewire\Monitoring\AnesthesiaHistory;
 use App\Livewire\Monitoring\AnesthesiaShow;
 use App\Livewire\Nicu\MonitoringHistory;
 use App\Livewire\Nicu\NicuPatientHistoryList;
+use App\Livewire\Ok\IntraAnestesiPatientHistoryList;
 use App\Livewire\PatientList;
 use App\Livewire\PatientMonitor;
 use App\Livewire\Picu\MonitoringChart;
@@ -71,7 +72,9 @@ Route::get('/monitoring/icu/history', IcuPatientHistoryList::class)
     ->name('monitoring.icu.history.list');
 
 
-
+Route::get('/anestesi/history', IntraAnestesiPatientHistoryList::class)
+    ->middleware(['auth'])
+    ->name('patient.anestesi.history');
 Route::get('monitoring/anestesi/history/{noRawat}', AnesthesiaHistory::class)
     ->name('monitoring.anestesi.history');
 Route::get('monitoring/anestesi/create/{noRawat}', AnesthesiaCreate::class)

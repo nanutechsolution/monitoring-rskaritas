@@ -33,6 +33,9 @@ $logout = function (Logout $logout) {
                     <x-nav-link :href="route('patient.nicu.history')" :active="request()->routeIs('patient.nicu.history')" wire:navigate>
                         {{ __('Riwayat NICU') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('patient.anestesi.history')" :active="request()->routeIs('patient.anestesi.history')" wire:navigate>
+                        {{ __('Riwayat Intra Anestesi') }}
+                    </x-nav-link>
                 </div>
             </div>
 

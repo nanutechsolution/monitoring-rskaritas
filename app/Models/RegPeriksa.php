@@ -122,5 +122,9 @@ class RegPeriksa extends Model
     {
         return $this->hasMany(\App\Models\MonitoringCycle::class, 'no_rawat', 'no_rawat');
     }
+    public function intraAnesthesiaMonitoring()
+    {
+        return $this->hasOne(\App\Models\IntraAnesthesiaMonitoring::class, 'no_rawat', 'no_rawat');
+    }
 
 }
