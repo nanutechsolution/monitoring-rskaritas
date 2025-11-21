@@ -116,8 +116,8 @@ $logout = function (Logout $logout) {
             <x-responsive-nav-link :href="route('patient.picu.history.list')" :active="request()->routeIs('patient.picu.history.list')" wire:navigate>
                 {{ __('Riwayat PICU') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('patient.nicu.history')" :active="request()->routeIs('patient.nicu.history')" wire:navigate>
-                {{ __('Riwayat NICU') }}
+            <x-responsive-nav-link :href="route('patient.anestesi.history')" :active="request()->routeIs('patient.anestesi.history')" wire:navigate>
+                {{ __('Riwayat Anestesi') }}
             </x-responsive-nav-link>
         </div>
 

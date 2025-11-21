@@ -1,7 +1,5 @@
 <div x-data="{ showFilter: false }" class="py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        {{-- HEADER --}}
         <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <h2 class="text-2xl font-semibold text-primary-700 dark:text-primary-300 leading-tight">
@@ -11,7 +9,6 @@
                     Pilih pasien untuk melihat semua .
                 </p>
             </div>
-            {{-- Tombol Filter (Mobile) --}}
             <button @click="showFilter = !showFilter" class="sm:hidden inline-flex items-center px-3 py-2 text-sm font-medium rounded-md
                        border border-primary-300 dark:border-primary-700
                        text-primary-700 dark:text-primary-300
@@ -22,7 +19,6 @@
             </button>
         </div>
 
-        {{-- FILTER SECTION --}}
         <div x-show="showFilter || window.innerWidth >= 640" x-transition.duration.200ms class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 sm:block" x-cloak>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
                 <div class="sm:col-span-2 md:col-span-3">
@@ -54,10 +50,8 @@
             </div>
         </div>
 
-        {{-- DAFTAR PASIEN --}}
         <div wire:loading.class.delay="opacity-50" class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
 
-            {{-- TABLE (Desktop) --}}
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 hidden md:table">
                 <thead class="bg-primary-50 dark:bg-gray-700">
                     <tr>
@@ -105,7 +99,6 @@
                 </tbody>
             </table>
 
-            {{-- CARD (Mobile) --}}
             <div class="divide-y divide-gray-200 dark:divide-gray-700 md:hidden">
                 @forelse ($patients as $patient)
                 <div class="px-4 py-4 hover:bg-primary-50 dark:hover:bg-gray-700 transition">
@@ -144,7 +137,6 @@
                 @endforelse
             </div>
 
-            {{-- Pagination --}}
             @if($patients->hasPages())
             <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6 bg-gray-50 dark:bg-gray-800 rounded-b-xl">
                 {{ $patients->links() }}

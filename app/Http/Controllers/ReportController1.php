@@ -556,11 +556,9 @@ class ReportController extends Controller
         $bpRecords = $records->filter(function ($r) {
             return !is_null($r->blood_pressure_systolic) || !is_null($r->blood_pressure_diastolic);
         })->values();
-
         $bpLabels = $bpRecords->pluck('record_time')->map(fn($t) => Carbon::parse($t)->format('H:i'));
         $bpSystolicData = $bpRecords->pluck('blood_pressure_systolic');
         $bpDiastolicData = $bpRecords->pluck('blood_pressure_diastolic');
-
         // --- CHART 3: TEKANAN DARAH ---
         $chartBpData = [
             'type' => 'line',
@@ -586,7 +584,7 @@ class ReportController extends Controller
                 'scales' => [
                     'y' => [
                         'title' => ['display' => true, 'text' => 'Tekanan Darah (mmHg)'],
-                        'min' => 30,
+                        'min' => 30, // Sesuaikan rentang
                         'max' => 100
                     ]
                 ]
@@ -1317,31 +1315,37 @@ class ReportController extends Controller
             ->header('Content-Disposition', 'inline; filename="' . $pdfFilename . '"');
     }
 
+
     /**
      * Generate PDF report for a specific ICU monitoring cycle.
      */
     public function printPdf(string $noRawat, string $sheetDate)
     {
         $noRawatDb = str_replace('_', '/', $noRawat);
-        // 1. Load Data Cycle (Mirip logic mount() di Workspace)
+        // 1. Ambil cycle tanpa filter records dulu
         $cycle = MonitoringCycleIcu::where('no_rawat', $noRawatDb)
             ->where('sheet_date', $sheetDate)
-            ->with(relations: [
-                'registrasi.pasien',
-                'records' => function ($query) {
-                    $query->with('inputter:nik,nama')->orderBy('observation_time', 'asc');
-                },
-                'devices'
-            ])
+            ->with(['registrasi.pasien', 'devices'])
             ->firstOrFail();
+
+        // 2. Tentukan start & end time
+        $cycleStart = $cycle->start_time;
+        $cycleEnd = $cycle->end_time;
+
+        // 3. Ambil records dengan filter waktu
+        $records = $cycle->records()
+            ->with('inputter:nik,nama')
+            ->whereBetween('observation_time', [$cycleStart, $cycleEnd])
+            ->orderBy('observation_time', 'asc')
+            ->get();
+
         $cpptRecords = \App\Models\PemeriksaanRanap::with('pegawai')
             ->where('no_rawat', $cycle->no_rawat)
-            ->whereRaw("TIMESTAMP(tgl_perawatan, jam_rawat) >= ?", [$cycle->start_time])
-            ->whereRaw("TIMESTAMP(tgl_perawatan, jam_rawat) <= ?", [$cycle->end_time])
+            ->whereRaw("CONCAT(tgl_perawatan, ' ', jam_rawat) >= ?", [$cycle->start_time])
+            ->whereRaw("CONCAT(tgl_perawatan, ' ', jam_rawat) <= ?", [$cycle->end_time])
             ->orderBy('tgl_perawatan', 'asc')
             ->orderBy('jam_rawat', 'asc')
             ->get();
-
         $diagnosaPasien = DB::table('diagnosa_pasien')
             ->join('penyakit', 'diagnosa_pasien.kd_penyakit', '=', 'penyakit.kd_penyakit')
             ->where('diagnosa_pasien.no_rawat', $cycle->no_rawat)
@@ -1357,72 +1361,18 @@ class ReportController extends Controller
         $recordsGroupedByMinute = $allRawRecords->groupBy(function ($record) {
             return $record->observation_time->format('Y-m-d H:i');
         });
-        $recordsGroupedByMinute = $recordsGroupedByMinute->sortKeys();
-        // ====================================================================
-        // LOGIKA FILTERING TIMESTAMP BARU (4 KATEGORI)
-        // ====================================================================
 
-        // 1. Filter untuk Data HEMODINAMIK (TTV Inti)
-        $filteredHemodynamicRecords = $recordsGroupedByMinute->filter(function ($recordsInMinute) {
-            $hasHemodynamicData = $recordsInMinute->some(
-                fn($r) =>
-                $r->suhu !== null || $r->nadi !== null || $r->tensi_sistol !== null || $r->map !== null
-            );
-            return $hasHemodynamicData;
-        });
-        $uniqueTimestampsHemodynamic = $filteredHemodynamicRecords->keys();
-
-        // 2. Filter untuk Data VENTILATOR
-        $filteredVentilatorRecords = $recordsGroupedByMinute->filter(function ($recordsInMinute) {
-            $hasVentilatorData = $recordsInMinute->some(
-                fn($r) =>
-                $r->ventilator_mode !== null || $r->ventilator_f !== null || $r->ventilator_tv !== null ||
-                    $r->ventilator_fio2 !== null || $r->ventilator_peep !== null || $r->ventilator_ie_ratio !== null ||
-                    $r->ventilator_pinsp !== null
-            );
-            return $hasVentilatorData;
-        });
-        $uniqueTimestampsVentilator = $filteredVentilatorRecords->keys();
-
-
-        // 3. Filter untuk Data TTV & OBSERVASI LAIN (Non-HD, Non-Vent)
-        $filteredNonFluidRecords = $recordsGroupedByMinute->filter(function ($recordsInMinute) {
-            // Hanya cek parameter selain Hemodinamik, Cairan, Catatan, dan Ventilator.
-            $hasOtherObs = $recordsInMinute->some(
-                fn($r) =>
-                $r->rr !== null || $r->spo2 !== null || $r->gcs_total !== null || $r->kesadaran !== null ||
-                    $r->nyeri !== null || $r->irama_ekg !== null || $r->cvp !== null || $r->cuff_pressure !== null ||
-                    $r->pupil_left_size_mm !== null || $r->pupil_right_size_mm !== null || $r->fall_risk_assessment !== null
-            );
-            return $hasOtherObs;
-        });
-        $uniqueTimestampsNonFluid = $filteredNonFluidRecords->keys();
-
-
-        // 4. Filter untuk Data CAIRAN (Masuk/Keluar > 0)
-        $filteredFluidRecords = $recordsGroupedByMinute->filter(function ($recordsInMinute) {
-            $hasFluids = $recordsInMinute->some(
-                fn($r) => ($r->cairan_masuk_volume !== null && $r->cairan_masuk_volume > 0) ||
-                    ($r->cairan_keluar_volume !== null && $r->cairan_keluar_volume > 0)
-            );
-            return $hasFluids;
-        });
-        $uniqueTimestampsFluid = $filteredFluidRecords->keys();
-
-
-        // 5. Filter untuk Data CATATAN/TINDAKAN (Notes & Meds)
-        $filteredNotesMedsRecords = $recordsGroupedByMinute->filter(function ($recordsInMinute) {
-            $hasNotesOrMeds = $recordsInMinute->some(
-                fn($r) =>
-                !empty($r->clinical_note) || !empty($r->medication_administration)
-            );
-            return $hasNotesOrMeds;
-        });
-        $uniqueTimestampsNotesAndMeds = $filteredNotesMedsRecords->keys();
-
-        // 3. Buat daftar unik timestamp per menit untuk penggabungan data
+        // 3. Buat daftar unik timestamp per menit untuk header kolom
         $uniqueTimestamps = $recordsGroupedByMinute->keys();
-        // 4. Siapkan data 'merged' per menit untuk tbody (menggunakan SEMUA timestamps)
+        $chartLabels = $recordsGroupedByMinute->keys()->all();
+
+        $suhuData = [];
+        $nadiData = [];
+        $sbpData = [];
+        $dbpData = [];
+        $mapData = [];
+
+        // 4. Siapkan data 'merged' per menit untuk tbody
         $mergedRecordsPerMinute = $uniqueTimestamps->mapWithKeys(function ($timestamp) use ($recordsGroupedByMinute) {
             $recordsInMinute = $recordsGroupedByMinute[$timestamp];
             $mergedData = [
@@ -1434,7 +1384,6 @@ class ReportController extends Controller
                 'meds' => [],
                 'suhu' => null,
                 'nadi' => null,
-                'tensi' => null,
                 'tensi_sistol' => null,
                 'tensi_diastol' => null,
                 'map' => null,
@@ -1452,7 +1401,6 @@ class ReportController extends Controller
                 'irama_ekg' => null,
                 'ventilator_mode' => null,
                 'ventilator_f' => null,
-                'ventilator_pinsp' => null,
                 'ventilator_tv' => null,
                 'ventilator_fio2' => null,
                 'ventilator_peep' => null,
@@ -1483,7 +1431,6 @@ class ReportController extends Controller
             $mergedData['irama_ekg'] = $recordsInMinute->last(fn($r) => $r->irama_ekg !== null)?->irama_ekg;
             $mergedData['ventilator_mode'] = $recordsInMinute->last(fn($r) => $r->ventilator_mode !== null)?->ventilator_mode;
             $mergedData['ventilator_f'] = $recordsInMinute->last(fn($r) => $r->ventilator_f !== null)?->ventilator_f;
-            $mergedData['ventilator_pinsp'] = $recordsInMinute->last(fn($r) => $r->ventilator_pinsp !== null)?->ventilator_pinsp;
             $mergedData['ventilator_tv'] = $recordsInMinute->last(fn($r) => $r->ventilator_tv !== null)?->ventilator_tv;
             $mergedData['ventilator_fio2'] = $recordsInMinute->last(fn($r) => $r->ventilator_fio2 !== null)?->ventilator_fio2;
             $mergedData['ventilator_peep'] = $recordsInMinute->last(fn($r) => $r->ventilator_peep !== null)?->ventilator_peep;
@@ -1524,38 +1471,25 @@ class ReportController extends Controller
 
             return [$timestamp => (object) $mergedData];
         });
-        $filteredHemodynamicRecords = $recordsGroupedByMinute->filter(function ($recordsInMinute) {
-            // $recordsInMinute adalah Collection of Records di menit tersebut
-            $hasHemodynamicData = $recordsInMinute->some(
-                fn($r) =>
-                $r->suhu !== null || $r->nadi !== null || $r->tensi_sistol !== null || $r->map !== null
-            );
-            return $hasHemodynamicData;
-        });
 
-        // 2. Tentukan Label Grafik HANYA dari timestamp yang difilter
-        $chartLabels = $filteredHemodynamicRecords->keys()->all();
-        // 2. Siapkan array untuk nilai Suhu, Nadi, SBP, DBP, dan MAP
-        $suhuData = []; // <--- VARIABEL BARU
-        $nadiData = [];
-        
-        $sbpData = [];
-        $dbpData = [];
-        $mapData = [];
         foreach ($chartLabels as $timestamp) {
             $record = $mergedRecordsPerMinute[$timestamp];
+
+            // Data Suhu
             $suhuData[] = $record->suhu ?? null;
+
+            // Data Hemodinamik lainnya
             $nadiData[] = $record->nadi ?? null;
             $sbpData[] = $record->tensi_sistol ?? null;
             $dbpData[] = $record->tensi_diastol ?? null;
             $mapData[] = $record->map ?? null;
         }
-        // --- CHART 1: VITAL SIGNS (HR & RR) ---
         $hemodynamicChartConfig = [
             'type' => 'line',
             'data' => [
                 'labels' => array_map(fn($t) => Carbon::parse($t)->format('H:i'), $chartLabels),
                 'datasets' => [
+                    // SUHU (Axis KANAN - y1)
                     [
                         'label' => 'Suhu (°C)',
                         'data' => $suhuData,
@@ -1564,6 +1498,7 @@ class ReportController extends Controller
                         'fill' => false,
                         'tension' => 0.1,
                         'pointRadius' => 3,
+                        'yAxisID' => 'y1', // MENGGUNAKAN AXIS KANAN
                     ],
                     // NADI (Axis KIRI - y)
                     [
@@ -1574,6 +1509,7 @@ class ReportController extends Controller
                         'fill' => false,
                         'tension' => 0.1,
                         'pointRadius' => 3,
+                        'yAxisID' => 'y',
                     ],
                     // SBP (Sistol) (Axis KIRI - y)
                     [
@@ -1584,15 +1520,7 @@ class ReportController extends Controller
                         'fill' => false,
                         'tension' => 0.1,
                         'pointRadius' => 3,
-                    ],
-                    [
-                        'label' => 'SBP (Diastol)',
-                        'data' => $dbpData,
-                        'borderColor' => '#42f216ff', // Biru Tua
-                        'backgroundColor' => 'transparent',
-                        'fill' => false,
-                        'tension' => 0.1,
-                        'pointRadius' => 3,
+                        'yAxisID' => 'y',
                     ],
                     // MAP (Axis KIRI - y)
                     [
@@ -1603,6 +1531,7 @@ class ReportController extends Controller
                         'fill' => false,
                         'tension' => 0.1,
                         'pointRadius' => 3,
+                        'yAxisID' => 'y',
                     ],
                 ],
             ],
@@ -1629,6 +1558,7 @@ class ReportController extends Controller
                 ],
             ],
         ];
+
         // 4. Generate Chart Image Base64 URI
         $hemodynamicChartUri = $this->generateChartWithCurl($hemodynamicChartConfig);
         $registrasi = RegPeriksa::with(['pasien', 'poliklinik', 'penjab', 'dpjpRanap.dokter'])
@@ -1671,6 +1601,7 @@ class ReportController extends Controller
         $currentKamarInap = $kamarInapHistory->first();
         $currentKamarInap = $kamarInapHistory->first(); // Record terbaru
         $currentRoomName = 'N/A';
+        // $currentInstallasiName = 'N/A';
         $currentInstallasiName = 'RAWAT INAP';
 
         if ($currentKamarInap && $currentKamarInap->kamar) {
@@ -1701,11 +1632,6 @@ class ReportController extends Controller
         $setting = DB::table('setting')->first();
         // 4. Load View Cetak dengan Data
         $dataForPdf = [
-            'uniqueTimestampsHemodynamic' => $uniqueTimestampsHemodynamic,
-            'uniqueTimestampsVentilator' => $uniqueTimestampsVentilator,
-            'uniqueTimestampsNonFluid' => $uniqueTimestampsNonFluid,
-            'uniqueTimestampsFluid' => $uniqueTimestampsFluid,
-            'uniqueTimestampsNotesAndMeds' => $uniqueTimestampsNotesAndMeds,
             'cycle' => $cycle,
             'registrasi' => $registrasi,
             'allParameters' => $allParameters,
@@ -1726,7 +1652,6 @@ class ReportController extends Controller
             'dpjpDokters' => $dpjpDokters,
             'diagnosaPasien' => $diagnosaPasien,
             'hospitalDayNumber' => $hospitalDayNumber,
-            'sheetDate' => $sheetDate,
             'hemodynamicChartUri' => $hemodynamicChartUri,
         ];
         $dataForSoap = [
@@ -1754,6 +1679,7 @@ class ReportController extends Controller
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="' . $pdfFilename . '"');
     }
+
     /**
      * Helper: Daftar Parameter untuk Laporan Cetak.
      * (Salin dari ObservationTable.php atau definisikan sesuai kebutuhan cetak)
@@ -1765,14 +1691,16 @@ class ReportController extends Controller
             ['key' => 'nadi', 'label' => 'Nadi', 'group' => 'HEMODINAMIK'],
             ['key' => 'tensi', 'label' => 'Tensi', 'group' => 'HEMODINAMIK'],
             ['key' => 'map', 'label' => 'MAP', 'group' => 'HEMODINAMIK'], // --- RESPIRASI ---
+            ['key' => 'ventilator_mode', 'label' => 'Mode Ventilator', 'group' => 'RESPIRASI'], // Pindah ke atas grup
+            ['key' => 'ventilator_pinsp', 'label' => 'Vent. P Insp', 'group' => 'RESPIRASI'],
+            ['key' => 'ventilator_peep', 'label' => 'Vent. PEEP', 'group' => 'RESPIRASI'],
             ['key' => 'rr', 'label' => 'RR (x/mnt)', 'group' => 'RESPIRASI'],
-            ['key' => 'ventilator_mode', 'label' => 'Mode Ventilator', 'group' => 'VENTILATOR'], // Pindah ke atas grup
-            ['key' => 'ventilator_pinsp', 'label' => 'Vent. P Insp', 'group' => 'VENTILATOR'],
-            ['key' => 'ventilator_peep', 'label' => 'Vent. PEEP', 'group' => 'VENTILATOR'],
-            ['key' => 'ventilator_f', 'label' => 'Vent. F (Freq)', 'group' => 'VENTILATOR'], // Dekatkan RR & Freq
-            ['key' => 'ventilator_tv', 'label' => 'Vent. TV (Vol)', 'group' => 'VENTILATOR'],
-            ['key' => 'ventilator_fio2', 'label' => 'Vent. FiO2 (%)', 'group' => 'VENTILATOR'],
-            ['key' => 'ventilator_ie_ratio', 'label' => 'Vent. I:E Ratio', 'group' => 'VENTILATOR'],
+            ['key' => 'ventilator_f', 'label' => 'Vent. F (Freq)', 'group' => 'RESPIRASI'], // Dekatkan RR & Freq
+            ['key' => 'ventilator_tv', 'label' => 'Vent. TV (Vol)', 'group' => 'RESPIRASI'],
+            ['key' => 'ventilator_fio2', 'label' => 'Vent. FiO2 (%)', 'group' => 'RESPIRASI'],
+            ['key' => 'ventilator_ie_ratio', 'label' => 'Vent. I:E Ratio', 'group' => 'RESPIRASI'],
+            // cvp, spo2, cuff_pressure dipindah ke OBSERVASI
+
             // --- OBSERVASI ---
             ['key' => 'kesadaran', 'label' => 'Kesadaran', 'group' => 'OBSERVASI'],
             ['key' => 'irama_ekg', 'label' => 'Irama EKG', 'group' => 'OBSERVASI'], // Pindah ke sini
@@ -1783,14 +1711,16 @@ class ReportController extends Controller
             ['key' => 'pupil', 'label' => 'Pupil (Ki/Ka)', 'group' => 'OBSERVASI'],
             ['key' => 'gcs', 'label' => 'GCS', 'group' => 'OBSERVASI'],
             ['key' => 'fall_risk_assessment', 'label' => 'Risiko Jatuh', 'group' => 'OBSERVASI'],
-            // --- CAIRAN --- (Dikeluarkan dari tabel pertama, hanya untuk referensi struktur)
+            // --- CAIRAN ---
             ['key' => 'cairan_masuk', 'label' => 'Cairan Masuk', 'group' => 'CAIRAN'],
             ['key' => 'cairan_keluar', 'label' => 'Cairan Keluar', 'group' => 'CAIRAN'],
+
             // --- CATATAN ---
             ['key' => 'clinical_note', 'label' => 'Catatan Klinis/Masalah', 'group' => 'CATATAN'],
             ['key' => 'medication_administration', 'label' => 'Tindakan/Obat', 'group' => 'CATATAN'],
         ];
     }
+
     /**
      * Mengambil data chart dari QuickChart menggunakan cURL
      *
@@ -1801,16 +1731,10 @@ class ReportController extends Controller
     {
         try {
             $chartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartData));
-
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $chartUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); // Mengembalikan hasil sebagai string
             curl_setopt($ch, CURLOPT_TIMEOUT, 15); // Timeout 15 detik
-
-            // --- INI BAGIAN PENTING UNTUK MASALAH LOKAL ---
-            // Matikan verifikasi SSL.
-            // !! PERINGATAN: Jangan gunakan di produksi jika tidak perlu !!
-            // !! Ini hanya untuk mengatasi masalah SSL di server lokal !!
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             // --------------------------------------------------
@@ -1833,5 +1757,4 @@ class ReportController extends Controller
             return null;
         }
     }
-   
 }
