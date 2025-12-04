@@ -31,33 +31,10 @@ class ObservationGrid extends Component
     #[Computed(persist: true)]
     public function allRecords(): Collection
     {
-        $shifts = [
-            'pagi' => [7, 13],  // Jam 07:00 - 13:59
-            'siang' => [14, 20], // Jam 14:00 - 20:59
-            'malam' => [21, 6],  // Jam 21:00 - 06:59
-        ];
         // Ambil semua record, urutkan berdasarkan waktu
         return $this->cycle->records()
             ->with('inputter')
             ->orderBy('observation_time', 'asc')
-
-            // --- Logika filter 'when' Anda (Ini sudah benar) ---
-            ->when($this->filterShift != 'all', function ($query) use ($shifts) {
-                $jam = $shifts[$this->filterShift];
-
-                // Logika filter malam (lintas hari)
-                if ($this->filterShift == 'malam') {
-                    return $query->where(function ($q) use ($jam) {
-                        $q->whereTime('observation_time', '>=', $jam[0] . ':00:00')
-                            ->orWhereTime('observation_time', '<=', $jam[1] . ':59:59');
-                    });
-                }
-
-                // Logika filter pagi/siang
-                return $query->whereTime('observation_time', '>=', $jam[0] . ':00:00')
-                    ->whereTime('observation_time', '<=', $jam[1] . ':59:59');
-            })
-
             ->get();
     }
 

@@ -15,7 +15,7 @@
             font-family: 'Helvetica', sans-serif;
             font-size: 9px;
             line-height: 1.3;
-            
+
         }
 
         /* Font sedikit lebih besar untuk A3 */
@@ -259,17 +259,22 @@
             <tr>
                 {{-- KOLOM 1: LOGO --}}
                 <td style="width: 15%; vertical-align: top; text-align: left;">
-                    @if($setting && $setting->logo)
-                    {{-- Pastikan lebar gambar diatur agar tidak terlalu besar --}}
-                    <img src="data:image/png;base64,{{ base64_encode($setting->logo) }}" alt="Logo" style="max-width: 80px; height: auto;">
+                    @if ($setting && $setting->logo)
+                        {{-- Pastikan lebar gambar diatur agar tidak terlalu besar --}}
+                        <img src="data:image/png;base64,{{ base64_encode($setting->logo) }}" alt="Logo"
+                            style="max-width: 80px; height: auto;">
                     @endif
                 </td>
 
                 {{-- KOLOM 2: NAMA RS & JUDUL DOKUMEN --}}
                 <td style="width: 60%; vertical-align: top; text-align: center;">
-                    <h1 style="font-size: 14px; margin-top: 0; margin-bottom: 5px; font-weight: bold;">{{ $setting->nama_instansi ?? 'Nama Instansi' }}</h1>
-                    <p style="font-size: 10px; margin: 0;">{{ $setting->alamat_instansi ?? '' }} {{ $setting->kabupaten ?? '' }}{{ ($setting->kabupaten && $setting->propinsi) ? ', ' : '' }}{{ $setting->propinsi ?? '' }}</p>
-                    <p style="font-size: 10px; margin-top: 2px;">Telp: {{ $setting->kontak ?? '' }} | Email: {{ $setting->email ?? '' }}</p>
+                    <h1 style="font-size: 14px; margin-top: 0; margin-bottom: 5px; font-weight: bold;">
+                        {{ $setting->nama_instansi ?? 'Nama Instansi' }}</h1>
+                    <p style="font-size: 10px; margin: 0;">{{ $setting->alamat_instansi ?? '' }}
+                        {{ $setting->kabupaten ?? '' }}{{ $setting->kabupaten && $setting->propinsi ? ', ' : '' }}{{ $setting->propinsi ?? '' }}
+                    </p>
+                    <p style="font-size: 10px; margin-top: 2px;">Telp: {{ $setting->kontak ?? '' }} | Email:
+                        {{ $setting->email ?? '' }}</p>
 
                     {{-- Judul Dokumen dipisah dengan garis --}}
                     <hr style="border: 0; border-top: 1px solid black; margin: 5px 0 5px 0;">
@@ -277,7 +282,8 @@
                 </td>
 
                 {{-- KOLOM 3: INFORMASI PASIEN (Gabungan Kanan Atas) --}}
-                <td style="width: 25%; vertical-align: top; text-align: left; border: 1px solid black; padding: 3px 5px;">
+                <td
+                    style="width: 25%; vertical-align: top; text-align: left; border: 1px solid black; padding: 3px 5px;">
                     <table class="no-border" style="width: 100%; font-size: 9px; border-collapse: collapse;">
                         <tr>
                             <td class="label-col" style="width: 45%;">NAMA</td>
@@ -289,7 +295,9 @@
                         </tr>
                         <tr>
                             <td class="label-col">TGL. LAHIR/UMUR</td>
-                            <td>: {{ $registrasi->pasien->tgl_lahir ? \Carbon\Carbon::parse($registrasi->pasien->tgl_lahir)->format('d-m-Y') : '-' }} / {{ $registrasi->umurdaftar ?? '' }}{{ $registrasi->sttsumur ?? '' }}</td>
+                            <td>:
+                                {{ $registrasi->pasien->tgl_lahir ? \Carbon\Carbon::parse($registrasi->pasien->tgl_lahir)->format('d-m-Y') : '-' }}
+                                / {{ $registrasi->umurdaftar ?? '' }}{{ $registrasi->sttsumur ?? '' }}</td>
                         </tr>
                         <tr>
                             <td class="label-col">RUANG</td>
@@ -324,11 +332,15 @@
                 {{-- Dokter & Diagnosa --}}
                 <div class="section-title">Dokter / DPJP</div>
                 <div style="font-size: 8px; padding-left: 5px;">
-                    @forelse($dpjpDokters as $dokter) {{ $loop->iteration }}. {{ $dokter->nm_dokter }}<br> @empty - @endforelse
+                    @forelse($dpjpDokters as $dokter)
+                    {{ $loop->iteration }}. {{ $dokter->nm_dokter }}<br> @empty -
+                    @endforelse
                 </div>
                 <div class="section-title">Diagnosa</div>
                 <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap;">
-                    @forelse($diagnosaPasien as $diagnosa) {{ $loop->iteration }}. {{ $diagnosa }}<br> @empty - @endforelse
+                    @forelse($diagnosaPasien as $diagnosa)
+                    {{ $loop->iteration }}. {{ $diagnosa }}<br> @empty -
+                    @endforelse
                 </div>
                 <hr>
                 {{-- Pola Ventilasi --}}
@@ -337,7 +349,8 @@
                 <hr>
                 {{-- Obat --}}
                 <div class="section-title">OBAT</div>
-                <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap;">Parenteral:<br>{!! nl2br(e($cycle->terapi_obat_parenteral ?: '-')) !!}<br>Enteral/Lain:<br>{!! nl2br(e($cycle->terapi_obat_enteral_lain ?: '-')) !!}</div>
+                <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap;">
+                    Parenteral:<br>{!! nl2br(e($cycle->terapi_obat_parenteral ?: '-')) !!}<br>Enteral/Lain:<br>{!! nl2br(e($cycle->terapi_obat_enteral_lain ?: '-')) !!}</div>
                 {{-- Target Nutrisi --}}
                 <div style="margin-top: 3px; padding-left: 5px;">
                     <div style="font-size: 8px; font-weight: bold;">Target Nutrisi Parenteral (24h):</div>
@@ -373,7 +386,23 @@
                         </tr>
                     </table>
                 </div>
+                <div style="margin-top: 3px; padding-left: 5px;">
+                    <div style="font-size: 8px; font-weight: bold;">Data Tambahan:</div>
+                    <table class="no-border" style="font-size: 7px; margin-top: 1px;">
+                        <tr>
+                            <td style="width: 40px;">BB:</td>
+                            <td>{{ $cycle->bb ?: '-' }} kg</td>
+                            <td style="width: 40px;">TB:</td>
+                            <td>{{ $cycle->tb ?: '-' }} cm</td>
+                        </tr>
+                        <tr>
+                            <td>Alergi:</td>
+                            <td colspan="3">{{ $cycle->alergi ?: '-' }}</td>
+                        </tr>
+                    </table>
+                </div>
                 <hr>
+
                 {{-- Penunjang --}}
                 <div class="section-title">PEMERIKSAAN PENUNJANG</div>
                 <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap;">{!! nl2br(e($cycle->pemeriksaan_penunjang ?: '-')) !!}</div>
@@ -396,36 +425,41 @@
                     <tbody>
                         @php $alatDisplayed = false; @endphp
                         @foreach ($cycle->devices->where('device_category', 'ALAT')->sortBy('device_name') as $device)
-                        <tr>
-                            <td>{{ $device->device_name }}</td>
-                            <td>{{ $device->ukuran ?: '-' }}</td>
-                            <td>{{ $device->lokasi ?: '-' }}</td>
-                            <td>{{ $device->tanggal_pasang ? $device->tanggal_pasang->format('d/m') : '-' }}</td>
-                        </tr>
-                        @php $alatDisplayed = true; @endphp
+                            <tr>
+                                <td>{{ $device->device_name }}</td>
+                                <td>{{ $device->ukuran ?: '-' }}</td>
+                                <td>{{ $device->lokasi ?: '-' }}</td>
+                                <td>{{ $device->tanggal_pasang ? $device->tanggal_pasang->format('d/m') : '-' }}</td>
+                            </tr>
+                            @php $alatDisplayed = true; @endphp
                         @endforeach
-                        @if(!$alatDisplayed) <tr>
-                            <td colspan="4" style="text-align: center;">-</td>
-                        </tr> @endif
+                        @if (!$alatDisplayed)
+                            <tr>
+                                <td colspan="4" style="text-align: center;">-</td>
+                            </tr>
+                        @endif
 
                         @php $tubeDisplayed = false; @endphp
                         @foreach ($cycle->devices->where('device_category', 'TUBE')->sortBy('device_name') as $device)
-                        <tr>
-                            <td>{{ $device->device_name }}</td>
-                            <td>{{ $device->ukuran ?: '-' }}</td>
-                            <td>{{ $device->lokasi ?: '-' }}</td>
-                            <td>{{ $device->tanggal_pasang ? $device->tanggal_pasang->format('d/m') : '-' }}</td>
-                        </tr>
-                        @php $tubeDisplayed = true; @endphp
+                            <tr>
+                                <td>{{ $device->device_name }}</td>
+                                <td>{{ $device->ukuran ?: '-' }}</td>
+                                <td>{{ $device->lokasi ?: '-' }}</td>
+                                <td>{{ $device->tanggal_pasang ? $device->tanggal_pasang->format('d/m') : '-' }}</td>
+                            </tr>
+                            @php $tubeDisplayed = true; @endphp
                         @endforeach
-                        @if(!$tubeDisplayed) <tr>
-                            <td colspan="4" style="text-align: center;">-</td>
-                        </tr> @endif
+                        @if (!$tubeDisplayed)
+                            <tr>
+                                <td colspan="4" style="text-align: center;">-</td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
                 {{-- Luka --}}
                 <div class="section-title">LUKA</div>
-                <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap; min-height: 20px;">{!! nl2br(e($cycle->wound_notes ?: '-')) !!}</div>
+                <div style="font-size: 8px; padding-left: 5px; white-space: pre-wrap; min-height: 20px;">
+                    {!! nl2br(e($cycle->wound_notes ?: '-')) !!}</div>
                 <hr>
                 {{-- Balance Cairan Summary Box --}}
                 <div class="section-title">BALANCE CAIRAN</div>
@@ -450,7 +484,8 @@
                         </tr>
                         <tr>
                             <th>BC 24 Jam</th>
-                            <td style="text-align: right; font-weight: bold;">{{ number_format($balance24Jam, 0) }} ml</td>
+                            <td style="text-align: right; font-weight: bold;">{{ number_format($balance24Jam, 0) }} ml
+                            </td>
                         </tr>
                         <tr>
                             <th>BC Sblmnya</th>
@@ -463,7 +498,8 @@
                         </tr>
                         <tr>
                             <th style="font-size: 10px;">BC Kumulatif</th>
-                            <td style="text-align: right; font-weight: bold; font-size: 10px;">{{ number_format($previousBalance + $balance24Jam, 0) }} ml</td>
+                            <td style="text-align: right; font-weight: bold; font-size: 10px;">
+                                {{ number_format($previousBalance + $balance24Jam, 0) }} ml</td>
                         </tr>
                     </table>
                 </div>
@@ -471,67 +507,79 @@
 
             {{-- ==================== KOLOM KANAN =================== --}}
             <td class="right-col">
-                @if(isset($hemodynamicChartUri) && $hemodynamicChartUri)
-                <h4 style="margin-top: 5px; margin-bottom: 5px; font-weight: bold;">GRAFIK HEMODINAMIK & TTV INTI</h4>
-                <div style="text-align: center; margin-bottom: 10px;">
-                    {{-- Gambar Base64 yang dihasilkan oleh QuickChart --}}
-                    <img src="{{ $hemodynamicChartUri }}" style="width: 100%; height: 250px; object-fit: contain;">
-                </div>
-                <div style="margin-top: 15px;"></div>
+                @if (isset($hemodynamicChartUri) && $hemodynamicChartUri)
+                    <h4 style="margin-top: 5px; margin-bottom: 5px; font-weight: bold;">GRAFIK HEMODINAMIK & TTV INTI
+                    </h4>
+                    <div style="text-align: center; margin-bottom: 10px;">
+                        {{-- Gambar Base64 yang dihasilkan oleh QuickChart --}}
+                        <img src="{{ $hemodynamicChartUri }}" style="width: 100%; height: 250px; object-fit: contain;">
+                    </div>
+                    <div style="margin-top: 15px;"></div>
                 @else
-                <p style="text-align: center; color: red;">Gagal memuat grafik Hemodinamik. Cek koneksi server atau Log.</p>
+                    <p style="text-align: center; color: red;">Gagal memuat grafik Hemodinamik. Cek koneksi server atau
+                        Log.</p>
                 @endif
 
                 {{-- ==================== 1. Tabel HEMODINAMIK (Tabel Paling Atas) =================== --}}
-                <!-- @if($uniqueTimestampsHemodynamic->count() > 0)
+                <!-- @if ($uniqueTimestampsHemodynamic->count() > 0)
                 <h4 style="margin-top: 5px; margin-bottom: 5px; font-weight: bold;">HEMODINAMIK (TTV INTI)</h4>
                 <table class="observation-table">
                     <thead>
                         <tr>
                             <th class="param-label">Parameter</th>
-                            @foreach($uniqueTimestampsHemodynamic as $timestamp)
-                            <th class="time-header">
+                            @foreach ($uniqueTimestampsHemodynamic as $timestamp)
+<th class="time-header">
                                 {{ \Carbon\Carbon::parse($timestamp)->format('H:i') }}<br>
                                 <span class="author-header">{{ $mergedRecordsPerMinute[$timestamp]->inputters }}</span>
                             </th>
-                            @endforeach
+@endforeach
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($allParameters as $param)
-
-                        {{-- HANYA TAMPILKAN GRUP HEMODINAMIK --}}
+                        @foreach ($allParameters as $param)
+{{-- HANYA TAMPILKAN GRUP HEMODINAMIK --}}
                         @if ($param['group'] == 'HEMODINAMIK')
-                        @php
-                        $key = $param['key'];
-                        // Cek apakah ada data di kolom Hemodinamik yang difilter
-                        $hasDataInFilteredColumns = false;
-                        foreach($uniqueTimestampsHemodynamic as $timestamp) {
-                        $record = $mergedRecordsPerMinute[$timestamp];
-                        if ($key == 'tensi' && ($record->tensi_sistol !== null || $record->tensi_diastol !== null)) { $hasDataInFilteredColumns = true; break; }
-                        elseif ($record->{$key} !== null) { $hasDataInFilteredColumns = true; break; }
-                        }
-                        @endphp
+@php
+    $key = $param['key'];
+    // Cek apakah ada data di kolom Hemodinamik yang difilter
+    $hasDataInFilteredColumns = false;
+    foreach ($uniqueTimestampsHemodynamic as $timestamp) {
+        $record = $mergedRecordsPerMinute[$timestamp];
+        if ($key == 'tensi' && ($record->tensi_sistol !== null || $record->tensi_diastol !== null)) {
+            $hasDataInFilteredColumns = true;
+            break;
+        } elseif ($record->{$key} !== null) {
+            $hasDataInFilteredColumns = true;
+            break;
+        }
+    }
+@endphp
 
-                        @if($hasDataInFilteredColumns)
-                        <tr>
+                        @if ($hasDataInFilteredColumns)
+<tr>
                             <th class="param-label">{{ $param['label'] }}</th>
-                            @foreach($uniqueTimestampsHemodynamic as $timestamp)
-                            <td>
+                            @foreach ($uniqueTimestampsHemodynamic as $timestamp)
+<td>
                                 @php
-                                $record = $mergedRecordsPerMinute[$timestamp];
-                                $value = null;
+                                    $record = $mergedRecordsPerMinute[$timestamp];
+                                    $value = null;
 
-                                if ($key == 'tensi' && (isset($record->tensi_sistol) || isset($record->tensi_diastol))) { $value = ($record->tensi_sistol ?? '-') . '/' . ($record->tensi_diastol ?? '-'); }
-                                elseif (isset($record->{$key}) && $record->{$key} !== null) { $value = $record->{$key}; }
+                                    if (
+                                        $key == 'tensi' &&
+                                        (isset($record->tensi_sistol) || isset($record->tensi_diastol))
+                                    ) {
+                                        $value = ($record->tensi_sistol ?? '-') . '/' . ($record->tensi_diastol ?? '-');
+                                    } elseif (isset($record->{$key}) && $record->{$key} !== null) {
+                                        $value = $record->{$key};
+                                    }
                                 @endphp
                                 <span class="whitespace-pre-wrap">{!! $value !!}</span>
                             </td>
-                            @endforeach
+@endforeach
                         </tr>
-                        @endif
-                        @endif
-                        @endforeach
+@endif
+@endif
+@endforeach
                     </tbody>
                 </table>
                 <div style="margin-top: 15px;"></div>
@@ -539,278 +587,340 @@
 
 
                 {{-- ==================== 2. Tabel VENTILATOR SETTING =================== --}}
-                @if($uniqueTimestampsVentilator->count() > 0)
-                <h4 style="margin-top: 5px; margin-bottom: 5px; font-weight: bold;">VENTILATOR SETTING</h4>
-                <table class="observation-table">
-                    <thead>
-                        <tr>
-                            <th class="param-label">Parameter</th>
-                            @foreach($uniqueTimestampsVentilator as $timestamp)
-                            <th class="time-header">
-                                {{ \Carbon\Carbon::parse($timestamp)->format('H:i') }}<br>
-                                <span class="author-header">{{ $mergedRecordsPerMinute[$timestamp]->inputters }}</span>
-                            </th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($allParameters as $param)
+                @if ($uniqueTimestampsVentilator->count() > 0)
+                    <h4 style="margin-top: 5px; margin-bottom: 5px; font-weight: bold;">VENTILATOR SETTING</h4>
+                    <table class="observation-table">
+                        <thead>
+                            <tr>
+                                <th class="param-label">Parameter</th>
+                                @foreach ($uniqueTimestampsVentilator as $timestamp)
+                                    <th class="time-header">
+                                        {{ \Carbon\Carbon::parse($timestamp)->format('H:i') }}<br>
+                                        <span
+                                            class="author-header">{{ $mergedRecordsPerMinute[$timestamp]->inputters }}</span>
+                                    </th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($allParameters as $param)
+                                @if ($param['group'] == 'VENTILATOR')
+                                    @php
+                                        $key = $param['key'];
+                                        $hasDataInFilteredColumns = false;
+                                        foreach ($uniqueTimestampsVentilator as $timestamp) {
+                                            $record = $mergedRecordsPerMinute[$timestamp];
+                                            if ($record->{$key} !== null) {
+                                                $hasDataInFilteredColumns = true;
+                                                break;
+                                            }
+                                        }
+                                    @endphp
 
-                        @if ($param['group'] == 'VENTILATOR')
-                        @php
-                        $key = $param['key'];
-                        $hasDataInFilteredColumns = false;
-                        foreach($uniqueTimestampsVentilator as $timestamp) {
-                        $record = $mergedRecordsPerMinute[$timestamp];
-                        if ($record->{$key} !== null) { $hasDataInFilteredColumns = true; break; }
-                        }
-                        @endphp
-
-                        @if($hasDataInFilteredColumns)
-                        <tr>
-                            <th class="param-label">{{ $param['label'] }}</th>
-                            @foreach($uniqueTimestampsVentilator as $timestamp)
-                            <td>
-                                @php
-                                $record = $mergedRecordsPerMinute[$timestamp];
-                                $value = $record->{$key} ?? null;
-                                @endphp
-                                <span class="whitespace-pre-wrap">{!! $value !!}</span>
-                            </td>
+                                    @if ($hasDataInFilteredColumns)
+                                        <tr>
+                                            <th class="param-label">{{ $param['label'] }}</th>
+                                            @foreach ($uniqueTimestampsVentilator as $timestamp)
+                                                <td>
+                                                    @php
+                                                        $record = $mergedRecordsPerMinute[$timestamp];
+                                                        $value = $record->{$key} ?? null;
+                                                    @endphp
+                                                    <span class="whitespace-pre-wrap">{!! $value !!}</span>
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    @endif
+                                @endif
                             @endforeach
-                        </tr>
-                        @endif
-                        @endif
-                        @endforeach
-                    </tbody>
-                </table>
-                <div style="margin-top: 15px;"></div>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 15px;"></div>
                 @endif
 
 
                 {{-- ==================== 3. Tabel TTV & OBSERVASI LAIN =================== --}}
-                @if($uniqueTimestampsNonFluid->count() > 0)
-                <h4 style="margin-top: 5px; margin-bottom: 5px; font-weight: bold;">TTV & OBSERVASI LAIN</h4>
-                <table class="observation-table">
-                    <thead>
-                        <tr>
-                            <th class="param-label">Parameter</th>
-                            @foreach($uniqueTimestampsNonFluid as $timestamp)
-                            <th class="time-header">
-                                {{ \Carbon\Carbon::parse($timestamp)->format('H:i') }}<br>
-                                <span class="author-header">{{ $mergedRecordsPerMinute[$timestamp]->inputters }}</span>
-                            </th>
+                @if ($uniqueTimestampsNonFluid->count() > 0)
+                    <h4 style="margin-top: 5px; margin-bottom: 5px; font-weight: bold;">TTV & OBSERVASI LAIN</h4>
+                    <table class="observation-table">
+                        <thead>
+                            <tr>
+                                <th class="param-label">Parameter</th>
+                                @foreach ($uniqueTimestampsNonFluid as $timestamp)
+                                    <th class="time-header">
+                                        {{ \Carbon\Carbon::parse($timestamp)->format('H:i') }}<br>
+                                        <span
+                                            class="author-header">{{ $mergedRecordsPerMinute[$timestamp]->inputters }}</span>
+                                    </th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php $currentGroup = ''; @endphp
+                            @foreach ($allParameters as $param)
+                                {{-- HANYA TAMPILKAN GRUP RESPIRASI DAN OBSERVASI --}}
+                                @if (in_array($param['group'], ['RESPIRASI', 'OBSERVASI']))
+                                    @if ($param['group'] != $currentGroup)
+                                        <tr>
+                                            <td colspan="{{ $uniqueTimestampsNonFluid->count() + 1 }}"
+                                                class="group-label">{{ $param['group'] }}</td>
+                                        </tr>
+                                        @php $currentGroup = $param['group']; @endphp
+                                    @endif
+
+                                    @php
+                                        $key = $param['key'];
+                                        $hasDataInFilteredColumns = $mergedRecordsPerMinute->contains(function (
+                                            $mergedRecord,
+                                        ) use ($key) {
+                                            if ($key == 'gcs') {
+                                                return $mergedRecord->gcs_e !== null ||
+                                                    $mergedRecord->gcs_v !== null ||
+                                                    $mergedRecord->gcs_m !== null;
+                                            } elseif ($key == 'pupil') {
+                                                return $mergedRecord->pupil_left_size_mm !== null ||
+                                                    $mergedRecord->pupil_right_size_mm !== null ||
+                                                    $mergedRecord->pupil_left_reflex !== null ||
+                                                    $mergedRecord->pupil_right_reflex !== null;
+                                            } else {
+                                                return isset($mergedRecord->{$key}) && $mergedRecord->{$key} !== null;
+                                            }
+                                        });
+                                    @endphp
+
+                                    @if ($hasDataInFilteredColumns)
+                                        <tr>
+                                            <th class="param-label">{{ $param['label'] }}</th>
+                                            @foreach ($uniqueTimestampsNonFluid as $timestamp)
+                                                <td>
+                                                    @php
+                                                        $record = $mergedRecordsPerMinute[$timestamp];
+                                                        $value = null;
+
+                                                        if (
+                                                            $key == 'gcs' &&
+                                                            (isset($record->gcs_e) ||
+                                                                isset($record->gcs_v) ||
+                                                                isset($record->gcs_m))
+                                                        ) {
+                                                            $gcsTotal =
+                                                                ($record->gcs_e ?? 0) +
+                                                                ($record->gcs_v ?? 0) +
+                                                                ($record->gcs_m ?? 0);
+                                                            $value =
+                                                                'E' .
+                                                                ($record->gcs_e ?? '-') .
+                                                                'V' .
+                                                                ($record->gcs_v ?? '-') .
+                                                                'M' .
+                                                                ($record->gcs_m ?? '-') .
+                                                                ($gcsTotal > 0 ? "($gcsTotal)" : '');
+                                                        } elseif (
+                                                            $key == 'pupil' &&
+                                                            (isset($record->pupil_left_size_mm) ||
+                                                                isset($record->pupil_right_size_mm))
+                                                        ) {
+                                                            $left =
+                                                                ($record->pupil_left_size_mm ?? '-') .
+                                                                '/' .
+                                                                ($record->pupil_left_reflex ?? '-');
+                                                            $right =
+                                                                ($record->pupil_right_size_mm ?? '-') .
+                                                                '/' .
+                                                                ($record->pupil_right_reflex ?? '-');
+                                                            $value = "{$left}|{$right}";
+                                                        } elseif (isset($record->{$key}) && $record->{$key} !== null) {
+                                                            $value = $record->{$key};
+                                                        }
+                                                    @endphp
+                                                    <span class="whitespace-pre-wrap">{!! $value !!}</span>
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    @endif
+                                @endif
                             @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php $currentGroup = ''; @endphp
-                        @foreach($allParameters as $param)
-
-                        {{-- HANYA TAMPILKAN GRUP RESPIRASI DAN OBSERVASI --}}
-                        @if (in_array($param['group'], ['RESPIRASI', 'OBSERVASI']))
-
-                        @if ($param['group'] != $currentGroup)
-                        <tr>
-                            <td colspan="{{ $uniqueTimestampsNonFluid->count() + 1 }}" class="group-label">{{ $param['group'] }}</td>
-                        </tr>
-                        @php $currentGroup = $param['group']; @endphp
-                        @endif
-
-                        @php
-                        $key = $param['key'];
-                        $hasDataInFilteredColumns = $mergedRecordsPerMinute->contains(function ($mergedRecord) use ($key) {
-                        if ($key == 'gcs') { return $mergedRecord->gcs_e !== null || $mergedRecord->gcs_v !== null || $mergedRecord->gcs_m !== null; }
-                        elseif ($key == 'pupil') { return $mergedRecord->pupil_left_size_mm !== null || $mergedRecord->pupil_right_size_mm !== null || $mergedRecord->pupil_left_reflex !== null || $mergedRecord->pupil_right_reflex !== null;}
-                        else { return isset($mergedRecord->{$key}) && $mergedRecord->{$key} !== null; }
-                        });
-                        @endphp
-
-                        @if($hasDataInFilteredColumns)
-                        <tr>
-                            <th class="param-label">{{ $param['label'] }}</th>
-                            @foreach($uniqueTimestampsNonFluid as $timestamp)
-                            <td>
-                                @php
-                                $record = $mergedRecordsPerMinute[$timestamp];
-                                $value = null;
-
-                                if ($key == 'gcs' && (isset($record->gcs_e) || isset($record->gcs_v) || isset($record->gcs_m))) {
-                                $gcsTotal = (($record->gcs_e ?? 0) + ($record->gcs_v ?? 0) + ($record->gcs_m ?? 0));
-                                $value = "E".($record->gcs_e ?? '-')."V".($record->gcs_v ?? '-')."M".($record->gcs_m ?? '-').($gcsTotal > 0 ? "($gcsTotal)" : '');
-                                }
-                                elseif ($key == 'pupil' && (isset($record->pupil_left_size_mm) || isset($record->pupil_right_size_mm))) {
-                                $left = ($record->pupil_left_size_mm ?? '-') . '/' . ($record->pupil_left_reflex ?? '-');
-                                $right = ($record->pupil_right_size_mm ?? '-') . '/' . ($record->pupil_right_reflex ?? '-');
-                                $value = "{$left}|{$right}";
-                                }
-                                elseif (isset($record->{$key}) && $record->{$key} !== null) { $value = $record->{$key}; }
-                                @endphp
-                                <span class="whitespace-pre-wrap">{!! $value !!}</span>
-                            </td>
-                            @endforeach
-                        </tr>
-                        @endif
-                        @endif
-                        @endforeach
-                    </tbody>
-                </table>
-                <div style="margin-top: 15px;"></div>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 15px;"></div>
                 @endif
 
 
                 {{-- ==================== 4. Tabel Fluid Balance (CAIRAN) =================== --}}
-                @if($uniqueTimestampsFluid->count() > 0)
-                <h4 style="margin-top: 5px; margin-bottom: 5px; font-weight: bold;">FLUID BALANCE</h4>
-                <table class="observation-table">
-                    <thead>
-                        <tr>
-                            <th class="param-label">Parameter</th>
-                            @foreach($uniqueTimestampsFluid as $timestamp)
-                            <th class="time-header">
-                                {{ \Carbon\Carbon::parse($timestamp)->format('H:i') }}<br>
-                                <span class="author-header">{{ $mergedRecordsPerMinute[$timestamp]->inputters }}</span>
-                            </th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{-- CAIRAN MASUK --}}
-                        <tr>
-                            <td colspan="{{ $uniqueTimestampsFluid->count() + 1 }}" class="group-label">CAIRAN MASUK</td>
-                        </tr>
-                        {{-- Filter Parenteral --}}
-                        @forelse ($uniqueParenteralFluids as $fluidName)
-                        <tr>
-                            <th class="param-label" style="padding-left: 15px;">{{ $fluidName }} (IV)</th>
-                            @foreach($uniqueTimestampsFluid as $timestamp)
-                            <td>
+                @if ($uniqueTimestampsFluid->count() > 0)
+                    <h4 style="margin-top: 5px; margin-bottom: 5px; font-weight: bold;">FLUID BALANCE</h4>
+                    <table class="observation-table">
+                        <thead>
+                            <tr>
+                                <th class="param-label">Parameter</th>
+                                @foreach ($uniqueTimestampsFluid as $timestamp)
+                                    <th class="time-header">
+                                        {{ \Carbon\Carbon::parse($timestamp)->format('H:i') }}<br>
+                                        <span
+                                            class="author-header">{{ $mergedRecordsPerMinute[$timestamp]->inputters }}</span>
+                                    </th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- CAIRAN MASUK --}}
+                            <tr>
+                                <td colspan="{{ $uniqueTimestampsFluid->count() + 1 }}" class="group-label">CAIRAN
+                                    MASUK</td>
+                            </tr>
+                            {{-- Filter Parenteral --}}
+                            @forelse ($uniqueParenteralFluids as $fluidName)
+                                <tr>
+                                    <th class="param-label" style="padding-left: 15px;">{{ $fluidName }} (IV)</th>
+                                    @foreach ($uniqueTimestampsFluid as $timestamp)
+                                        <td>
+                                            @php
+                                                $vol = collect($mergedRecordsPerMinute[$timestamp]->fluids_in)
+                                                    ->where('is_parenteral', true)
+                                                    ->where('jenis', $fluidName)
+                                                    ->sum('volume');
+                                            @endphp
+                                            @if ($vol > 0)
+                                                <span class="font-semibold text-green-700">{{ $vol }}</span>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @empty
+                            @endforelse
+                            {{-- Filter Enteral --}}
+                            @forelse ($uniqueEnteralFluids as $fluidName)
+                                <tr>
+                                    <th class="param-label" style="padding-left: 15px;">{{ $fluidName }}
+                                        (Oral/NGT)</th>
+                                    @foreach ($uniqueTimestampsFluid as $timestamp)
+                                        <td>
+                                            @php
+                                                $vol = collect($mergedRecordsPerMinute[$timestamp]->fluids_in)
+                                                    ->where('is_enteral', true)
+                                                    ->where('jenis', $fluidName)
+                                                    ->sum('volume');
+                                            @endphp
+                                            @if ($vol > 0)
+                                                <span class="font-semibold text-green-700">{{ $vol }}</span>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @empty
+                            @endforelse
+
+                            {{-- TOTAL CAIRAN MASUK --}}
+                            <tr style="background-color: #f0f8ff;">
+                                <th class="param-label">TOTAL Cairan Masuk</th>
+                                @foreach ($uniqueTimestampsFluid as $timestamp)
+                                    <td>
+                                        @php $totalIn = collect($mergedRecordsPerMinute[$timestamp]->fluids_in)->sum('volume'); @endphp
+                                        @if ($totalIn > 0)
+                                            <span class="font-bold text-green-700">{{ $totalIn }}</span>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            </tr>
+
+                            {{-- CAIRAN KELUAR --}}
+                            <tr>
+                                <td colspan="{{ $uniqueTimestampsFluid->count() + 1 }}" class="group-label">CAIRAN
+                                    KELUAR</td>
+                            </tr>
+                            @php $keluarTypes = ['Irigasi CM', 'Irigasi CK', 'Urine', 'NGT', 'Drain/WSD 1', 'Drain/WSD 2', 'Lain-lain']; @endphp
+                            @foreach ($keluarTypes as $type)
                                 @php
-                                $vol = collect($mergedRecordsPerMinute[$timestamp]->fluids_in)->where('is_parenteral', true)->where('jenis', $fluidName)->sum('volume');
+                                    // Filter Cairan Keluar: Hanya tampil jika total volume > 0 di SELURUH cycle
+                                    $totalKeluarForType = $allRecords
+                                        ->where('cairan_keluar_jenis', $type)
+                                        ->whereNotNull('cairan_keluar_volume')
+                                        ->sum('cairan_keluar_volume');
                                 @endphp
-                                @if($vol > 0) <span class="font-semibold text-green-700">{{ $vol }}</span> @endif
-                            </td>
-                            @endforeach
-                        </tr>
-                        @empty @endforelse
-                        {{-- Filter Enteral --}}
-                        @forelse ($uniqueEnteralFluids as $fluidName)
-                        <tr>
-                            <th class="param-label" style="padding-left: 15px;">{{ $fluidName }} (Oral/NGT)</th>
-                            @foreach($uniqueTimestampsFluid as $timestamp)
-                            <td>
-                                @php
-                                $vol = collect($mergedRecordsPerMinute[$timestamp]->fluids_in)->where('is_enteral', true)->where('jenis', $fluidName)->sum('volume');
-                                @endphp
-                                @if($vol > 0) <span class="font-semibold text-green-700">{{ $vol }}</span> @endif
-                            </td>
-                            @endforeach
-                        </tr>
-                        @empty @endforelse
 
-                        {{-- TOTAL CAIRAN MASUK --}}
-                        <tr style="background-color: #f0f8ff;">
-                            <th class="param-label">TOTAL Cairan Masuk</th>
-                            @foreach($uniqueTimestampsFluid as $timestamp)
-                            <td>
-                                @php $totalIn = collect($mergedRecordsPerMinute[$timestamp]->fluids_in)->sum('volume'); @endphp
-                                @if($totalIn > 0) <span class="font-bold text-green-700">{{ $totalIn }}</span> @endif
-                            </td>
+                                @if ($totalKeluarForType > 0)
+                                    <tr>
+                                        <th class="param-label">{{ $type }}</th>
+                                        @foreach ($uniqueTimestampsFluid as $timestamp)
+                                            <td>
+                                                @php $vol = collect($mergedRecordsPerMinute[$timestamp]->fluids_out)->where('jenis', $type)->sum('volume'); @endphp
+                                                @if ($vol > 0)
+                                                    <span
+                                                        class="font-semibold text-red-700">{{ $vol }}</span>
+                                                @endif
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                @endif
                             @endforeach
-                        </tr>
 
-                        {{-- CAIRAN KELUAR --}}
-                        <tr>
-                            <td colspan="{{ $uniqueTimestampsFluid->count() + 1 }}" class="group-label">CAIRAN KELUAR</td>
-                        </tr>
-                        @php $keluarTypes = ['Irigasi CM', 'Irigasi CK', 'Urine', 'NGT', 'Drain/WSD 1', 'Drain/WSD 2', 'Lain-lain']; @endphp
-                        @foreach($keluarTypes as $type)
-                        @php
-                        // Filter Cairan Keluar: Hanya tampil jika total volume > 0 di SELURUH cycle
-                        $totalKeluarForType = $allRecords
-                        ->where('cairan_keluar_jenis', $type)
-                        ->whereNotNull('cairan_keluar_volume')
-                        ->sum('cairan_keluar_volume');
-                        @endphp
-
-                        @if($totalKeluarForType > 0)
-                        <tr>
-                            <th class="param-label">{{ $type }}</th>
-                            @foreach($uniqueTimestampsFluid as $timestamp)
-                            <td>
-                                @php $vol = collect($mergedRecordsPerMinute[$timestamp]->fluids_out)->where('jenis', $type)->sum('volume'); @endphp
-                                @if($vol > 0) <span class="font-semibold text-red-700">{{ $vol }}</span> @endif
-                            </td>
-                            @endforeach
-                        </tr>
-                        @endif
-                        @endforeach
-
-                        {{-- TOTAL CAIRAN KELUAR --}}
-                        <tr style="background-color: #fff0f5;">
-                            <th class="param-label">TOTAL Cairan Keluar</th>
-                            @foreach($uniqueTimestampsFluid as $timestamp)
-                            <td>
-                                @php $totalOut = collect($mergedRecordsPerMinute[$timestamp]->fluids_out)->sum('volume'); @endphp
-                                @if($totalOut > 0) <span class="font-bold text-red-700">{{ $totalOut }}</span> @endif
-                            </td>
-                            @endforeach
-                        </tr>
-                    </tbody>
-                </table>
-                <div style="margin-top: 15px;"></div>
+                            {{-- TOTAL CAIRAN KELUAR --}}
+                            <tr style="background-color: #fff0f5;">
+                                <th class="param-label">TOTAL Cairan Keluar</th>
+                                @foreach ($uniqueTimestampsFluid as $timestamp)
+                                    <td>
+                                        @php $totalOut = collect($mergedRecordsPerMinute[$timestamp]->fluids_out)->sum('volume'); @endphp
+                                        @if ($totalOut > 0)
+                                            <span class="font-bold text-red-700">{{ $totalOut }}</span>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 15px;"></div>
                 @endif
 
 
                 {{-- ==================== 5. Tabel CATATAN / TINDAKAN (NOTES & MEDS) =================== --}}
-                @if($uniqueTimestampsNotesAndMeds->count() > 0)
-                <h4 style="margin-top: 5px; margin-bottom: 5px; font-weight: bold;">CATATAN KLINIS & TINDAKAN</h4>
-                <table class="observation-table">
-                    <thead>
-                        <tr>
-                            <th class="param-label">Parameter</th>
-                            @foreach($uniqueTimestampsNotesAndMeds as $timestamp)
-                            <th class="time-header">
-                                {{ \Carbon\Carbon::parse($timestamp)->format('H:i') }}<br>
-                                <span class="author-header">{{ $mergedRecordsPerMinute[$timestamp]->inputters }}</span>
-                            </th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($allParameters as $param)
+                @if ($uniqueTimestampsNotesAndMeds->count() > 0)
+                    <h4 style="margin-top: 5px; margin-bottom: 5px; font-weight: bold;">CATATAN KLINIS & TINDAKAN</h4>
+                    <table class="observation-table">
+                        <thead>
+                            <tr>
+                                <th class="param-label">Parameter</th>
+                                @foreach ($uniqueTimestampsNotesAndMeds as $timestamp)
+                                    <th class="time-header">
+                                        {{ \Carbon\Carbon::parse($timestamp)->format('H:i') }}<br>
+                                        <span
+                                            class="author-header">{{ $mergedRecordsPerMinute[$timestamp]->inputters }}</span>
+                                    </th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($allParameters as $param)
+                                @if ($param['group'] == 'CATATAN')
+                                    @php
+                                        $key = $param['key'];
+                                        $hasDataInFilteredColumns = false;
+                                        foreach ($uniqueTimestampsNotesAndMeds as $timestamp) {
+                                            $record = $mergedRecordsPerMinute[$timestamp];
+                                            if (!empty($record->{$key})) {
+                                                $hasDataInFilteredColumns = true;
+                                                break;
+                                            }
+                                        }
+                                    @endphp
 
-                        @if ($param['group'] == 'CATATAN')
-                        @php
-                        $key = $param['key'];
-                        $hasDataInFilteredColumns = false;
-                        foreach($uniqueTimestampsNotesAndMeds as $timestamp) {
-                        $record = $mergedRecordsPerMinute[$timestamp];
-                        if (!empty($record->{$key})) {
-                        $hasDataInFilteredColumns = true;
-                        break;
-                        }
-                        }
-                        @endphp
-
-                        @if($hasDataInFilteredColumns)
-                        <tr>
-                            <th class="param-label">{{ $param['label'] }}</th>
-                            @foreach($uniqueTimestampsNotesAndMeds as $timestamp)
-                            <td>
-                                @php
-                                $record = $mergedRecordsPerMinute[$timestamp];
-                                $value = !empty($record->{$key}) ? $record->{$key} : null;
-                                @endphp
-                                <span class="whitespace-pre-wrap">{!! $value !!}</span>
-                            </td>
+                                    @if ($hasDataInFilteredColumns)
+                                        <tr>
+                                            <th class="param-label">{{ $param['label'] }}</th>
+                                            @foreach ($uniqueTimestampsNotesAndMeds as $timestamp)
+                                                <td>
+                                                    @php
+                                                        $record = $mergedRecordsPerMinute[$timestamp];
+                                                        $value = !empty($record->{$key}) ? $record->{$key} : null;
+                                                    @endphp
+                                                    <span class="whitespace-pre-wrap">{!! $value !!}</span>
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    @endif
+                                @endif
                             @endforeach
-                        </tr>
-                        @endif
-                        @endif
-                        @endforeach
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
                 @endif
 
             </td>

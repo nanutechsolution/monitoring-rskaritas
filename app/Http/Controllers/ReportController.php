@@ -10,13 +10,11 @@ use App\Models\IntraAnesthesiaMonitoring;
 use App\Models\KamarInap;
 use App\Models\MedicationPicu;
 use App\Models\MonitoringCycleIcu;
-use App\Models\PicuMonitoring;
 use App\Models\PippAssessment;
 use App\Models\MonitoringRecord;
 use App\Models\PemeriksaanRanap;
 use App\Models\PicuMonitoringCycle;
 use App\Models\PicuMonitoringRecord;
-use App\Models\PippAssessmentPicu;
 use App\Models\RegPeriksa;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -24,6 +22,7 @@ use Carbon\Carbon;
 use iio\libmergepdf\Merger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ReportController extends Controller
 {
@@ -1334,13 +1333,51 @@ class ReportController extends Controller
                 'devices'
             ])
             ->firstOrFail();
-        $cpptRecords = \App\Models\PemeriksaanRanap::with('pegawai')
+        // $cpptRecords = \App\Models\PemeriksaanRanap::with('pegawai')
+        //     ->where('no_rawat', $cycle->no_rawat)
+        //     ->whereRaw("TIMESTAMP(tgl_perawatan, jam_rawat) >= ?", [$cycle->start_time])
+        //     ->whereRaw("TIMESTAMP(tgl_perawatan, jam_rawat) <= ?", [$cycle->end_time])
+        //     ->orderBy('tgl_perawatan', 'asc')
+        //     ->orderBy('jam_rawat', 'asc')
+        //     ->get();
+
+        $cpptRecords = PemeriksaanRanap::query()
+            ->with('pegawai')
             ->where('no_rawat', $cycle->no_rawat)
-            ->whereRaw("TIMESTAMP(tgl_perawatan, jam_rawat) >= ?", [$cycle->start_time])
-            ->whereRaw("TIMESTAMP(tgl_perawatan, jam_rawat) <= ?", [$cycle->end_time])
-            ->orderBy('tgl_perawatan', 'asc')
-            ->orderBy('jam_rawat', 'asc')
+            ->whereBetween(DB::raw("TIMESTAMP(tgl_perawatan, jam_rawat)"), [
+                $cycle->start_time,
+                $cycle->end_time
+            ])
+            ->whereExists(function ($query) use ($cycle) {
+                $query->select(DB::raw(1))
+                    ->from('kamar_inap')
+                    ->join('kamar', 'kamar.kd_kamar', '=', 'kamar_inap.kd_kamar')
+                    ->join('bangsal', 'bangsal.kd_bangsal', '=', 'kamar.kd_bangsal')
+                    ->whereColumn('kamar_inap.no_rawat', 'pemeriksaan_ranap.no_rawat')
+                    ->where('bangsal.kd_bangsal', 'LIKE', '%ICU%')
+                    ->where(function ($sub) {
+                        $sub->whereRaw("
+                TIMESTAMP(pemeriksaan_ranap.tgl_perawatan, pemeriksaan_ranap.jam_rawat)
+                >= TIMESTAMP(kamar_inap.tgl_masuk, kamar_inap.jam_masuk)
+            ");
+                    })
+                    ->where(function ($sub) {
+                        $sub->where('kamar_inap.tgl_keluar', '=', '0000-00-00')
+                            ->orWhereRaw("
+                    TIMESTAMP(pemeriksaan_ranap.tgl_perawatan, pemeriksaan_ranap.jam_rawat)
+                    <= TIMESTAMP(
+                        COALESCE(NULLIF(kamar_inap.tgl_keluar, '0000-00-00'), CURRENT_DATE()),
+                        COALESCE(NULLIF(kamar_inap.jam_keluar, '00:00:00'), CURRENT_TIME())
+                    )
+                ");
+                    });
+            })
+
+            ->orderBy(DB::raw("TIMESTAMP(tgl_perawatan, jam_rawat)"))
             ->get();
+
+        // $sql = Str::replaceArray('?', $cpptRecords->getBindings(), $cpptRecords->toSql());
+        // dd($sql);
 
         $diagnosaPasien = DB::table('diagnosa_pasien')
             ->join('penyakit', 'diagnosa_pasien.kd_penyakit', '=', 'penyakit.kd_penyakit')
@@ -1538,7 +1575,7 @@ class ReportController extends Controller
         // 2. Siapkan array untuk nilai Suhu, Nadi, SBP, DBP, dan MAP
         $suhuData = []; // <--- VARIABEL BARU
         $nadiData = [];
-        
+
         $sbpData = [];
         $dbpData = [];
         $mapData = [];
@@ -1639,15 +1676,24 @@ class ReportController extends Controller
             ->orderBy('jam_masuk', 'desc')
             ->with('kamar.bangsal') // Eager load relasi yang dibutuhkan
             ->get();
-        $firstKamarInap = KamarInap::where('no_rawat', $noRawatDb)
-            ->orderBy('tgl_masuk', 'asc')
-            ->orderBy('jam_masuk', 'asc')
+        $firstIcuStay = KamarInap::query()
+            ->join('kamar', 'kamar.kd_kamar', '=', 'kamar_inap.kd_kamar')
+            ->join('bangsal', 'bangsal.kd_bangsal', '=', 'kamar.kd_bangsal')
+            ->where('kamar_inap.no_rawat', $noRawatDb)
+            ->where('bangsal.nm_bangsal', 'LIKE', '%ICU%')
+            ->orderBy('kamar_inap.tgl_masuk')
+            ->orderBy('kamar_inap.jam_masuk')
             ->first();
 
+
         // Tanggal mulai rawat inap
-        $startDateCarbon = $firstKamarInap
-            ? \Carbon\Carbon::parse($firstKamarInap->tgl_masuk)
-            : \Carbon\Carbon::parse($registrasi->tgl_registrasi); // fallback jika tidak ada kamar inap
+        if ($firstIcuStay) {
+            $startDateCarbon = \Carbon\Carbon::parse($firstIcuStay->tgl_masuk);
+        } else {
+            // fallback: belum pernah ICU
+            $startDateCarbon = \Carbon\Carbon::parse($registrasi->tgl_registrasi);
+        }
+        // fallback jika tidak ada kamar inap
 
         // Tanggal target = tanggal sheet PDF
         $targetDateCarbon = \Carbon\Carbon::parse($sheetDate);
@@ -1833,5 +1879,4 @@ class ReportController extends Controller
             return null;
         }
     }
-   
 }

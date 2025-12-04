@@ -114,12 +114,9 @@ class Workspace extends Component
         } else {
             $hospitalDate = $currentTime->toDateString();
         }
-        $targetDate = $sheetDate ? \Carbon\Carbon::parse($sheetDate)->toDateString() : $hospitalDate; // Gunakan $hospitalDate jika $sheetDate null
+        $targetDate = $sheetDate ? \Carbon\Carbon::parse($sheetDate)->toDateString() : $hospitalDate; 
         $targetDateCarbon = \Carbon\Carbon::parse($targetDate);
-        // $startDateCarbon = \Carbon\Carbon::parse($startDate); // Tambahkan parsing untuk startDate
-        // $hospitalDayNumber = abs($targetDateCarbon->diffInDays($startDateCarbon)) + 1;
         $hospitalDayNumber = $startDateCarbon->diffInDays($targetDateCarbon) + 1;
-
         $this->cycle = MonitoringCycleIcu::firstOrCreate(
             [
                 'no_rawat' => $this->noRawatDb,
@@ -219,6 +216,9 @@ class Workspace extends Component
             'parenteral_target_protein' => $this->cycle->parenteral_target_protein,
             'parenteral_target_lemak' => $this->cycle->parenteral_target_lemak,
             'wound_notes' => $this->cycle->wound_notes,
+            'bb' => $this->cycle->bb,
+            'tb' => $this->cycle->tb,
+            'alergi' => $this->cycle->alergi,
 
         ];
     }
@@ -241,6 +241,9 @@ class Workspace extends Component
             'staticState.parenteral_target_kalori' => 'nullable|integer|min:0',
             'staticState.parenteral_target_protein' => 'nullable|integer|min:0',
             'staticState.parenteral_target_lemak' => 'nullable|integer|min:0',
+            'staticState.bb' => 'nullable|numeric|min:0|max:500',
+            'staticState.tb' => 'nullable|numeric|min:0|max:300',
+            'staticState.alergi' => 'nullable|string|max:255',
 
         ]);
 
